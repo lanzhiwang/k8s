@@ -985,6 +985,71 @@ WantedBy=multi-user.target
 
 
 
+10.1.36.43
+10.1.36.44
+10.1.36.45
+
+
+[root@k8s-master1 ssl]# vim ./kubernetes-csr.json
+[root@k8s-master1 ssl]# cat ./kubernetes-csr.json
+{
+  "CN": "kubernetes",
+  "hosts": [
+    "127.0.0.1",
+    "10.1.36.43",
+    "10.1.36.44",
+    "10.1.36.45",
+    "10.68.0.2",
+    "kubernetes",
+    "kubernetes.default",
+    "kubernetes.default.svc",
+    "kubernetes.default.svc.cluster",
+    "kubernetes.default.svc.cluster.local"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "CN",
+      "ST": "hubeisheng",
+      "L": "wuhanshi",
+      "O": "k8s",
+      "OU": "System"
+    }
+  ]
+}
+[root@k8s-master1 ssl]# 
+[root@k8s-master1 ssl]# ./cfssl gencert -ca=./ca.pem -ca-key=./ca-key.pem -config=./ca-config.json -profile=kubernetes kubernetes-csr.json | ./cfssljson -bare kubernetes
+
+kubernetes-csr.json
+
+kubernetes.csr
+kubernetes-key.pem
+kubernetes.pem
+
+# 测试 kubernetes.pem 证书是否可以连接 etcd 集群
+[root@k8s-master1 ssl]# ETCDCTL_API=3 /opt/k8s/bin/etcdctl -w table --endpoints=https://10.1.36.43:2379 --cacert=./ca.pem --cert=./kubernetes.pem --key=./kubernetes-key.pem member list
++------------------+---------+-------+-------------------------+-------------------------+
+|        ID        | STATUS  | NAME  |       PEER ADDRS        |      CLIENT ADDRS       |
++------------------+---------+-------+-------------------------+-------------------------+
+| 342124d005cfc514 | started | etcd2 | https://10.1.36.44:2380 | https://10.1.36.44:2379 |
+| 693065fae82f839e | started | etcd3 | https://10.1.36.45:2380 | https://10.1.36.45:2379 |
+| e2051cb26200bca6 | started | etcd1 | https://10.1.36.43:2380 | https://10.1.36.43:2379 |
++------------------+---------+-------+-------------------------+-------------------------+
+[root@k8s-master1 ssl]# 
+
+
+
+
+
+
+
+
+
+
+
 
 
 ```
