@@ -10,6 +10,7 @@
 
 ```bash
 
+# 整个工作目录
 [root@k8s-master1 temp]# pwd
 /opt/k8s/temp
 [root@k8s-master1 temp]# 
@@ -300,7 +301,7 @@ lrwxrwxrwx 1 root root 10 May 16 17:39 6c772e2d-ecdb-4653-a459-eefd99455f68 -> .
 
 
 [root@k8s-master1 ~]# vim /etc/fstab
-UUID=4ab4484f-c385-4eba-8f33-c736800fe874 /opt/k8s                ext4    defaults        0 0
+UUID=852da811-4d2e-4108-bb17-8eb51d49689e /opt/k8s                ext4    defaults        0 0
 [root@k8s-master1 ~]# 
 重启系统检查 hostname 和挂载是否生效
 
@@ -311,7 +312,8 @@ UUID=4ab4484f-c385-4eba-8f33-c736800fe874 /opt/k8s                ext4    defaul
 [root@k8s-master1 ssl]# pwd
 /opt/k8s/temp/ssl
 # 准备 CA 配置文件
-[root@k8s-master1 ssl]# cat ./ca-config.json 
+[root@k8s-master1 ssl]# vim ./ca-config.json 
+[root@k8s-master1 ssl]# cat ./ca-config.json
 {
   "signing": {
     "default": {
@@ -331,10 +333,13 @@ UUID=4ab4484f-c385-4eba-8f33-c736800fe874 /opt/k8s                ext4    defaul
   }
 }
 [root@k8s-master1 ssl]# 
+
+[root@k8s-master1 ssl]# 
 # 准备 CA 签名请求文件，CA 证书请求文件有 ca 字段，其他的请求文件没有该字段
-[root@k8s-master1 ssl]# cat ./ca-csr.json 
+[root@k8s-master1 ssl]# vim ./ca-csr.json 
+[root@k8s-master1 ssl]# cat ./ca-csr.json
 {
-  "CN": "www.mingyuanyun.com/emailAddress=huz01@mingyuanyun.com",
+  "CN": "kubernetes",
   "key": {
     "algo": "rsa",
     "size": 2048
@@ -344,8 +349,8 @@ UUID=4ab4484f-c385-4eba-8f33-c736800fe874 /opt/k8s                ext4    defaul
       "C": "CN",
       "ST": "hubeisheng",
       "L": "wuhanshi",
-      "O": "mingyuanyun",
-      "OU": "Technical Support"
+      "O": "k8s",
+      "OU": "System"
     }
   ],
   "ca": {
@@ -353,15 +358,18 @@ UUID=4ab4484f-c385-4eba-8f33-c736800fe874 /opt/k8s                ext4    defaul
   }
 }
 [root@k8s-master1 ssl]# 
-[root@k8s-master1 ssl]# ./cfssl gencert -initca ca-csr.json | ./cfssljson -bare ca
-[root@k8s-master1 ssl]# 
+
+ca-config.json
+ca-csr.json 
+
+[root@k8s-master1 ssl]# ./cfssl gencert -initca ca-csr.json | ./cfssljson -bare ca 
 [root@k8s-master1 ssl]# ll
 total 18828
--rw-r--r-- 1 root root      292 May 19 13:53 ca-config.json
--rw-r--r-- 1 root root     1094 May 19 14:00 ca.csr
--rw-r--r-- 1 root root      314 May 19 13:56 ca-csr.json
--rw------- 1 root root     1679 May 19 14:00 ca-key.pem
--rw-r--r-- 1 root root     1541 May 19 14:00 ca.pem
+-rw-r--r-- 1 root root      292 May 20 09:58 ca-config.json
+-rw-r--r-- 1 root root     1005 May 20 10:02 ca.csr
+-rw-r--r-- 1 root root      251 May 20 10:01 ca-csr.json
+-rw------- 1 root root     1675 May 20 10:02 ca-key.pem
+-rw-r--r-- 1 root root     1371 May 20 10:02 ca.pem
 -rwxr-xr-x 1 root root 10376657 Mar 30  2016 cfssl
 -rwxr-xr-x 1 root root  6595195 Mar 30  2016 cfssl-certinfo
 -rwxr-xr-x 1 root root  2277873 Mar 30  2016 cfssljson
@@ -374,11 +382,23 @@ ca.csr  # CA 证书请求文件
 ca-key.pem  # CA 私钥
 ca.pem  # CA 证书
 
+# 查看证书信息
+[root@k8s-master1 ssl]# ./cfssl-certinfo -cert ./ca.pem
+[root@k8s-master1 ssl]# openssl x509 -in ca.pem -noout -text | grep "CA:TRUE"
+                CA:TRUE, pathlen:2
+[root@k8s-master1 ssl]# 
+# 查看证书请求文件
+[root@k8s-master1 ssl]# openssl req -text -in ca.csr -noout
+
+
+
+
 
 # 准备 kubectl 使用的 admin 证书签名请求，缺少 hosts 自动
+[root@k8s-master1 ssl]# vim ./admin-csr.json
 [root@k8s-master1 ssl]# cat ./admin-csr.json
 {
-  "CN": "www.mingyuanyun.com/emailAddress=huz01@mingyuanyun.com",
+  "CN": "admin",
   "hosts": [],
   "key": {
     "algo": "rsa",
@@ -389,19 +409,22 @@ ca.pem  # CA 证书
       "C": "CN",
       "ST": "hubeisheng",
       "L": "wuhanshi",
-      "O": "mingyuanyun",
-      "OU": "Technical Support"
+      "O": "system:masters",
+      "OU": "System"
     }
   ]
 }
 [root@k8s-master1 ssl]# 
+
+admin-csr.json
+
 [root@k8s-master1 ssl]# ./cfssl gencert -ca=./ca.pem -ca-key=./ca-key.pem -config=./ca-config.json -profile=kubernetes admin-csr.json | ./cfssljson -bare admin
-2019/05/19 14:17:32 [INFO] generate received request
-2019/05/19 14:17:32 [INFO] received CSR
-2019/05/19 14:17:32 [INFO] generating key: rsa-2048
-2019/05/19 14:17:33 [INFO] encoded CSR
-2019/05/19 14:17:33 [INFO] signed certificate with serial number 317145352576000474480959839956652034649539483191
-2019/05/19 14:17:33 [WARNING] This certificate lacks a "hosts" field. This makes it unsuitable for
+2019/05/20 10:29:01 [INFO] generate received request
+2019/05/20 10:29:01 [INFO] received CSR
+2019/05/20 10:29:01 [INFO] generating key: rsa-2048
+2019/05/20 10:29:01 [INFO] encoded CSR
+2019/05/20 10:29:01 [INFO] signed certificate with serial number 257984209803207484856031741658634617026284489433
+2019/05/20 10:29:01 [WARNING] This certificate lacks a "hosts" field. This makes it unsuitable for
 websites. For more information see the Baseline Requirements for the Issuance and Management
 of Publicly-Trusted Certificates, v.1.1.6, from the CA/Browser Forum (https://cabforum.org);
 specifically, section 10.2.3 ("Information Requirements").
@@ -413,18 +436,26 @@ admin.csr
 admin-key.pem
 admin.pem
 
+# 查看证书信息
+[root@k8s-master1 ssl]# openssl x509 -in admin.pem -noout -text | grep "CA"
+                CA:FALSE
+[root@k8s-master1 ssl]# 
+
+
+
+# 所有节点的准备工作
 
 [root@k8s-master1 temp]# rpm -qa | grep firewall
 firewalld-0.4.4.4-14.el7.noarch
 firewalld-filesystem-0.4.4.4-14.el7.noarch
 python-firewall-0.4.4.4-14.el7.noarch
 [root@k8s-master1 temp]# 
-[root@k8s-master1 temp]# yum erase firewalld-0.4.4.4-14.el7.noarch firewalld-filesystem-0.4.4.4-14.el7.noarch python-firewall-0.4.4.4-14.el7.noarch
+[root@k8s-master1 temp]# yum erase -y firewalld-0.4.4.4-14.el7.noarch firewalld-filesystem-0.4.4.4-14.el7.noarch python-firewall-0.4.4.4-14.el7.noarch
 [root@k8s-master1 temp]# 
 [root@k8s-master1 temp]# rpm -qa | grep firewall
 [root@k8s-master1 temp]# 
 
-[root@k8s-master1 temp]# yum install conntrack-tools psmisc nfs-utils jq socat bash-completion rsync ipset ipvsadm
+[root@k8s-master1 temp]# yum install -y conntrack-tools psmisc nfs-utils jq socat bash-completion rsync ipset ipvsadm
 
 
 # 永久关闭 selinux
@@ -434,7 +465,6 @@ vim /etc/selinux/config
 # 禁止 rsyslog 获取 journald 日志，注释掉下面两行，重启 rsyslog 服务
 [root@k8s-master1 temp]# cat /etc/rsyslog.conf | grep "ModLoad imjournal"
 $ModLoad imjournal # provides access to the systemd journal
-[root@k8s-master1 temp]# 
 [root@k8s-master1 temp]# 
 [root@k8s-master1 temp]# cat /etc/rsyslog.conf | grep "IMJournalStateFile"
 $IMJournalStateFile imjournal.state
@@ -643,6 +673,101 @@ $ cat /etc/modprobe.d/sctp.conf
 # put sctp into blacklist
 install sctp /bin/true
 
+$ yum install -y yum-utils device-mapper-persistent-data lvm2
+$ yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+$ yum makecache fast
+$ yum install -y docker-ce
+[root@k8s-master1 temp]# mkdir -p /etc/docker /opt/k8s/docker
+[root@k8s-master1 temp]# vim /etc/docker/daemon.json
+[root@k8s-master1 temp]# cat /etc/docker/daemon.json
+{
+  "max-concurrent-downloads": 10,
+  "log-driver": "json-file",
+  "log-level": "warn",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+    },
+  "data-root": "/opt/k8s/docker"
+}
+[root@k8s-master1 temp]# 
+
+[root@k8s-master1 temp]# systemctl daemon-reload
+[root@k8s-master1 temp]# systemctl enable docker.service
+[root@k8s-master1 temp]# systemctl start docker.service
+[root@k8s-master1 temp]# systemctl status docker.service 
+[root@k8s-master1 temp]# docker info
+Containers: 0
+ Running: 0
+ Paused: 0
+ Stopped: 0
+Images: 0
+Server Version: 18.09.6
+Storage Driver: overlay2
+ Backing Filesystem: extfs
+ Supports d_type: true
+ Native Overlay Diff: true
+Logging Driver: json-file
+Cgroup Driver: cgroupfs
+Plugins:
+ Volume: local
+ Network: bridge host macvlan null overlay
+ Log: awslogs fluentd gcplogs gelf journald json-file local logentries splunk syslog
+Swarm: inactive
+Runtimes: runc
+Default Runtime: runc
+Init Binary: docker-init
+containerd version: bb71b10fd8f58240ca47fbb579b9d1028eea7c84
+runc version: 2b18fe1d885ee5083ef9f0838fee39b62d653e30
+init version: fec3683
+Security Options:
+ seccomp
+  Profile: default
+Kernel Version: 3.10.0-862.11.6.el7.x86_64
+Operating System: CentOS Linux 7 (Core)
+OSType: linux
+Architecture: x86_64
+CPUs: 4
+Total Memory: 13.69GiB
+Name: k8s-master1
+ID: 4TZL:XLU3:FEO5:CYEJ:XHGV:KL4K:PCD6:MK6A:5SV6:VVSY:NFBB:VIDZ
+Docker Root Dir: /opt/k8s/docker
+Debug Mode (client): false
+Debug Mode (server): false
+Registry: https://index.docker.io/v1/
+Labels:
+Experimental: false
+Insecure Registries:
+ 127.0.0.0/8
+Live Restore Enabled: false
+Product License: Community Engine
+
+[root@k8s-master1 temp]# ll /opt/k8s/docker/
+total 48
+drwx------ 2 root root 4096 May 20 14:54 builder
+drwx------ 4 root root 4096 May 20 14:54 buildkit
+drwx------ 2 root root 4096 May 20 14:54 containers
+drwx------ 3 root root 4096 May 20 14:54 image
+drwxr-x--- 3 root root 4096 May 20 14:54 network
+drwx------ 3 root root 4096 May 20 14:54 overlay2
+drwx------ 4 root root 4096 May 20 14:54 plugins
+drwx------ 2 root root 4096 May 20 14:54 runtimes
+drwx------ 2 root root 4096 May 20 14:54 swarm
+drwx------ 2 root root 4096 May 20 14:54 tmp
+drwx------ 2 root root 4096 May 20 14:54 trust
+drwx------ 2 root root 4096 May 20 14:54 volumes
+[root@k8s-master1 temp]# 
+
+
+[root@k8s-master1 temp]# curl -L "https://github.com/docker/compose/releases/download/1.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+[root@k8s-master1 temp]# chmod +x /usr/local/bin/docker-compose
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+[root@k8s-master1 temp]# ln -s /usr/local/bin/docker-compose /usr/sbin/docker-compose
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# docker-compose --version
+docker-compose version 1.24.0, build 0aa59064
+[root@k8s-master1 temp]# 
 
 
 

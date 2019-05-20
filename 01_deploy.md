@@ -56,7 +56,7 @@ cat /etc/kubernetes/ssl/ca-config.json
 # 准备 CA 签名请求文件，CA 证书请求文件有 ca 字段，其他的请求文件没有该字段
 cat /etc/kubernetes/ssl/ca-csr.json
 {
-  "CN": "www.antiy.com/emailAddress=huzhi@antiy.cn",
+  "CN": "kubernetes",
   "key": {
     "algo": "rsa",
     "size": 2048
@@ -66,14 +66,15 @@ cat /etc/kubernetes/ssl/ca-csr.json
       "C": "CN",
       "ST": "hubeisheng",
       "L": "wuhanshi",
-      "O": "wuhanantiy",
-      "OU": "Technical Support"
+      "O": "k8s",
+      "OU": "System"
     }
   ],
   "ca": {
     "expiry": "131400h"
   }
 }
+
 
 # 生成 CA 证书和私钥
 cd /etc/kubernetes/ssl && /opt/kube/bin/cfssl gencert -initca ca-csr.json | /opt/kube/bin/cfssljson -bare ca
@@ -89,7 +90,8 @@ ca.pem  # CA 证书
 # 准备 kubectl 使用的 admin 证书签名请求
 cat /etc/kubernetes/ssl/admin-csr.json
 {
-  "CN": "www.antiy.com/emailAddress=admin@antiy.cn",
+  "CN": "admin",
+  "hosts": [],
   "key": {
     "algo": "rsa",
     "size": 2048
@@ -99,11 +101,13 @@ cat /etc/kubernetes/ssl/admin-csr.json
       "C": "CN",
       "ST": "hubeisheng",
       "L": "wuhanshi",
-      "O": "wuhanantiy",
-      "OU": "Technical Support"
+      "O": "system:masters",
+      "OU": "System"
     }
   ]
 }
+
+
 
 # 创建 admin 证书与私钥
 cd /etc/kubernetes/ssl && /opt/kube/bin/cfssl gencert \
