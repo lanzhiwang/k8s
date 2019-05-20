@@ -673,6 +673,10 @@ $ cat /etc/modprobe.d/sctp.conf
 # put sctp into blacklist
 install sctp /bin/true
 
+
+# scp
+
+
 $ yum install -y yum-utils device-mapper-persistent-data lvm2
 $ yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 $ yum makecache fast
@@ -771,7 +775,221 @@ docker-compose version 1.24.0, build 0aa59064
 
 
 
+10.1.36.43
+10.1.36.44
+10.1.36.45
+
+# 创建 etcd 证书请求文件
+[root@k8s-master1 ssl]# vim ./etcd-csr.json
+[root@k8s-master1 ssl]# cat ./etcd-csr.json
+{
+  "CN": "etcd",
+  "hosts": [
+    "127.0.0.1",
+    "10.1.36.43",
+    "10.1.36.44",
+    "10.1.36.45"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "CN",
+      "ST": "hubeisheng",
+      "L": "wuhanshi",
+      "O": "k8s",
+      "OU": "System"
+    }
+  ]
+}
+[root@k8s-master1 ssl]# 
+
+[root@k8s-master1 ssl]# ./cfssl gencert -ca=./ca.pem -ca-key=./ca-key.pem -config=./ca-config.json -profile=kubernetes etcd-csr.json | ./cfssljson -bare etcd
+
+etcd-csr.json
+
+etcd.csr
+etcd-key.pem
+etcd.pem
+
+
+mkdir -p /opt/k8s/etcd
+mkdir -p /opt/k8s/bin
+etcd
+etcdctl
+
+mkdir -p /opt/k8s/ssl
+
+etcd.pem
+etcd-key.pem
+ca.pem
+  
+# 创建etcd的 systemd unit 文件，以 10.1.36.43 NODE_NAME=etcd1 为例
+[root@k8s-master1 k8s]# vim /etc/systemd/system/etcd.service
+[root@k8s-master1 k8s]# cat /etc/systemd/system/etcd.service
+[Unit]
+Description=Etcd Server
+After=network.target
+After=network-online.target
+Wants=network-online.target
+Documentation=https://github.com/coreos
+
+[Service]
+Type=notify
+WorkingDirectory=/opt/k8s/etcd
+ExecStart=/opt/k8s/bin/etcd \
+  --name=etcd1 \
+  --cert-file=/opt/k8s/ssl/etcd.pem \
+  --key-file=/opt/k8s/ssl/etcd-key.pem \
+  --trusted-ca-file=/opt/k8s/ssl/ca.pem \
+  --peer-cert-file=/opt/k8s/ssl/etcd.pem \
+  --peer-key-file=/opt/k8s/ssl/etcd-key.pem \
+  --peer-trusted-ca-file=/opt/k8s/ssl/ca.pem \
+  --initial-advertise-peer-urls=https://10.1.36.43:2380 \
+  --listen-peer-urls=https://10.1.36.43:2380 \
+  --listen-client-urls=https://10.1.36.43:2379,http://127.0.0.1:2379 \
+  --advertise-client-urls=https://10.1.36.43:2379 \
+  --initial-cluster-token=etcd-cluster \
+  --initial-cluster=etcd1=https://10.1.36.43:2380,etcd2=https://10.1.36.44:2380,etcd3=https://10.1.36.45:2380 \
+  --initial-cluster-state=new \
+  --data-dir=/opt/k8s/etcd
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+[root@k8s-master1 k8s]# 
+
+
+# 开机启用etcd服务
+systemctl enable etcd （ systemctl disable etcd ）
+# 开启etcd服务
+systemctl daemon-reload
+systemctl restart etcd
+systemctl status etcd.service
+
+# 查看日志
+journalctl -xe
+journalctl -u etcd
+
+# 检查服务是否正常
+ETCDCTL_API=3 /opt/k8s/bin/etcdctl --endpoints=https://10.1.36.43:2379 --cacert=/opt/k8s/ssl/ca.pem --cert=/opt/k8s/ssl/etcd.pem --key=/opt/k8s/ssl/etcd-key.pem endpoint health
+
+ETCDCTL_API=3 /opt/k8s/bin/etcdctl --endpoints=https://10.1.36.43:2379 --cacert=/opt/k8s/ssl/ca.pem --cert=/opt/k8s/ssl/etcd.pem --key=/opt/k8s/ssl/etcd-key.pem endpoint status
+ETCDCTL_API=3 /opt/k8s/bin/etcdctl -w table --endpoints=https://10.1.36.43:2379 --cacert=/opt/k8s/ssl/ca.pem --cert=/opt/k8s/ssl/etcd.pem --key=/opt/k8s/ssl/etcd-key.pem endpoint status
+
+
+netstat -tulnp | grep 2379
+netstat -tulnp | grep 2380
+
+[root@k8s-master1 etcd]# ETCDCTL_API=3 /opt/k8s/bin/etcdctl -w table --endpoints=https://10.1.36.43:2379 --cacert=/opt/k8s/ssl/ca.pem --cert=/opt/k8s/ssl/etcd.pem --key=/opt/k8s/ssl/etcd-key.pem member list
++------------------+---------+-------+-------------------------+-------------------------+
+|        ID        | STATUS  | NAME  |       PEER ADDRS        |      CLIENT ADDRS       |
++------------------+---------+-------+-------------------------+-------------------------+
+| 342124d005cfc514 | started | etcd2 | https://10.1.36.44:2380 | https://10.1.36.44:2379 |
+| 693065fae82f839e | started | etcd3 | https://10.1.36.45:2380 | https://10.1.36.45:2379 |
+| e2051cb26200bca6 | started | etcd1 | https://10.1.36.43:2380 | https://10.1.36.43:2379 |
++------------------+---------+-------+-------------------------+-------------------------+
+[root@k8s-master1 etcd]# 
+
+
+[root@k8s-master1 etcd]# ETCDCTL_API=3 /opt/k8s/bin/etcdctl --endpoints=https://10.1.36.43:2379 --cacert=/opt/k8s/ssl/ca.pem --cert=/opt/k8s/ssl/etcd.pem --key=/opt/k8s/ssl/etcd-key.pem check perf
+ 60 / 60 Booooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo! 100.00%1m0s
+PASS: Throughput is 150 writes/s
+PASS: Slowest request took 0.065082s
+PASS: Stddev is 0.007099s
+PASS
+[root@k8s-master1 etcd]# 
+
+note: 如果重新部署，使用一下步骤：
+1、删除 /opt/k8s/etcd 目录下的所有内容
+2、systemctl disable etcd
+3、再重复执行上述过程
+
+
+# 创建etcd的 systemd unit 文件，以 10.1.36.44 NODE_NAME=etcd2 为例
+vim /etc/systemd/system/etcd.service
+cat /etc/systemd/system/etcd.service
+[Unit]
+Description=Etcd Server
+After=network.target
+After=network-online.target
+Wants=network-online.target
+Documentation=https://github.com/coreos
+
+[Service]
+Type=notify
+WorkingDirectory=/opt/k8s/etcd
+ExecStart=/opt/k8s/bin/etcd \
+  --name=etcd2 \
+  --cert-file=/opt/k8s/ssl/etcd.pem \
+  --key-file=/opt/k8s/ssl/etcd-key.pem \
+  --trusted-ca-file=/opt/k8s/ssl/ca.pem \
+  --peer-cert-file=/opt/k8s/ssl/etcd.pem \
+  --peer-key-file=/opt/k8s/ssl/etcd-key.pem \
+  --peer-trusted-ca-file=/opt/k8s/ssl/ca.pem \
+  --initial-advertise-peer-urls=https://10.1.36.44:2380 \
+  --listen-peer-urls=https://10.1.36.44:2380 \
+  --listen-client-urls=https://10.1.36.44:2379,http://127.0.0.1:2379 \
+  --advertise-client-urls=https://10.1.36.44:2379 \
+  --initial-cluster-token=etcd-cluster \
+  --initial-cluster=etcd1=https://10.1.36.43:2380,etcd2=https://10.1.36.44:2380,etcd3=https://10.1.36.45:2380 \
+  --initial-cluster-state=new \
+  --data-dir=/opt/k8s/etcd
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+
+
+# 创建etcd的 systemd unit 文件，以 10.1.36.45 NODE_NAME=etcd3 为例
+vim /etc/systemd/system/etcd.service
+cat /etc/systemd/system/etcd.service
+[Unit]
+Description=Etcd Server
+After=network.target
+After=network-online.target
+Wants=network-online.target
+Documentation=https://github.com/coreos
+
+[Service]
+Type=notify
+WorkingDirectory=/opt/k8s/etcd
+ExecStart=/opt/k8s/bin/etcd \
+  --name=etcd3 \
+  --cert-file=/opt/k8s/ssl/etcd.pem \
+  --key-file=/opt/k8s/ssl/etcd-key.pem \
+  --trusted-ca-file=/opt/k8s/ssl/ca.pem \
+  --peer-cert-file=/opt/k8s/ssl/etcd.pem \
+  --peer-key-file=/opt/k8s/ssl/etcd-key.pem \
+  --peer-trusted-ca-file=/opt/k8s/ssl/ca.pem \
+  --initial-advertise-peer-urls=https://10.1.36.45:2380 \
+  --listen-peer-urls=https://10.1.36.45:2380 \
+  --listen-client-urls=https://10.1.36.45:2379,http://127.0.0.1:2379 \
+  --advertise-client-urls=https://10.1.36.45:2379 \
+  --initial-cluster-token=etcd-cluster \
+  --initial-cluster=etcd1=https://10.1.36.43:2380,etcd2=https://10.1.36.44:2380,etcd3=https://10.1.36.45:2380 \
+  --initial-cluster-state=new \
+  --data-dir=/opt/k8s/etcd
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+
+
+
+
+
 ```
+
+
 
 
 
