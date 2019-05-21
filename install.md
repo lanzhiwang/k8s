@@ -1453,6 +1453,588 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
 
 
 
+
+
+# 使 kubelet 设置 CNI 支持，cni 配置文件
+[root@k8s-linux-worker1 k8s]# vim /opt/k8s/cni/net.d/10-default.conf
+[root@k8s-linux-worker1 k8s]# cat /opt/k8s/cni/net.d/10-default.conf
+{
+  "name": "mynet",
+  "type": "bridge",
+  "bridge": "mynet0",
+  "isDefaultGateway": true,
+  "ipMasq": true,
+  "hairpinMode": true,
+  "ipam": {
+    "type": "host-local",
+    "subnet": "172.20.0.0/16"
+  }
+}
+[root@k8s-linux-worker1 k8s]# 
+
+[root@k8s-linux-worker1 k8s]# docker pull mirrorgooglecontainers/pause-amd64:3.1
+3.1: Pulling from mirrorgooglecontainers/pause-amd64
+67ddbfb20a22: Pull complete 
+Digest: sha256:59eec8837a4d942cc19a52b8c09ea75121acc38114a2c68b98983ce9356b8610
+Status: Downloaded newer image for mirrorgooglecontainers/pause-amd64:3.1
+[root@k8s-linux-worker1 k8s]# 
+[root@k8s-linux-worker1 k8s]# docker images
+REPOSITORY                           TAG                 IMAGE ID            CREATED             SIZE
+mirrorgooglecontainers/pause-amd64   3.1                 da86e6ba6ca1        17 months ago       742kB
+[root@k8s-linux-worker1 k8s]# 
+[root@k8s-linux-worker1 k8s]# 
+[root@k8s-linux-worker1 k8s]# 
+
+
+# https://github.com/kubernetes/kubernetes/issues/52711
+# 准备 kubelet 证书签名请求，以 10.1.36.46 为例
+[root@k8s-linux-worker1 ssl]# vim ./kubelet-csr.json 
+[root@k8s-linux-worker1 ssl]# cat ./kubelet-csr.json 
+{
+  "CN": "system:node:10.1.36.46",
+  "hosts": [
+    "127.0.0.1",
+    "10.1.36.46"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "CN",
+      "ST": "hubeisheng",
+      "L": "wuhanshi",
+      "O": "system:nodes",
+      "OU": "System"
+    }
+  ]
+}
+[root@k8s-linux-worker1 ssl]# 
+[root@k8s-linux-worker1 ssl]# ./cfssl gencert -ca=./ca.pem -ca-key=./ca-key.pem -config=./ca-config.json -profile=kubernetes kubelet-csr.json | ./cfssljson -bare kubelet
+
+kubelet-csr.json 
+
+kubelet.csr
+kubelet-key.pem
+kubelet.pem
+
+
+# 设置 kubelet 集群参数
+[root@k8s-linux-worker1 bin]# ./kubectl config set-cluster kubernetes --certificate-authority=/opt/k8s/ssl/ca.pem --embed-certs=true --server=https://10.1.36.43:6443 --kubeconfig=/opt/k8s/temp/ssl/kubelet.kubeconfig
+Cluster "kubernetes" set.
+[root@k8s-linux-worker1 bin]# 
+[root@k8s-linux-worker1 bin]# cat /opt/k8s/temp/ssl/kubelet.kubeconfig
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUR4akNDQXE2Z0F3SUJBZ0lVS2N0enNHZ2FXbkh5N3VWN2lUeHhyVm1tRHYwd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2FURUxNQWtHQTFVRUJoTUNRMDR4RXpBUkJnTlZCQWdUQ21oMVltVnBjMmhsYm1jeEVUQVBCZ05WQkFjVApDSGQxYUdGdWMyaHBNUXd3Q2dZRFZRUU
+    server: https://10.1.36.43:6443
+  name: kubernetes
+contexts: []
+current-context: ""
+kind: Config
+preferences: {}
+users: []
+[root@k8s-linux-worker1 bin]# 
+
+# 设置 kubelet 客户端认证参数
+[root@k8s-linux-worker1 bin]# ./kubectl config set-credentials system:node:10.1.36.46 --client-certificate=/opt/k8s/ssl/kubelet.pem --embed-certs=true --client-key=/opt/k8s/ssl/kubelet-key.pem --kubeconfig=/opt/k8s/temp/ssl/kubelet.kubeconfig
+User "system:node:10.1.36.46" set.
+[root@k8s-linux-worker1 bin]# 
+[root@k8s-linux-worker1 bin]# cat /opt/k8s/temp/ssl/kubelet.kubeconfig
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUR4akNDQXE2Z0F3SUJBZ0lVS2N0enNHZ2FXbkh5N3VWN2lUeHhyVm1tRHYwd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2FURUxNQWtHQTFVRUJoTUNRMDR4RXpBUkJnTlZCQWdUQ21oMVltVnBjMmhsYm1jeEVUQVBCZ05WQkFjVApDSGQxYUdGdWMyaHBNUXd3Q2dZRFZRUU
+    server: https://10.1.36.43:6443
+  name: kubernetes
+contexts: []
+current-context: ""
+kind: Config
+preferences: {}
+users:
+- name: system:node:10.1.36.46
+  user:
+    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVCRENDQXV5Z0F3SUJBZ0lVWkUwaFdiQnN0aC9BTFA3U0pQWEdFQzZ2OFA0d0RRWUpLb1pJaHZjTkFRRUwKQlFBd2FURUxNQWtHQTFVRUJoTUNRMDR4RXpBUkJnTlZCQWdUQ21oMVltVnBjMmhsYm1jeEVUQVBCZ05WQkFjVApDSGQxYUdGdWMyaHBNUXd3Q2dZRFZRUU
+    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBdXhxalFsR3RhTGVIUzdYay9WSXNBTDk0Q2NnSW4wYXEvbDZzaUNkSTdraU0yRmE2ClBJRTFEZENRYUs2U3QvSUtWSWVEb29UVkg4UEJ6aGN0YWgweTY2KzJVQTRicWhjTm5va2hXNGdHMTYvTE1VRHgKanFsNms1ektCTXhxN2hkMHFWcm
+[root@k8s-linux-worker1 bin]# 
+
+# 设置 kubelet 上下文参数
+[root@k8s-linux-worker1 bin]# ./kubectl config set-context default --cluster=kubernetes --user=system:node:10.1.36.46 --kubeconfig=/opt/k8s/temp/ssl/kubelet.kubeconfig
+Context "default" created.
+[root@k8s-linux-worker1 bin]# 
+[root@k8s-linux-worker1 bin]# cat /opt/k8s/temp/ssl/kubelet.kubeconfig
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUR4akNDQXE2Z0F3SUJBZ0lVS2N0enNHZ2FXbkh5N3VWN2lUeHhyVm1tRHYwd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2FURUxNQWtHQTFVRUJoTUNRMDR4RXpBUkJnTlZCQWdUQ21oMVltVnBjMmhsYm1jeEVUQVBCZ05WQkFjVApDSGQxYUdGdWMyaHBNUXd3Q2dZRFZRUU
+    server: https://10.1.36.43:6443
+  name: kubernetes
+contexts:
+- context:
+    cluster: kubernetes
+    user: system:node:10.1.36.46
+  name: default
+current-context: ""
+kind: Config
+preferences: {}
+users:
+- name: system:node:10.1.36.46
+  user:
+    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVCRENDQXV5Z0F3SUJBZ0lVWkUwaFdiQnN0aC9BTFA3U0pQWEdFQzZ2OFA0d0RRWUpLb1pJaHZjTkFRRUwKQlFBd2FURUxNQWtHQTFVRUJoTUNRMDR4RXpBUkJnTlZCQWdUQ21oMVltVnBjMmhsYm1jeEVUQVBCZ05WQkFjVApDSGQxYUdGdWMyaHBNUXd3Q2dZRFZRUU
+    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBdXhxalFsR3RhTGVIUzdYay9WSXNBTDk0Q2NnSW4wYXEvbDZzaUNkSTdraU0yRmE2ClBJRTFEZENRYUs2U3QvSUtWSWVEb29UVkg4UEJ6aGN0YWgweTY2KzJVQTRicWhjTm5va2hXNGdHMTYvTE1VRHgKanFsNms1ektCTXhxN2hkMHFWcm
+[root@k8s-linux-worker1 bin]# 
+
+# 选择默认上下文
+[root@k8s-linux-worker1 bin]# ./kubectl config use-context default --kubeconfig=/opt/k8s/temp/ssl/kubelet.kubeconfig
+Switched to context "default".
+[root@k8s-linux-worker1 bin]# cat /opt/k8s/temp/ssl/kubelet.kubeconfig
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUR4akNDQXE2Z0F3SUJBZ0lVS2N0enNHZ2FXbkh5N3VWN2lUeHhyVm1tRHYwd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2FURUxNQWtHQTFVRUJoTUNRMDR4RXpBUkJnTlZCQWdUQ21oMVltVnBjMmhsYm1jeEVUQVBCZ05WQkFjVApDSGQxYUdGdWMyaHBNUXd3Q2dZRFZRUU
+    server: https://10.1.36.43:6443
+  name: kubernetes
+contexts:
+- context:
+    cluster: kubernetes
+    user: system:node:10.1.36.46
+  name: default
+current-context: default
+kind: Config
+preferences: {}
+users:
+- name: system:node:10.1.36.46
+  user:
+    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVCRENDQXV5Z0F3SUJBZ0lVWkUwaFdiQnN0aC9BTFA3U0pQWEdFQzZ2OFA0d0RRWUpLb1pJaHZjTkFRRUwKQlFBd2FURUxNQWtHQTFVRUJoTUNRMDR4RXpBUkJnTlZCQWdUQ21oMVltVnBjMmhsYm1jeEVUQVBCZ05WQkFjVApDSGQxYUdGdWMyaHBNUXd3Q2dZRFZRUU
+    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBdXhxalFsR3RhTGVIUzdYay9WSXNBTDk0Q2NnSW4wYXEvbDZzaUNkSTdraU0yRmE2ClBJRTFEZENRYUs2U3QvSUtWSWVEb29UVkg4UEJ6aGN0YWgweTY2KzJVQTRicWhjTm5va2hXNGdHMTYvTE1VRHgKanFsNms1ektCTXhxN2hkMHFWcm
+[root@k8s-linux-worker1 bin]# 
+
+
+
+10.1.36.46
+10.1.36.47
+10.1.36.48
+10.1.36.49
+
+
+mkdir -p /opt/k8s/kubelet
+
+mkdir -p /opt/k8s/cni/net.d
+10-default.conf
+
+
+/opt/k8s/bin
+kubelet
+
+/opt/k8s/ssl
+ca.pem
+ca-key.pem
+kubelet.pem
+kubelet-key.pem
+kubelet.kubeconfig
+
+/opt/k8s/log/
+Kubelet.log
+
+docker 镜像
+mirrorgooglecontainers/pause-amd64:3.1
+
+
+# 创建 kubelet 的systemd unit文件，以 10.1.36.46 为例
+[root@k8s-linux-worker1 bin]# vim /etc/systemd/system/kubelet.service
+[root@k8s-linux-worker1 bin]# cat /etc/systemd/system/kubelet.service
+[Unit]
+Description=Kubernetes Kubelet
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+WorkingDirectory=/opt/k8s/kubelet
+ExecStartPre=/bin/mkdir -p /sys/fs/cgroup/cpuset/system.slice/kubelet.service
+ExecStartPre=/bin/mkdir -p /sys/fs/cgroup/hugetlb/system.slice/kubelet.service
+ExecStartPre=/bin/mkdir -p /sys/fs/cgroup/memory/system.slice/kubelet.service
+ExecStartPre=/bin/mkdir -p /sys/fs/cgroup/pids/system.slice/kubelet.service
+ExecStart=/opt/k8s/bin/kubelet \
+  --address=10.1.36.46 \
+  --allow-privileged=true \
+  --anonymous-auth=false \
+  --authentication-token-webhook \
+  --authorization-mode=Webhook \
+  --client-ca-file=/opt/k8s/ssl/ca.pem \
+  --cluster-dns=10.68.0.2 \
+  --cluster-domain=cluster.local. \
+  --cni-bin-dir=/opt/k8s/bin \
+  --cni-conf-dir=/opt/k8s/cni/net.d \
+  --fail-swap-on=false \
+  --hairpin-mode hairpin-veth \
+  --hostname-override=10.1.36.46 \
+  --kubeconfig=/opt/k8s/ssl/kubelet.kubeconfig \
+  --max-pods=110 \
+  --network-plugin=cni \
+  --pod-infra-container-image=mirrorgooglecontainers/pause-amd64:3.1 \
+  --register-node=true \
+  --root-dir=/opt/k8s/kubelet \
+  --tls-cert-file=/opt/k8s/ssl/kubelet.pem \
+  --tls-private-key-file=/opt/k8s/ssl/kubelet-key.pem \
+  --cgroups-per-qos=true \
+  --cgroup-driver=cgroupfs \
+  --enforce-node-allocatable=pods,kube-reserved \
+  --kube-reserved=cpu=200m,memory=500Mi,ephemeral-storage=1Gi \
+  --kube-reserved-cgroup=/system.slice/kubelet.service \
+  --eviction-hard=memory.available<200Mi,nodefs.available<10% \
+  --log-file=/opt/k8s/log/Kubelet.log \
+  --v=2
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+[root@k8s-linux-worker1 bin]# 
+
+
+
+systemctl enable kubelet.service （ systemctl disable kubelet.service ）
+systemctl daemon-reload
+systemctl restart kubelet.service
+systemctl status kubelet.service
+
+
+[root@k8s-linux-worker1 bin]# netstat -tulnp | grep kubelet
+tcp        0      0 127.0.0.1:45125         0.0.0.0:*               LISTEN      53132/kubelet       
+tcp        0      0 127.0.0.1:10248         0.0.0.0:*               LISTEN      53132/kubelet       
+tcp        0      0 10.1.36.46:10250        0.0.0.0:*               LISTEN      53132/kubelet       
+tcp        0      0 10.1.36.46:10255        0.0.0.0:*               LISTEN      53132/kubelet       
+[root@k8s-linux-worker1 bin]# 
+
+
+
+
+
+
+
+
+# 准备 kube-proxy 证书签名请求
+[root@k8s-linux-worker1 ssl]# vim ./kube-proxy-csr.json
+[root@k8s-linux-worker1 ssl]# cat ./kube-proxy-csr.json
+{
+  "CN": "system:kube-proxy",
+  "hosts": [],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "CN",
+      "ST": "hubeisheng",
+      "L": "wuhanshi",
+      "O": "k8s",
+      "OU": "System"
+    }
+  ]
+}
+[root@k8s-linux-worker1 ssl]# 
+
+# 创建 kube-proxy 证书与私钥
+[root@k8s-linux-worker1 ssl]# ./cfssl gencert -ca=./ca.pem -ca-key=./ca-key.pem -config=./ca-config.json -profile=kubernetes kube-proxy-csr.json | ./cfssljson -bare kube-proxy
+
+kube-proxy-csr.json
+
+kube-proxy.csr
+kube-proxy-key.pem
+kube-proxy.pem
+
+# 为 kube-proxy 设置集群参数，参数保存到 kube-proxy.kubeconfig 文件中
+[root@k8s-linux-worker1 bin]# ./kubectl config set-cluster kubernetes --certificate-authority=/opt/k8s/ssl/ca.pem --embed-certs=true --server=https://10.1.36.43:6443 --kubeconfig=/opt/k8s/temp/ssl/kube-proxy.kubeconfig
+Cluster "kubernetes" set.
+[root@k8s-linux-worker1 bin]# 
+
+# 设置 kube-proxy 认证参数
+[root@k8s-linux-worker1 bin]# ./kubectl config set-credentials kube-proxy --client-certificate=/opt/k8s/ssl/kube-proxy.pem --client-key=/opt/k8s/ssl/kube-proxy-key.pem --embed-certs=true --kubeconfig=/opt/k8s/temp/ssl/kube-proxy.kubeconfig
+User "kube-proxy" set.
+[root@k8s-linux-worker1 bin]# 
+
+# 设置上下文参数
+[root@k8s-linux-worker1 bin]# ./kubectl config set-context default --cluster=kubernetes --user=kube-proxy --kubeconfig=/opt/k8s/temp/ssl/kube-proxy.kubeconfig
+Context "default" created.
+[root@k8s-linux-worker1 bin]# 
+
+# 选择默认上下文
+[root@k8s-linux-worker1 bin]# ./kubectl config use-context default --kubeconfig=/opt/k8s/temp/ssl/kube-proxy.kubeconfig
+Switched to context "default".
+[root@k8s-linux-worker1 bin]# 
+
+
+
+
+mkdir -p /opt/k8s/kube-proxy
+
+/opt/k8s/bin/
+kube-proxy
+
+/opt/k8s/ssl/
+kube-proxy.kubeconfig
+
+# 创建 kube-proxy 服务文件，以 10.1.36.46 为例
+[root@k8s-linux-worker1 bin]# vim /etc/systemd/system/kube-proxy.service
+[root@k8s-linux-worker1 bin]# 
+[root@k8s-linux-worker1 bin]# cat /etc/systemd/system/kube-proxy.service
+[Unit]
+Description=Kubernetes Kube-Proxy Server
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/k8s/kube-proxy
+ExecStart=/opt/k8s/bin/kube-proxy \
+  --bind-address=10.1.36.46 \
+  --hostname-override=10.1.36.46 \
+  --kubeconfig=/opt/k8s/ssl/kube-proxy.kubeconfig \
+  --logtostderr=true \
+  --proxy-mode=iptables
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+[root@k8s-linux-worker1 bin]# 
+
+
+systemctl enable kube-proxy.service （ systemctl disable kube-proxy.service ）
+systemctl daemon-reload
+systemctl restart kube-proxy.service
+systemctl status kube-proxy.service
+
+[root@k8s-linux-worker1 bin]# netstat -tulnp | grep kube-proxy
+tcp        0      0 127.0.0.1:10249         0.0.0.0:*               LISTEN      55989/kube-proxy    
+tcp6       0      0 :::10256                :::*                    LISTEN      55989/kube-proxy    
+[root@k8s-linux-worker1 bin]# 
+
+
+# https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/
+[root@k8s-master1 temp]# kubectl apply -f ./kube-flannel.yml 
+podsecuritypolicy.extensions/psp.flannel.unprivileged created
+clusterrole.rbac.authorization.k8s.io/flannel created
+clusterrolebinding.rbac.authorization.k8s.io/flannel created
+serviceaccount/flannel created
+configmap/kube-flannel-cfg created
+daemonset.extensions/kube-flannel-ds-amd64 created
+daemonset.extensions/kube-flannel-ds-arm64 created
+daemonset.extensions/kube-flannel-ds-arm created
+daemonset.extensions/kube-flannel-ds-ppc64le created
+daemonset.extensions/kube-flannel-ds-s390x created
+
+
+[root@k8s-master1 temp]# kubectl get daemonsets --all-namespaces
+NAMESPACE     NAME                      DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR                     AGE
+kube-system   kube-flannel-ds-amd64     1         1         0       1            0           beta.kubernetes.io/arch=amd64     2m41s
+kube-system   kube-flannel-ds-arm       0         0         0       0            0           beta.kubernetes.io/arch=arm       2m41s
+kube-system   kube-flannel-ds-arm64     0         0         0       0            0           beta.kubernetes.io/arch=arm64     2m41s
+kube-system   kube-flannel-ds-ppc64le   0         0         0       0            0           beta.kubernetes.io/arch=ppc64le   2m41s
+kube-system   kube-flannel-ds-s390x     0         0         0       0            0           beta.kubernetes.io/arch=s390x     2m41s
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get pods --all-namespaces
+NAMESPACE     NAME                          READY   STATUS             RESTARTS   AGE
+kube-system   kube-flannel-ds-amd64-vlwws   0/1     CrashLoopBackOff   4          2m44s
+[root@k8s-master1 temp]# 
+
+kubectl describe pod kube-flannel-ds-amd64-vlwws -n kube-system
+
+kubectl logs kube-flannel-ds-amd64-vlwws -n kube-system
+
+172.20.0.0/16
+
+
+kubectl --namespace=kube-system edit pod kube-flannel-ds-amd64-vlwws
+
+
+[root@k8s-master1 temp]# kubectl apply -f ./kube-flannel.yml 
+podsecuritypolicy.extensions/psp.flannel.unprivileged configured
+clusterrole.rbac.authorization.k8s.io/flannel unchanged
+clusterrolebinding.rbac.authorization.k8s.io/flannel unchanged
+serviceaccount/flannel unchanged
+configmap/kube-flannel-cfg configured ## 修改
+daemonset.extensions/kube-flannel-ds-amd64 unchanged
+daemonset.extensions/kube-flannel-ds-arm64 unchanged
+daemonset.extensions/kube-flannel-ds-arm unchanged
+daemonset.extensions/kube-flannel-ds-ppc64le unchanged
+daemonset.extensions/kube-flannel-ds-s390x unchanged
+[root@k8s-master1 temp]# 
+
+
+
+[root@k8s-master1 temp]# kubectl logs kube-flannel-ds-amd64-vlwws -n kube-system
+I0521 12:11:07.515060       1 main.go:514] Determining IP address of default interface
+I0521 12:11:07.516002       1 main.go:527] Using interface with name eth0 and address 10.1.36.46
+I0521 12:11:07.516065       1 main.go:544] Defaulting external address to interface address (10.1.36.46)
+E0521 12:11:07.719918       1 main.go:241] Failed to create SubnetManager: error retrieving pod spec for 'kube-system/kube-flannel-ds-amd64-vlwws': Get https://10.68.0.1:443/api/v1/namespaces/kube-system/pods/kube-flannel-ds-amd64-vlwws: x509: certificate is valid for 127.0.0.1, 10.1.36.43, 10.1.36.44, 10.1.36.45, 10.68.0.2, not 10.68.0.1
+[root@k8s-master1 temp]# 
+
+
+
+# 增加 10.68.0.1
+[root@k8s-master1 ssl]# vim ./kubernetes-csr.json
+[root@k8s-master1 ssl]# cat ./kubernetes-csr.json
+{
+  "CN": "kubernetes",
+  "hosts": [
+    "127.0.0.1",
+    "10.1.36.43",
+    "10.1.36.44",
+    "10.1.36.45",
+    "10.68.0.2",
+    "10.68.0.1",
+    "kubernetes",
+    "kubernetes.default",
+    "kubernetes.default.svc",
+    "kubernetes.default.svc.cluster",
+    "kubernetes.default.svc.cluster.local"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "CN",
+      "ST": "hubeisheng",
+      "L": "wuhanshi",
+      "O": "k8s",
+      "OU": "System"
+    }
+  ]
+}
+[root@k8s-master1 ssl]# 
+
+[root@k8s-master1 ssl]# kubectl get pods --all-namespaces
+NAMESPACE     NAME                                    READY   STATUS              RESTARTS   AGE
+kube-system   kube-flannel-ds-amd64-vlwws             1/1     Running             16         58m
+kube-system   kubernetes-dashboard-5f7b999d65-9xqtz   0/1     ContainerCreating   0          50m
+[root@k8s-master1 ssl]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/
+[root@k8s-master1 temp]# kubectl apply -f ./kubernetes-dashboard.yaml 
+secret/kubernetes-dashboard-certs created
+secret/kubernetes-dashboard-csrf created
+serviceaccount/kubernetes-dashboard created
+role.rbac.authorization.k8s.io/kubernetes-dashboard-minimal created
+rolebinding.rbac.authorization.k8s.io/kubernetes-dashboard-minimal created
+deployment.apps/kubernetes-dashboard created
+service/kubernetes-dashboard created
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get service --all-namespaces
+NAMESPACE     NAME                   TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+default       kubernetes             ClusterIP   10.68.0.1       <none>        443/TCP   3h38m
+kube-system   kubernetes-dashboard   ClusterIP   10.68.173.192   <none>        443/TCP   97s
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl --namespace=kube-system get service kubernetes-dashboard
+NAME                   TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+kubernetes-dashboard   ClusterIP   10.68.173.192   <none>        443/TCP   7m42s
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl --namespace=kube-system get service kubernetes-dashboard -o yaml
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"k8s-app":"kubernetes-dashboard"},"name":"kubernetes-dashboard","namespace":"kube-system"},"spec":{"ports":[{"port":443,"targetPort":8443}],"selector":{"k8s-app":"kubernetes-dashboard"}}}
+  creationTimestamp: "2019-05-21T11:42:49Z"
+  labels:
+    k8s-app: kubernetes-dashboard
+  name: kubernetes-dashboard
+  namespace: kube-system
+  resourceVersion: "22524"
+  selfLink: /api/v1/namespaces/kube-system/services/kubernetes-dashboard
+  uid: 8f8f4ea1-7bbd-11e9-8eb2-0017fa00a076
+spec:
+  clusterIP: 10.68.173.192
+  ports:
+  - port: 443
+    protocol: TCP
+    targetPort: 8443
+  selector:
+    k8s-app: kubernetes-dashboard
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
+[root@k8s-master1 temp]# 
+
+NodePort
+
+[root@k8s-master1 temp]# kubectl --namespace=kube-system edit service kubernetes-dashboard
+service/kubernetes-dashboard edited
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl --namespace=kube-system get service kubernetes-dashboard -o yaml
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"k8s-app":"kubernetes-dashboard"},"name":"kubernetes-dashboard","namespace":"kube-system"},"spec":{"ports":[{"port":443,"targetPort":8443}],"selector":{"k8s-app":"kubernetes-dashboard"}}}
+  creationTimestamp: "2019-05-21T11:42:49Z"
+  labels:
+    k8s-app: kubernetes-dashboard
+  name: kubernetes-dashboard
+  namespace: kube-system
+  resourceVersion: "23273"
+  selfLink: /api/v1/namespaces/kube-system/services/kubernetes-dashboard
+  uid: 8f8f4ea1-7bbd-11e9-8eb2-0017fa00a076
+spec:
+  clusterIP: 10.68.173.192
+  externalTrafficPolicy: Cluster
+  ports:
+  - nodePort: 29118
+    port: 443
+    protocol: TCP
+    targetPort: 8443
+  selector:
+    k8s-app: kubernetes-dashboard
+  sessionAffinity: None
+  type: NodePort
+status:
+  loadBalancer: {}
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl --namespace=kube-system get service kubernetes-dashboard
+NAME                   TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)         AGE
+kubernetes-dashboard   NodePort   10.68.173.192   <none>        443:29118/TCP   9m59s
+[root@k8s-master1 temp]# 
+
+http://139.217.0.156:29118/
+
+
+[root@k8s-master1 ssl]# kubectl get pods --all-namespaces
+NAMESPACE     NAME                                    READY   STATUS              RESTARTS   AGE
+kube-system   kube-flannel-ds-amd64-vlwws             1/1     Running             16         58m
+kube-system   kubernetes-dashboard-5f7b999d65-9xqtz   0/1     ContainerCreating   0          50m
+[root@k8s-master1 ssl]# 
+
+
+
+[root@k8s-master1 ssl]# kubectl logs kubernetes-dashboard-5f7b999d65-9xqtz -n kube-system
+Error from server (BadRequest): container "kubernetes-dashboard" in pod "kubernetes-dashboard-5f7b999d65-9xqtz" is waiting to start: ContainerCreating
+[root@k8s-master1 ssl]# 
+
 ```
 
 
