@@ -1639,6 +1639,7 @@ kubelet.kubeconfig
 Kubelet.log
 
 docker 镜像
+k8s.gcr.io/pause:3.1
 mirrorgooglecontainers/pause-amd64:3.1
 
 
@@ -1672,7 +1673,7 @@ ExecStart=/opt/k8s/bin/kubelet \
   --kubeconfig=/opt/k8s/ssl/kubelet.kubeconfig \
   --max-pods=110 \
   --network-plugin=cni \
-  --pod-infra-container-image=mirrorgooglecontainers/pause-amd64:3.1 \
+  --pod-infra-container-image=k8s.gcr.io/pause:3.1 \
   --register-node=true \
   --root-dir=/opt/k8s/kubelet \
   --tls-cert-file=/opt/k8s/ssl/kubelet.pem \
@@ -1812,6 +1813,8 @@ tcp        0      0 127.0.0.1:10249         0.0.0.0:*               LISTEN      
 tcp6       0      0 :::10256                :::*                    LISTEN      55989/kube-proxy    
 [root@k8s-linux-worker1 bin]# 
 
+
+kubectl api-resources
 
 # https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/
 [root@k8s-master1 temp]# kubectl apply -f ./kube-flannel.yml 
@@ -2035,12 +2038,69 @@ kube-system   kubernetes-dashboard-5f7b999d65-9xqtz   0/1     ContainerCreating 
 Error from server (BadRequest): container "kubernetes-dashboard" in pod "kubernetes-dashboard-5f7b999d65-9xqtz" is waiting to start: ContainerCreating
 [root@k8s-master1 ssl]# 
 
+
+
+[root@k8s-master1 temp]# kubectl get pods --all-namespaces
+NAMESPACE     NAME                                    READY   STATUS              RESTARTS   AGE
+kube-system   kube-flannel-ds-amd64-vlwws             1/1     Running             16         114m
+kube-system   kubernetes-dashboard-5f7b999d65-9xqtz   0/1     ContainerCreating   0          105m
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# 
+
+
+
+
+
+[root@k8s-master1 temp]# kubectl get pods --all-namespaces
+NAMESPACE     NAME                                    READY   STATUS              RESTARTS   AGE
+kube-system   kube-flannel-ds-amd64-vlwws             1/1     Running             16         130m
+kube-system   kubernetes-dashboard-5f7b999d65-52qzn   0/1     ContainerCreating   0          8m56s
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl describe pod kubernetes-dashboard-5f7b999d65-52qzn --namespace=kube-system
+
+Events:
+  Type     Reason                  Age                   From                 Message
+
+----     ------                  ----                  ----                 -------
+  Normal   Scheduled               5m27s                 default-scheduler    Successfully assigned kube-system/kubernetes-dashboard-5f7b999d65-52qzn to 10.1.36.46
+  Warning  FailedCreatePodSandBox  5m25s                 kubelet, 10.1.36.46  Failed create pod sandbox: rpc error: code = Unknown desc = [failed to set up sandbox container "fd1ea6ccf31d86cfe17163190a45d3683174de9803ec74b3b970b528a9e7a4e2" network for pod "kubernetes-dashboard-5f7b999d65-52qzn": NetworkPlugin cni failed to set up pod "kubernetes-dashboard-5f7b999d65-52qzn_kube-system" network: failed to find plugin "loopback" in path [/opt/k8s/bin], failed to clean up sandbox container "fd1ea6ccf31d86cfe17163190a45d3683174de9803ec74b3b970b528a9e7a4e2" network for pod "kubernetes-dashboard-5f7b999d65-52qzn": NetworkPlugin cni failed to teardown pod "kubernetes-dashboard-5f7b999d65-52qzn_kube-system" network: failed to find plugin "bridge" in path [/opt/k8s/bin]]
+  Normal   SandboxChanged          18s (x26 over 5m24s)  kubelet, 10.1.36.46  Pod sandbox changed, it will be killed and re-created.
+[root@k8s-master1 temp]# 
+
+[root@k8s-linux-worker1 temp]# ll /opt/k8s/bin/
+total 173008
+-rwxr-xr-x 1 root root   5009327 May 21 21:43 bridge
+-rwxr-xr-x 1 root root   3957620 May 21 22:09 host-local
+-rwxr-xr-x 1 root root 127850432 May 21 17:32 kubelet
+-rwxr-xr-x 1 root root  36681344 May 21 18:38 kube-proxy
+-rwxr-xr-x 1 root root   3650379 May 21 22:09 loopback
+[root@k8s-linux-worker1 temp]# 
+
+bridge
+host-local
+loopback
+flannel
+portmap
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ```
-
-
-
-
-
-
-
-
