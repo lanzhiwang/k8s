@@ -337,6 +337,10 @@ Global flags:
 
 
 
+
+
+
+
 # 其他相关选项说明
 $ head -c 16 /dev/urandom | od -An -t x | tr -d ' '
 ab20dd9bb7cda46e449a09f3f2a81086

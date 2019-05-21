@@ -1040,6 +1040,407 @@ kubernetes.pem
 +------------------+---------+-------+-------------------------+-------------------------+
 [root@k8s-master1 ssl]# 
 
+# 查看证书内容验证 user 和 group
+[root@k8s-master1 ssl]# openssl x509 -in kubernetes.pem -noout -text
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            0f:6d:5c:12:78:78:69:8e:c7:f9:2c:ae:77:4e:49:3a:f5:87:b8:06
+    Signature Algorithm: sha256WithRSAEncryption
+        Issuer: C=CN, ST=hubeisheng, L=wuhanshi, O=k8s, OU=System, CN=kubernetes
+        Validity
+            Not Before: May 20 12:21:00 2019 GMT
+            Not After : May 17 12:21:00 2029 GMT
+        Subject: C=CN, ST=hubeisheng, L=wuhanshi, O=k8s, OU=System, CN=kubernetes
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (2048 bit)
+                Modulus:
+                    00:b1:87:83:6f:c1:5e:83:80:3d:e9:6e:09:79:6e:
+                    24:4a:ef:62:2a:af:d0:67:57:5a:f0:0e:80:41:db:
+                    15:5f:41:cd:60:b5:cd:9c:dc:a7:3d:b3:b5:e0:14:
+                    3a:7d:af:6e:0c:93:50:6e:7e:0a:6f:eb:bd:ad:6d:
+                    92:e0:e5:d7:bc:a5:2e:c8:8e:53:bb:2b:14:44:ee:
+                    b4:b2:a4:a9:f7:ed:ca:eb:77:51:62:3f:9e:6f:70:
+                    48:22:29:76:f3:bd:de:8d:72:02:ef:85:66:5f:db:
+                    3a:53:aa:dc:4a:67:de:75:48:2f:b7:74:f4:38:ba:
+                    51:c8:5b:47:47:5e:15:ae:51:2f:13:e9:05:0a:ca:
+                    04:ab:79:7d:1c:d8:a2:e1:c3:47:e5:fc:86:45:7e:
+                    2e:dd:65:75:ca:26:ee:bd:4d:b9:d2:2c:3f:08:08:
+                    8a:83:aa:38:56:92:b8:46:75:3f:9d:d4:de:08:0a:
+                    67:bf:95:fd:bf:58:ed:6a:56:2a:73:89:a1:ae:9a:
+                    e6:69:ec:51:77:88:8b:d9:09:2d:69:25:67:58:eb:
+                    ec:78:b7:25:66:94:03:07:39:19:e7:86:1e:81:f8:
+                    54:c4:ca:fd:1a:58:f1:b7:5f:d5:97:b6:8f:7a:62:
+                    c8:98:cc:da:2b:dd:0f:a4:15:76:c9:3a:00:82:3c:
+                    16:f1
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Key Usage: critical
+                Digital Signature, Key Encipherment
+            X509v3 Extended Key Usage: 
+                TLS Web Server Authentication, TLS Web Client Authentication
+            X509v3 Basic Constraints: critical
+                CA:FALSE
+            X509v3 Subject Key Identifier: 
+                86:35:89:ED:05:CB:B9:D2:EF:1A:8E:B7:D2:57:F4:B8:24:1D:A4:95
+            X509v3 Authority Key Identifier: 
+                keyid:2D:9D:AA:71:D1:C6:9A:BC:B8:FC:40:4B:59:64:CE:93:9D:F9:1C:98
+
+            X509v3 Subject Alternative Name: 
+                DNS:kubernetes, DNS:kubernetes.default, DNS:kubernetes.default.svc, DNS:kubernetes.default.svc.cluster, DNS:kubernetes.default.svc.cluster.local, IP Address:127.0.0.1, IP Address:10.1.36.43, IP Address:10.1.36.44, IP Address:10.1.36.45, IP Address:10.68.0.2
+    Signature Algorithm: sha256WithRSAEncryption
+         a0:ac:86:cd:d8:73:fe:7b:64:27:12:ca:1a:91:7d:26:a9:e5:
+         b7:67:72:a5:be:b0:5d:61:0d:17:fd:06:1e:9c:8a:04:72:a7:
+         61:5d:d2:dd:13:2e:44:6e:3a:fd:65:15:33:c1:cd:90:bd:91:
+         c3:f7:46:17:50:40:07:21:a0:e1:e3:f9:4b:8e:b8:b8:90:f6:
+         c8:07:12:10:ff:25:05:e7:1a:39:16:35:92:5e:11:4d:6c:67:
+         45:6b:7b:39:0a:fc:b2:1d:f8:eb:7d:d6:50:a9:4e:06:c6:08:
+         56:76:13:ea:0f:7d:8c:78:4c:c0:f8:ca:af:aa:0f:43:7b:fe:
+         bd:9b:3d:46:1c:4f:f6:34:92:9e:a1:e6:ae:1f:7a:c0:c2:a2:
+         75:00:12:23:0d:45:72:7c:8e:1a:03:e7:32:71:e2:06:53:9b:
+         7c:13:f9:32:c8:c7:40:10:08:94:05:29:9c:94:67:a2:25:76:
+         e5:e2:61:94:70:bf:3f:fd:cb:58:e0:11:62:ea:a4:36:bb:c5:
+         27:77:d8:e8:44:6f:cc:a7:9a:92:87:97:81:61:9c:79:3a:20:
+         e0:41:4f:f7:f2:09:e8:5a:e7:97:63:98:90:89:f1:49:fc:fc:
+         f7:19:9a:0d:35:dc:36:96:05:af:13:a0:5f:7b:4d:9b:9a:9b:
+         d2:f6:e3:f0
+[root@k8s-master1 ssl]# 
+
+
+# 创建 aggregator proxy 证书签名请求
+[root@k8s-master1 ssl]# vim ./aggregator-proxy-csr.json
+[root@k8s-master1 ssl]# cat ./aggregator-proxy-csr.json
+{
+  "CN": "aggregator",
+  "hosts": [],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "CN",
+      "ST": "hubeisheng",
+      "L": "wuhanshi",
+      "O": "k8s",
+      "OU": "System"
+    }
+  ]
+}
+[root@k8s-master1 ssl]# 
+[root@k8s-master1 ssl]# ./cfssl gencert -ca=./ca.pem -ca-key=./ca-key.pem -config=./ca-config.json -profile=kubernetes aggregator-proxy-csr.json | ./cfssljson -bare aggregator-proxy
+
+aggregator-proxy-csr.json
+
+aggregator-proxy.csr
+aggregator-proxy-key.pem
+aggregator-proxy.pem
+
+[root@k8s-master1 ssl]# vim ./basic-auth.csv
+[root@k8s-master1 ssl]# cat ./basic-auth.csv
+admin,admin,1
+readonly,readonly,2
+[root@k8s-master1 ssl]# 
+
+
+10.1.36.43
+10.1.36.44
+10.1.36.45
+
+/opt/k8s/bin/
+kube-apiserver
+
+/opt/k8s/ssl
+ca.pem
+ca-key.pem
+kubernetes.pem
+kubernetes-key.pem
+basic-auth.csv
+admin.pem
+admin-key.pem
+aggregator-proxy.pem
+aggregator-proxy-key.pem
+
+/opt/k8s/log/
+audit.log
+apiserver.log
+
+# 创建 kube-apiserver 的 systemd unit 文件，以 10.1.36.43 为例
+[root@k8s-master1 temp]# vim /etc/systemd/system/kube-apiserver.service
+[root@k8s-master1 temp]# cat /etc/systemd/system/kube-apiserver.service
+[Unit]
+Description=Kubernetes API Server
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=network.target
+
+[Service]
+ExecStart=/opt/k8s/bin/kube-apiserver \
+  --etcd-cafile=/opt/k8s/ssl/ca.pem \
+  --etcd-certfile=/opt/k8s/ssl/kubernetes.pem \
+  --etcd-keyfile=/opt/k8s/ssl/kubernetes-key.pem \
+  --etcd-servers=https://10.1.36.43:2379,https://10.1.36.44:2379,https://10.1.36.45:2379 \
+  --bind-address=10.1.36.43 \
+  --tls-cert-file=/opt/k8s/ssl/kubernetes.pem \
+  --tls-private-key-file=/opt/k8s/ssl/kubernetes-key.pem \
+  --insecure-bind-address=127.0.0.1 \
+  --audit-log-maxage=30 \
+  --audit-log-maxbackup=3 \
+  --audit-log-maxsize=100 \
+  --audit-log-path=/opt/k8s/log/audit.log \
+  --enable-swagger-ui=true \
+  --anonymous-auth=false \
+  --basic-auth-file=/opt/k8s/ssl/basic-auth.csv \
+  --client-ca-file=/opt/k8s/ssl/ca.pem \
+  --service-account-key-file=/opt/k8s/ssl/ca-key.pem \
+  --requestheader-client-ca-file=/opt/k8s/ssl/ca.pem \
+  --requestheader-allowed-names= \
+  --requestheader-extra-headers-prefix=X-Remote-Extra- \
+  --requestheader-group-headers=X-Remote-Group \
+  --requestheader-username-headers=X-Remote-User \
+  --authorization-mode=Node,RBAC \
+  --runtime-config=batch/v2alpha1=true \
+  --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota,NodeRestriction,MutatingAdmissionWebhook,ValidatingAdmissionWebhook \
+  --kubelet-https=true \
+  --kubelet-client-certificate=/opt/k8s/ssl/admin.pem \
+  --kubelet-client-key=/opt/k8s/ssl/admin-key.pem \
+  --service-cluster-ip-range=10.68.0.0/16 \
+  --service-node-port-range=20000-40000 \
+  --endpoint-reconciler-type=lease \
+  --allow-privileged=true \
+  --event-ttl=1h \
+  --proxy-client-cert-file=/opt/k8s/ssl/aggregator-proxy.pem \
+  --proxy-client-key-file=/opt/k8s/ssl/aggregator-proxy-key.pem \
+  --enable-aggregator-routing=true \
+  --v=2 \
+  --log-file=/opt/k8s/log/apiserver.log
+  
+Restart=on-failure
+RestartSec=5
+Type=notify
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+
+[root@k8s-master1 temp]# 
+
+
+# 验证版本
+[root@k8s-master1 bin]# ./kube-apiserver --version
+Kubernetes v1.14.0
+[root@k8s-master1 bin]# 
+
+
+systemctl enable kube-apiserver.service （ systemctl disable kube-apiserver.service ）
+systemctl daemon-reload
+systemctl restart kube-apiserver.service
+systemctl status kube-apiserver.service
+
+# 查看日志
+journalctl -xe
+journalctl -u kube-apiserver
+
+[root@k8s-master1 temp]# netstat -tulnp | grep kube
+tcp        0      0 10.1.36.43:6443         0.0.0.0:*               LISTEN      98043/kube-apiserve 
+tcp        0      0 127.0.0.1:8080          0.0.0.0:*               LISTEN      98043/kube-apiserve 
+[root@k8s-master1 temp]# 
+
+
+
+/opt/k8s/bin
+kube-controller-manager
+
+/opt/k8s/ssl
+ca.pem
+ca-key.pem
+
+/opt/k8s/log/
+kube-controller-manager.log
+
+
+# 创建 kube-controller-manager 的 systemd unit 文件
+[root@k8s-master1 bin]# vim /etc/systemd/system/kube-controller-manager.service
+[root@k8s-master1 bin]# cat /etc/systemd/system/kube-controller-manager.service
+[Unit]
+Description=Kubernetes Controller Manager
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+ExecStart=/opt/k8s/bin/kube-controller-manager \
+  --allocate-node-cidrs=true \
+  --cluster-cidr=172.20.0.0/16 \
+  --cluster-name=kubernetes \
+  --leader-elect=true \
+  --address=127.0.0.1 \
+  --cluster-signing-cert-file=/opt/k8s/ssl/ca.pem \
+  --cluster-signing-key-file=/opt/k8s/ssl/ca-key.pem \
+  --horizontal-pod-autoscaler-use-rest-clients=true \
+  --service-cluster-ip-range=10.68.0.0/16 \
+  --service-account-private-key-file=/opt/k8s/ssl/ca-key.pem \
+  --root-ca-file=/opt/k8s/ssl/ca.pem \
+  --master=http://127.0.0.1:8080 \
+  --log-file=/opt/k8s/log/kube-controller-manager.log
+  --v=2
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+[root@k8s-master1 bin]# 
+
+
+
+systemctl enable kube-controller-manager.service （ systemctl disable kube-controller-manager.service ）
+systemctl daemon-reload
+systemctl restart kube-controller-manager.service
+systemctl status kube-controller-manager.service
+
+
+[root@k8s-master1 bin]# netstat -tulnp | grep kube-controll
+tcp        0      0 127.0.0.1:10252         0.0.0.0:*               LISTEN      99302/kube-controll 
+tcp6       0      0 :::10257                :::*                    LISTEN      99302/kube-controll 
+[root@k8s-master1 bin]# 
+
+
+/opt/k8s/bin/
+kube-scheduler
+
+/opt/k8s/log/
+kube-scheduler.log
+
+# 创建 kube-scheduler 的 systemd unit 文件
+[root@k8s-master1 bin]# vim /etc/systemd/system/kube-scheduler.service
+[root@k8s-master1 bin]# cat /etc/systemd/system/kube-scheduler.service
+[Unit]
+Description=Kubernetes Scheduler
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+ExecStart=/opt/k8s/bin/kube-scheduler \
+  --address=127.0.0.1 \
+  --master=http://127.0.0.1:8080 \
+  --leader-elect=true \
+  --log-file=/opt/k8s/log/kube-scheduler.log
+  --v=2
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+
+[root@k8s-master1 bin]# 
+
+
+systemctl enable kube-scheduler.service （ systemctl disable kube-scheduler.service ）
+systemctl daemon-reload
+systemctl restart kube-scheduler.service
+systemctl status kube-scheduler.service
+
+[root@k8s-master1 bin]# netstat -tulnp | grep kube-schedul
+tcp        0      0 127.0.0.1:10251         0.0.0.0:*               LISTEN      100194/kube-schedul 
+tcp6       0      0 :::10259                :::*                    LISTEN      100194/kube-schedul 
+[root@k8s-master1 bin]# 
+
+
+# 为 kubectl 设置集群参数，指定 CA 证书和 apiserver 地址
+[root@k8s-master1 bin]# ./kubectl config set-cluster kubernetes --certificate-authority=/opt/k8s/ssl/ca.pem --embed-certs=true --server=https://10.1.36.43:6443
+Cluster "kubernetes" set.
+[root@k8s-master1 bin]# 
+[root@k8s-master1 bin]# 
+[root@k8s-master1 bin]# cat ~/.kube/config 
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUR4akNDQXE2Z0F3SUJBZ0lVS2N0enNHZ2FXbkh5N3VWN2lUeHhyVm1tRHYwd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2FURUxNQWtHQTFVRUJoTUNRMDR4RXpBUkJnTlZCQWdUQ21oMVltVnBjMmhsYm1jeEVUQVBCZ05WQkFjVApDSGQxYUdGdWMyaHBNUXd3Q2dZRFZRUU
+    server: https://10.1.36.43:6443
+  name: kubernetes
+contexts: []
+current-context: ""
+kind: Config
+preferences: {}
+users: []
+[root@k8s-master1 bin]# 
+
+# 设置客户端 kubectl 认证参数，指定使用 admin 证书和私钥
+[root@k8s-master1 bin]# ./kubectl config set-credentials admin --client-certificate=/opt/k8s/ssl/admin.pem --embed-certs=true --client-key=/opt/k8s/ssl/admin-key.pem
+User "admin" set.
+[root@k8s-master1 bin]# cat ~/.kube/config 
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUR4akNDQXE2Z0F3SUJBZ0lVS2N0enNHZ2FXbkh5N3VWN2lUeHhyVm1tRHYwd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2FURUxNQWtHQTFVRUJoTUNRMDR4RXpBUkJnTlZCQWdUQ21oMVltVnBjMmhsYm1jeEVUQVBCZ05WQkFjVApDSGQxYUdGdWMyaHBNUXd3Q2dZRFZRUU
+    server: https://10.1.36.43:6443
+  name: kubernetes
+contexts: []
+current-context: ""
+kind: Config
+preferences: {}
+users:
+- name: admin
+  user:
+    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUQ1VENDQXMyZ0F3SUJBZ0lVTFRCcGZSQURvMFlmUHBWNWdRREthWmRDQ3Rrd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2FURUxNQWtHQTFVRUJoTUNRMDR4RXpBUkJnTlZCQWdUQ21oMVltVnBjMmhsYm1jeEVUQVBCZ05WQkFjVApDSGQxYUdGdWMyaHBNUXd3Q2dZRFZRUU
+    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcFFJQkFBS0NBUUVBd0dUT1R2bGtmUEwwWjllZkpIcURVWWtrRnRhWWVUYURNRFVBQVdtbUhNR3ZZbmJQCnZmU2JENGEvVHg0SEhmRmJoUWxHVElXSXY0RVgrcnZBRlpOYTRiQ1pxUUtSMFo5eUw5ejc3SW9ieEs3ZlZPYk8KVlJtdGRmL3lLVlVVY3gvM1NVUU
+[root@k8s-master1 bin]# 
+
+
+# 设置上下文参数，说明使用 cluster 集群和用户 admin
+[root@k8s-master1 bin]# ./kubectl config set-context kubernetes --cluster=kubernetes --user=admin
+Context "kubernetes" created.
+[root@k8s-master1 bin]# cat ~/.kube/config 
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUR4akNDQXE2Z0F3SUJBZ0lVS2N0enNHZ2FXbkh5N3VWN2lUeHhyVm1tRHYwd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2FURUxNQWtHQTFVRUJoTUNRMDR4RXpBUkJnTlZCQWdUQ21oMVltVnBjMmhsYm1jeEVUQVBCZ05WQkFjVApDSGQxYUdGdWMyaHBNUXd3Q2dZRFZRUU
+    server: https://10.1.36.43:6443
+  name: kubernetes
+contexts:
+- context:
+    cluster: kubernetes
+    user: admin
+  name: kubernetes
+current-context: ""
+kind: Config
+preferences: {}
+users:
+- name: admin
+  user:
+    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUQ1VENDQXMyZ0F3SUJBZ0lVTFRCcGZSQURvMFlmUHBWNWdRREthWmRDQ3Rrd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2FURUxNQWtHQTFVRUJoTUNRMDR4RXpBUkJnTlZCQWdUQ21oMVltVnBjMmhsYm1jeEVUQVBCZ05WQkFjVApDSGQxYUdGdWMyaHBNUXd3Q2dZRFZRUU
+    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcFFJQkFBS0NBUUVBd0dUT1R2bGtmUEwwWjllZkpIcURVWWtrRnRhWWVUYURNRFVBQVdtbUhNR3ZZbmJQCnZmU2JENGEvVHg0SEhmRmJoUWxHVElXSXY0RVgrcnZBRlpOYTRiQ1pxUUtSMFo5eUw5ejc3SW9ieEs3ZlZPYk8KVlJtdGRmL3lLVlVVY3gvM1NVUU
+[root@k8s-master1 bin]# 
+
+# 选择默认上下文
+[root@k8s-master1 bin]# ./kubectl config use-context kubernetes
+Switched to context "kubernetes".
+[root@k8s-master1 bin]# cat ~/.kube/config 
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUR4akNDQXE2Z0F3SUJBZ0lVS2N0enNHZ2FXbkh5N3VWN2lUeHhyVm1tRHYwd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2FURUxNQWtHQTFVRUJoTUNRMDR4RXpBUkJnTlZCQWdUQ21oMVltVnBjMmhsYm1jeEVUQVBCZ05WQkFjVApDSGQxYUdGdWMyaHBNUXd3Q2dZRFZRUU
+    server: https://10.1.36.43:6443
+  name: kubernetes
+contexts:
+- context:
+    cluster: kubernetes
+    user: admin
+  name: kubernetes
+current-context: kubernetes
+kind: Config
+preferences: {}
+users:
+- name: admin
+  user:
+    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUQ1VENDQXMyZ0F3SUJBZ0lVTFRCcGZSQURvMFlmUHBWNWdRREthWmRDQ3Rrd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2FURUxNQWtHQTFVRUJoTUNRMDR4RXpBUkJnTlZCQWdUQ21oMVltVnBjMmhsYm1jeEVUQVBCZ05WQkFjVApDSGQxYUdGdWMyaHBNUXd3Q2dZRFZRUU
+    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcFFJQkFBS0NBUUVBd0dUT1R2bGtmUEwwWjllZkpIcURVWWtrRnRhWWVUYURNRFVBQVdtbUhNR3ZZbmJQCnZmU2JENGEvVHg0SEhmRmJoUWxHVElXSXY0RVgrcnZBRlpOYTRiQ1pxUUtSMFo5eUw5ejc3SW9ieEs3ZlZPYk8KVlJtdGRmL3lLVlVVY3gvM1NVUU
+[root@k8s-master1 bin]# 
+
+[root@k8s-master1 bin]# ./kubectl cluster-info
+Kubernetes master is running at https://10.1.36.43:6443
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+[root@k8s-master1 bin]# 
+
 
 
 
