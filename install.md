@@ -2237,4 +2237,274 @@ kube-system   kubernetes-dashboard-5f7b999d65-52qzn   1/1     Running   0       
 [root@k8s-master1 ~]# 
 
 
+# 检查网络是否可用
+[root@k8s-master1 ~]# kubectl describe pod --namespace kube-system kubernetes-dashboard-5f7b999d65-52qzn
+Name:           kubernetes-dashboard-5f7b999d65-52qzn
+Namespace:      kube-system
+Node:           10.1.36.46/10.1.36.46
+Start Time:     Tue, 21 May 2019 21:35:47 +0800
+Labels:         k8s-app=kubernetes-dashboard
+                pod-template-hash=5f7b999d65
+Annotations:    <none>
+Status:         Running
+IP:             172.20.0.2
+Controlled By:  ReplicaSet/kubernetes-dashboard-5f7b999d65
+Containers:
+  kubernetes-dashboard:
+    Container ID:  docker://9f2d1b2a6bba0874ade8776113ce48b7e35eb295c9cab263c2a5c81d4c4241c4
+    Image:         k8s.gcr.io/kubernetes-dashboard-amd64:v1.10.1
+    Image ID:      docker://sha256:f9aed6605b814b69e92dece6a50ed1e4e730144eb1cc971389dde9cb3820d124
+    Port:          8443/TCP
+    Host Port:     0/TCP
+    Args:
+      --auto-generate-certificates
+    State:          Running
+      Started:      Tue, 21 May 2019 22:10:09 +0800
+    Ready:          True
+    Restart Count:  0
+    Liveness:       http-get https://:8443/ delay=30s timeout=30s period=10s #success=1 #failure=3
+    Environment:    <none>
+    Mounts:
+      /certs from kubernetes-dashboard-certs (rw)
+      /tmp from tmp-volume (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from kubernetes-dashboard-token-w6fdt (ro)
+Conditions:
+  Type              Status
+  Initialized       True 
+  Ready             True 
+  ContainersReady   True 
+  PodScheduled      True 
+Volumes:
+  kubernetes-dashboard-certs:
+    Type:        Secret (a volume populated by a Secret)
+    SecretName:  kubernetes-dashboard-certs
+    Optional:    false
+  tmp-volume:
+    Type:       EmptyDir (a temporary directory that shares a pod's lifetime)
+    Medium:     
+    SizeLimit:  <unset>
+  kubernetes-dashboard-token-w6fdt:
+    Type:        Secret (a volume populated by a Secret)
+    SecretName:  kubernetes-dashboard-token-w6fdt
+    Optional:    false
+QoS Class:       BestEffort
+Node-Selectors:  <none>
+Tolerations:     node-role.kubernetes.io/master:NoSchedule
+Events:          <none>
+[root@k8s-master1 ~]# 
+[root@k8s-master1 ~]# ping 172.20.0.2
+PING 172.20.0.2 (172.20.0.2) 56(84) bytes of data.
+^C
+--- 172.20.0.2 ping statistics ---
+4 packets transmitted, 0 received, 100% packet loss, time 2999ms
+
+[root@k8s-master1 ~]# 
+[root@k8s-master1 ~]# 
+[root@k8s-master1 ~]# ping 172.20.0.2
+PING 172.20.0.2 (172.20.0.2) 56(84) bytes of data.
+^C
+--- 172.20.0.2 ping statistics ---
+17 packets transmitted, 0 received, 100% packet loss, time 15999ms
+
+[root@k8s-master1 ~]# 
+
+
+[root@k8s-linux-worker1 net.d]# 
+[root@k8s-linux-worker1 net.d]# pwd
+/opt/k8s/cni/net.d
+[root@k8s-linux-worker1 net.d]# 
+[root@k8s-linux-worker1 net.d]# mv 10-default.conf 10-default.conf_back
+[root@k8s-linux-worker1 net.d]# cat  10-default.conf_back
+{
+  "name": "mynet",
+  "type": "bridge",
+  "bridge": "mynet0",
+  "isDefaultGateway": true,
+  "ipMasq": true,
+  "hairpinMode": true,
+  "ipam": {
+    "type": "host-local",
+    "subnet": "172.20.0.0/16"
+  }
+}
+[root@k8s-linux-worker1 net.d]# 
+[root@k8s-linux-worker1 net.d]# pwd
+/opt/k8s/cni/net.d
+[root@k8s-linux-worker1 net.d]# systemctl restart kubelet.service
+[root@k8s-linux-worker1 net.d]# systemctl status kubelet.service
+● kubelet.service - Kubernetes Kubelet
+   Loaded: loaded (/etc/systemd/system/kubelet.service; enabled; vendor preset: disabled)
+   Active: active (running) since Fri 2019-05-24 14:26:49 CST; 7s ago
+     Docs: https://github.com/GoogleCloudPlatform/kubernetes
+  Process: 49050 ExecStartPre=/bin/mkdir -p /sys/fs/cgroup/pids/system.slice/kubelet.service (code=exited, status=0/SUCCESS)
+  Process: 49046 ExecStartPre=/bin/mkdir -p /sys/fs/cgroup/memory/system.slice/kubelet.service (code=exited, status=0/SUCCESS)
+  Process: 49043 ExecStartPre=/bin/mkdir -p /sys/fs/cgroup/hugetlb/system.slice/kubelet.service (code=exited, status=0/SUCCESS)
+  Process: 49040 ExecStartPre=/bin/mkdir -p /sys/fs/cgroup/cpuset/system.slice/kubelet.service (code=exited, status=0/SUCCESS)
+ Main PID: 49054 (kubelet)
+    Tasks: 25
+   Memory: 32.1M
+   CGroup: /system.slice/kubelet.service
+           └─49054 /opt/k8s/bin/kubelet --address=10.1.36.46 --allow-privileged=true --anonymous-auth=false --authentication-token-webhook --authorization-mode=Webhook --client-ca-file=/opt/k8s/ssl/ca.pem --cluster-dns=10.68.0.2 --cluster-domain=cluster.local. --cni-...
+
+May 24 14:26:49 k8s-linux-worker1 kubelet[49054]: I0524 14:26:49.962306   49054 reconciler.go:252] operationExecutor.MountVolume started for volume "tmp-volume" (UniqueName: "kubernetes.io/empty-dir/578ed9bb-7bcd-11e9-8f1f-0017fa00a076-tmp-volume")...8f1f-0017fa00a076")
+May 24 14:26:49 k8s-linux-worker1 kubelet[49054]: I0524 14:26:49.962547   49054 operation_generator.go:669] MountVolume.SetUp succeeded for volume "tmp-volume" (UniqueName: "kubernetes.io/empty-dir/578ed9bb-7bcd-11e9-8f1f-0017fa00a076-tmp-volume") ...8f1f-0017fa00a076")
+May 24 14:26:49 k8s-linux-worker1 kubelet[49054]: I0524 14:26:49.962570   49054 operation_generator.go:669] MountVolume.SetUp succeeded for volume "kubernetes-dashboard-certs" (UniqueName: "kubernetes.io/secret/578ed9bb-7bcd-11e9-8f1f-0017fa00a076-kubernetes-dashboar...
+May 24 14:26:49 k8s-linux-worker1 kubelet[49054]: I0524 14:26:49.963322   49054 operation_generator.go:669] MountVolume.SetUp succeeded for volume "kubernetes-dashboard-token-w6fdt" (UniqueName: "kubernetes.io/secret/578ed9bb-7bcd-11e9-8f1f-0017fa00a076-kubernetes-da...
+May 24 14:26:50 k8s-linux-worker1 kubelet[49054]: E0524 14:26:50.500985   49054 pod_workers.go:190] Error syncing pod 578ed9bb-7bcd-11e9-8f1f-0017fa00a076 ("kubernetes-dashboard-5f7b999d65-52qzn_kube-system(578ed9bb-7bcd-11e9-8f1f-0017fa00a076)"), skipping: network i...
+May 24 14:26:52 k8s-linux-worker1 kubelet[49054]: E0524 14:26:52.457404   49054 pod_workers.go:190] Error syncing pod 578ed9bb-7bcd-11e9-8f1f-0017fa00a076 ("kubernetes-dashboard-5f7b999d65-52qzn_kube-system(578ed9bb-7bcd-11e9-8f1f-0017fa00a076)"), skipping: network i...
+May 24 14:26:54 k8s-linux-worker1 kubelet[49054]: W0524 14:26:54.375708   49054 cni.go:213] Unable to update cni config: No networks found in /opt/k8s/cni/net.d
+May 24 14:26:54 k8s-linux-worker1 kubelet[49054]: E0524 14:26:54.457395   49054 pod_workers.go:190] Error syncing pod 578ed9bb-7bcd-11e9-8f1f-0017fa00a076 ("kubernetes-dashboard-5f7b999d65-52qzn_kube-system(578ed9bb-7bcd-11e9-8f1f-0017fa00a076)"), skipping: network i...
+May 24 14:26:54 k8s-linux-worker1 kubelet[49054]: E0524 14:26:54.681143   49054 kubelet.go:2170] Container runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:docker: network plugin is not ready: cni config uninitialized
+May 24 14:26:56 k8s-linux-worker1 kubelet[49054]: E0524 14:26:56.457345   49054 pod_workers.go:190] Error syncing pod 578ed9bb-7bcd-11e9-8f1f-0017fa00a076 ("kubernetes-dashboard-5f7b999d65-52qzn_kube-system(578ed9bb-7bcd-11e9-8f1f-0017fa00a076)"), skipping: network i...
+Hint: Some lines were ellipsized, use -l to show in full.
+[root@k8s-linux-worker1 net.d]# 
+[root@k8s-linux-worker1 net.d]# 
+[root@k8s-linux-worker1 net.d]# 
+[root@k8s-linux-worker1 net.d]# 
+[root@k8s-linux-worker1 net.d]# 
+[root@k8s-linux-worker1 net.d]# docker ps -a
+CONTAINER ID        IMAGE                  COMMAND                  CREATED             STATUS                  PORTS               NAMES
+b8f872324f46        ff281650a721           "cp -f /etc/kube-fla…"   2 days ago          Exited (0) 2 days ago                       k8s_install-cni_kube-flannel-ds-amd64-vlwws_kube-system_5064723c-7bbc-11e9-8eb2-0017fa00a076_0
+8fb84df67835        ff281650a721           "/opt/bin/flanneld -…"   2 days ago          Up 2 days                                   k8s_kube-flannel_kube-flannel-ds-amd64-vlwws_kube-system_5064723c-7bbc-11e9-8eb2-0017fa00a076_0
+b4ccab357b38        k8s.gcr.io/pause:3.1   "/pause"                 2 days ago          Up 2 days                                   k8s_POD_kube-flannel-ds-amd64-vlwws_kube-system_5064723c-7bbc-11e9-8eb2-0017fa00a076_2
+9f2d1b2a6bba        f9aed6605b81           "/dashboard --insecu…"   2 days ago          Up 2 days                                   k8s_kubernetes-dashboard_kubernetes-dashboard-5f7b999d65-52qzn_kube-system_578ed9bb-7bcd-11e9-8f1f-0017fa00a076_0
+9609353660a9        k8s.gcr.io/pause:3.1   "/pause"                 2 days ago          Up 2 days                                   k8s_POD_kubernetes-dashboard-5f7b999d65-52qzn_kube-system_578ed9bb-7bcd-11e9-8f1f-0017fa00a076_1
+[root@k8s-linux-worker1 net.d]# 
+[root@k8s-linux-worker1 net.d]# docker stop $(docker ps -aq)
+b8f872324f46
+8fb84df67835
+b4ccab357b38
+9f2d1b2a6bba
+9609353660a9
+[root@k8s-linux-worker1 net.d]# docker rm $(docker ps -aq)
+0a1c7e3e6498
+8fb84df67835
+b4ccab357b38
+9f2d1b2a6bba
+9609353660a9
+Error response from daemon: You cannot remove a running container 737bfd1141f8349924c7a8437b8820ebff4b2571192d9ae24a6cf2554a908f2e. Stop the container before attempting removal or force remove
+Error response from daemon: You cannot remove a running container 0c6a01d3da7de9ca7a6ad39aa5c856d2c27b8c196828b92b22aa1db2881fa74b. Stop the container before attempting removal or force remove
+[root@k8s-linux-worker1 net.d]# 
+[root@k8s-linux-worker1 net.d]# 
+[root@k8s-linux-worker1 net.d]# docker ps -a
+CONTAINER ID        IMAGE                  COMMAND                  CREATED             STATUS              PORTS               NAMES
+737bfd1141f8        ff281650a721           "/opt/bin/flanneld -…"   39 seconds ago      Up 37 seconds                           k8s_kube-flannel_kube-flannel-ds-amd64-vlwws_kube-system_5064723c-7bbc-11e9-8eb2-0017fa00a076_1
+0c6a01d3da7d        k8s.gcr.io/pause:3.1   "/pause"                 40 seconds ago      Up 39 seconds                           k8s_POD_kube-flannel-ds-amd64-vlwws_kube-system_5064723c-7bbc-11e9-8eb2-0017fa00a076_3
+[root@k8s-linux-worker1 net.d]# 
+
+
+[root@k8s-master1 ~]# kubectl get pods --all-namespaces
+NAMESPACE     NAME                                    READY   STATUS    RESTARTS   AGE
+kube-system   kube-flannel-ds-amd64-vlwws             1/1     Running   1          2d18h
+kube-system   kubernetes-dashboard-5f7b999d65-52qzn   0/1     Error     0          2d16h
+[root@k8s-master1 ~]# 
+[root@k8s-master1 ~]# kubectl logs kubernetes-dashboard-5f7b999d65-52qzn -n kube-system
+Unable to retrieve container logs for docker://9f2d1b2a6bba0874ade8776113ce48b7e35eb295c9cab263c2a5c81d4c4241c4
+[root@k8s-master1 ~]# 
+[root@k8s-master1 ~]# 
+[root@k8s-master1 ~]# 
+[root@k8s-master1 ~]# kubectl describe pod kubernetes-dashboard-5f7b999d65-52qzn -n kube-system
+Name:           kubernetes-dashboard-5f7b999d65-52qzn
+Namespace:      kube-system
+Node:           10.1.36.46/10.1.36.46
+Start Time:     Tue, 21 May 2019 21:35:47 +0800
+Labels:         k8s-app=kubernetes-dashboard
+                pod-template-hash=5f7b999d65
+Annotations:    <none>
+Status:         Running
+IP:             
+Controlled By:  ReplicaSet/kubernetes-dashboard-5f7b999d65
+Containers:
+  kubernetes-dashboard:
+    Container ID:  docker://9f2d1b2a6bba0874ade8776113ce48b7e35eb295c9cab263c2a5c81d4c4241c4
+    Image:         k8s.gcr.io/kubernetes-dashboard-amd64:v1.10.1
+    Image ID:      docker://sha256:f9aed6605b814b69e92dece6a50ed1e4e730144eb1cc971389dde9cb3820d124
+    Port:          8443/TCP
+    Host Port:     0/TCP
+    Args:
+      --auto-generate-certificates
+    State:          Terminated
+      Reason:       Error
+      Exit Code:    2
+      Started:      Tue, 21 May 2019 22:10:09 +0800
+      Finished:     Fri, 24 May 2019 14:27:41 +0800
+    Ready:          False
+    Restart Count:  0
+    Liveness:       http-get https://:8443/ delay=30s timeout=30s period=10s #success=1 #failure=3
+    Environment:    <none>
+    Mounts:
+      /certs from kubernetes-dashboard-certs (rw)
+      /tmp from tmp-volume (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from kubernetes-dashboard-token-w6fdt (ro)
+Conditions:
+  Type              Status
+  Initialized       True 
+  Ready             False 
+  ContainersReady   False 
+  PodScheduled      True 
+Volumes:
+  kubernetes-dashboard-certs:
+    Type:        Secret (a volume populated by a Secret)
+    SecretName:  kubernetes-dashboard-certs
+    Optional:    false
+  tmp-volume:
+    Type:       EmptyDir (a temporary directory that shares a pod's lifetime)
+    Medium:     
+    SizeLimit:  <unset>
+  kubernetes-dashboard-token-w6fdt:
+    Type:        Secret (a volume populated by a Secret)
+    SecretName:  kubernetes-dashboard-token-w6fdt
+    Optional:    false
+QoS Class:       BestEffort
+Node-Selectors:  <none>
+Tolerations:     node-role.kubernetes.io/master:NoSchedule
+Events:
+  Type     Reason           Age                      From                 Message
+  ----     ------           ----                     ----                 -------
+  Warning  NetworkNotReady  2m53s (x154 over 7m54s)  kubelet, 10.1.36.46  network is not ready: runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:docker: network plugin is not ready: cni config uninitialized
+[root@k8s-master1 ~]# 
+
+
+
+[root@k8s-linux-worker1 net.d]# pwd
+/opt/k8s/cni/net.d
+[root@k8s-linux-worker1 net.d]# mv 10-default.conf_back 10-default.conf
+[root@k8s-linux-worker1 net.d]# 
+[root@k8s-linux-worker1 net.d]# 
+[root@k8s-linux-worker1 net.d]# systemctl restart kubelet.service
+[root@k8s-linux-worker1 net.d]# 
+[root@k8s-linux-worker1 net.d]# docker ps -a
+CONTAINER ID        IMAGE                  COMMAND                  CREATED             STATUS                     PORTS               NAMES
+c67316285a4a        f9aed6605b81           "/dashboard --insecu…"   13 seconds ago      Up 12 seconds                                  k8s_kubernetes-dashboard_kubernetes-dashboard-5f7b999d65-52qzn_kube-system_578ed9bb-7bcd-11e9-8f1f-0017fa00a076_0
+ad5e361ac3ad        k8s.gcr.io/pause:3.1   "/pause"                 14 seconds ago      Up 13 seconds                                  k8s_POD_kubernetes-dashboard-5f7b999d65-52qzn_kube-system_578ed9bb-7bcd-11e9-8f1f-0017fa00a076_0
+4f383592385b        ff281650a721           "cp -f /etc/kube-fla…"   7 minutes ago       Exited (0) 7 minutes ago                       k8s_install-cni_kube-flannel-ds-amd64-vlwws_kube-system_5064723c-7bbc-11e9-8eb2-0017fa00a076_0
+737bfd1141f8        ff281650a721           "/opt/bin/flanneld -…"   8 minutes ago       Up 8 minutes                                   k8s_kube-flannel_kube-flannel-ds-amd64-vlwws_kube-system_5064723c-7bbc-11e9-8eb2-0017fa00a076_1
+0c6a01d3da7d        k8s.gcr.io/pause:3.1   "/pause"                 8 minutes ago       Up 8 minutes                                   k8s_POD_kube-flannel-ds-amd64-vlwws_kube-system_5064723c-7bbc-11e9-8eb2-0017fa00a076_3
+[root@k8s-linux-worker1 net.d]# 
+[root@k8s-linux-worker1 net.d]# docker rm $(docker ps -aq)
+4f383592385b
+Error response from daemon: You cannot remove a running container c67316285a4a9b09c3007898da29cf42c7a9f25d4ccf90482cef4ecb3f1ada50. Stop the container before attempting removal or force remove
+Error response from daemon: You cannot remove a running container ad5e361ac3adcb943d74a66efcf744b81198a014292d8ea074e9b08be6ebb2cc. Stop the container before attempting removal or force remove
+Error response from daemon: You cannot remove a running container 737bfd1141f8349924c7a8437b8820ebff4b2571192d9ae24a6cf2554a908f2e. Stop the container before attempting removal or force remove
+Error response from daemon: You cannot remove a running container 0c6a01d3da7de9ca7a6ad39aa5c856d2c27b8c196828b92b22aa1db2881fa74b. Stop the container before attempting removal or force remove
+[root@k8s-linux-worker1 net.d]# 
+[root@k8s-linux-worker1 net.d]# docker ps -a
+CONTAINER ID        IMAGE                  COMMAND                  CREATED             STATUS              PORTS               NAMES
+c67316285a4a        f9aed6605b81           "/dashboard --insecu…"   40 seconds ago      Up 39 seconds                           k8s_kubernetes-dashboard_kubernetes-dashboard-5f7b999d65-52qzn_kube-system_578ed9bb-7bcd-11e9-8f1f-0017fa00a076_0
+ad5e361ac3ad        k8s.gcr.io/pause:3.1   "/pause"                 41 seconds ago      Up 40 seconds                           k8s_POD_kubernetes-dashboard-5f7b999d65-52qzn_kube-system_578ed9bb-7bcd-11e9-8f1f-0017fa00a076_0
+737bfd1141f8        ff281650a721           "/opt/bin/flanneld -…"   8 minutes ago       Up 8 minutes                            k8s_kube-flannel_kube-flannel-ds-amd64-vlwws_kube-system_5064723c-7bbc-11e9-8eb2-0017fa00a076_1
+0c6a01d3da7d        k8s.gcr.io/pause:3.1   "/pause"                 8 minutes ago       Up 8 minutes                            k8s_POD_kube-flannel-ds-amd64-vlwws_kube-system_5064723c-7bbc-11e9-8eb2-0017fa00a076_3
+[root@k8s-linux-worker1 net.d]# 
+
+
+
+
+
+
+
+
+
+
+
+
 ```
