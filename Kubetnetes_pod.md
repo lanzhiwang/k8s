@@ -1,4 +1,4 @@
-## Kubetnetes 中 pod 创建流程
+## Kubetnetes 中 pod 创建流程以及各组件的作用
 
 Pod 是 Kubernetes 中最基本的部署调度单元，可以包含 container，逻辑上表示某种应用的一个实例。例如一个web 站点应用由前端、后端及数据库构建而成，这三个组件将运行在各自的容器中，那么我们可以创建包含三个container 的 pod。
 
@@ -17,9 +17,6 @@ Kubetnetes 中 pod 创建流程如下图所示
 7. kubelet 根据调度结果执行 Pod 创建操作： 绑定成功后，scheduler 会调用 APIServer 的 API 在 etcd 中创建一个 boundpod 对象，描述在一个工作节点上绑定运行的所有 pod 信息。运行在每个工作节点上的 kubelet 也会定期与 APIServer 同步 boundpod 信息，一旦发现应该在该工作节点上运行的 boundpod 对象没有更新，则调用Docker API 创建并启动 pod 内的容器。
 
 
-
-
-
 kubectl
 
 apiserver
@@ -35,6 +32,4 @@ proxy：网络代理
 docker
 
 etcd
-
-
 
