@@ -2,9 +2,44 @@
 
 
 
-安装 docker 时要设置 Docker Root Dir 选项
+
+### 相关配置
+
+```
+# 集群网络插件，可以支持calico, flannel, kube-router, cilium
+CLUSTER_NETWORK="flannel"
+
+# 服务网段 (Service CIDR），注意不要与内网已有网段冲突
+SERVICE_CIDR="10.68.0.0/16"
+
+# kubernetes 服务 IP (预分配，一般是 SERVICE_CIDR 中第一个IP)
+CLUSTER_KUBERNETES_SVC_IP="10.68.0.1"
+
+# 集群 DNS 服务 IP (从 SERVICE_CIDR 中预分配)
+CLUSTER_DNS_SVC_IP="10.68.0.2"
+
+# POD 网段 (Cluster CIDR），注意不要与内网已有网段冲突
+CLUSTER_CIDR="172.20.0.0/16"
+
+# 服务端口范围 (NodePort Range)
+NODE_PORT_RANGE="20000-40000"
+
+# 集群 DNS 域名
+CLUSTER_DNS_DOMAIN="cluster.local."
+
+# 需要说明的是集群的 apiserver 地址应该是负载均衡的地址
+# MASTER_IP 为负载均衡主节点地址
+# MASTER_IP="192.168.1.12"
+# KUBE_APISERVER="https://192.168.1.12:8443"
+
+MASTER_IP="10.1.36.43"
+KUBE_APISERVER="https://10.1.36.43:6443"
 
 
+# 集群 basic auth 使用的用户名和密码，用于 basic-auth.csv
+BASIC_AUTH_USER="admin"
+BASIC_AUTH_PASS="admin"
+```
 
 ### 相关文件下载
 
@@ -1813,10 +1848,27 @@ tcp        0      0 127.0.0.1:10249         0.0.0.0:*               LISTEN      
 tcp6       0      0 :::10256                :::*                    LISTEN      55989/kube-proxy    
 [root@k8s-linux-worker1 bin]# 
 
-
 kubectl api-resources
 
-# https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/
+
+```
+
+
+
+### 部署 flannel
+
+```bash
+
+# 参考 https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/
+
+flannel 部署以下资源
+PodSecurityPolicy
+ClusterRole
+ClusterRoleBinding
+ServiceAccount
+ConfigMap
+DaemonSet
+
 [root@k8s-master1 temp]# kubectl apply -f ./kube-flannel.yml 
 podsecuritypolicy.extensions/psp.flannel.unprivileged created
 clusterrole.rbac.authorization.k8s.io/flannel created
@@ -1829,6 +1881,127 @@ daemonset.extensions/kube-flannel-ds-arm created
 daemonset.extensions/kube-flannel-ds-ppc64le created
 daemonset.extensions/kube-flannel-ds-s390x created
 
+[root@k8s-master1 ~]# kubectl get PodSecurityPolicy 
+NAME                       PRIV    CAPS        SELINUX    RUNASUSER   FSGROUP    SUPGROUP   READONLYROOTFS   VOLUMES
+psp.flannel.unprivileged   false   NET_ADMIN   RunAsAny   RunAsAny    RunAsAny   RunAsAny   false            configMap,secret,emptyDir,hostPath
+[root@k8s-master1 ~]# 
+
+[root@k8s-master1 ~]# kubectl get ClusterRole --all-namespaces
+NAME                                                                   AGE
+admin                                                                  2d19h
+cluster-admin                                                          2d19h
+edit                                                                   2d19h
+flannel                                                                2d15h
+system:aggregate-to-admin                                              2d19h
+system:aggregate-to-edit                                               2d19h
+system:aggregate-to-view                                               2d19h
+system:auth-delegator                                                  2d19h
+system:aws-cloud-provider                                              2d19h
+system:basic-user                                                      2d19h
+system:certificates.k8s.io:certificatesigningrequests:nodeclient       2d19h
+system:certificates.k8s.io:certificatesigningrequests:selfnodeclient   2d19h
+system:controller:attachdetach-controller                              2d19h
+system:controller:certificate-controller                               2d19h
+system:controller:clusterrole-aggregation-controller                   2d19h
+system:controller:cronjob-controller                                   2d19h
+system:controller:daemon-set-controller                                2d19h
+system:controller:deployment-controller                                2d19h
+system:controller:disruption-controller                                2d19h
+system:controller:endpoint-controller                                  2d19h
+system:controller:expand-controller                                    2d19h
+system:controller:generic-garbage-collector                            2d19h
+system:controller:horizontal-pod-autoscaler                            2d19h
+system:controller:job-controller                                       2d19h
+system:controller:namespace-controller                                 2d19h
+system:controller:node-controller                                      2d19h
+system:controller:persistent-volume-binder                             2d19h
+system:controller:pod-garbage-collector                                2d19h
+system:controller:pv-protection-controller                             2d19h
+system:controller:pvc-protection-controller                            2d19h
+system:controller:replicaset-controller                                2d19h
+system:controller:replication-controller                               2d19h
+system:controller:resourcequota-controller                             2d19h
+system:controller:route-controller                                     2d19h
+system:controller:service-account-controller                           2d19h
+system:controller:service-controller                                   2d19h
+system:controller:statefulset-controller                               2d19h
+system:controller:ttl-controller                                       2d19h
+system:csi-external-attacher                                           2d19h
+system:csi-external-provisioner                                        2d19h
+system:discovery                                                       2d19h
+system:heapster                                                        2d19h
+system:kube-aggregator                                                 2d19h
+system:kube-controller-manager                                         2d19h
+system:kube-dns                                                        2d19h
+system:kube-scheduler                                                  2d19h
+system:kubelet-api-admin                                               2d19h
+system:node                                                            2d19h
+system:node-bootstrapper                                               2d19h
+system:node-problem-detector                                           2d19h
+system:node-proxier                                                    2d19h
+system:persistent-volume-provisioner                                   2d19h
+system:public-info-viewer                                              2d19h
+system:volume-scheduler                                                2d19h
+view                                                                   2d19h
+[root@k8s-master1 ~]# 
+
+[root@k8s-master1 ~]# kubectl get ClusterRoleBinding --all-namespaces
+NAME                                                   AGE
+cluster-admin                                          2d19h
+flannel                                                2d15h
+system:aws-cloud-provider                              2d19h
+system:basic-user                                      2d19h
+system:controller:attachdetach-controller              2d19h
+system:controller:certificate-controller               2d19h
+system:controller:clusterrole-aggregation-controller   2d19h
+system:controller:cronjob-controller                   2d19h
+system:controller:daemon-set-controller                2d19h
+system:controller:deployment-controller                2d19h
+system:controller:disruption-controller                2d19h
+system:controller:endpoint-controller                  2d19h
+system:controller:expand-controller                    2d19h
+system:controller:generic-garbage-collector            2d19h
+system:controller:horizontal-pod-autoscaler            2d19h
+system:controller:job-controller                       2d19h
+system:controller:namespace-controller                 2d19h
+system:controller:node-controller                      2d19h
+system:controller:persistent-volume-binder             2d19h
+system:controller:pod-garbage-collector                2d19h
+system:controller:pv-protection-controller             2d19h
+system:controller:pvc-protection-controller            2d19h
+system:controller:replicaset-controller                2d19h
+system:controller:replication-controller               2d19h
+system:controller:resourcequota-controller             2d19h
+system:controller:route-controller                     2d19h
+system:controller:service-account-controller           2d19h
+system:controller:service-controller                   2d19h
+system:controller:statefulset-controller               2d19h
+system:controller:ttl-controller                       2d19h
+system:discovery                                       2d19h
+system:kube-controller-manager                         2d19h
+system:kube-dns                                        2d19h
+system:kube-scheduler                                  2d19h
+system:node                                            2d19h
+system:node-proxier                                    2d19h
+system:public-info-viewer                              2d19h
+system:volume-scheduler                                2d19h
+[root@k8s-master1 ~]# 
+
+[root@k8s-master1 ~]# kubectl get ServiceAccount --all-namespaces
+NAMESPACE         NAME                   SECRETS   AGE
+default           default                1         2d18h
+kube-node-lease   default                1         2d18h
+kube-public       default                1         2d18h
+kube-system       default                1         2d18h
+kube-system       flannel                1         2d15h
+kube-system       kubernetes-dashboard   1         2d15h
+[root@k8s-master1 ~]# 
+
+[root@k8s-master1 ~]# kubectl get ConfigMap --all-namespaces
+NAMESPACE     NAME                                 DATA   AGE
+kube-system   extension-apiserver-authentication   6      2d19h
+kube-system   kube-flannel-cfg                     2      2d15h
+[root@k8s-master1 ~]# 
 
 [root@k8s-master1 temp]# kubectl get daemonsets --all-namespaces
 NAMESPACE     NAME                      DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR                     AGE
@@ -1838,21 +2011,8 @@ kube-system   kube-flannel-ds-arm64     0         0         0       0           
 kube-system   kube-flannel-ds-ppc64le   0         0         0       0            0           beta.kubernetes.io/arch=ppc64le   2m41s
 kube-system   kube-flannel-ds-s390x     0         0         0       0            0           beta.kubernetes.io/arch=s390x     2m41s
 [root@k8s-master1 temp]# 
-[root@k8s-master1 temp]# kubectl get pods --all-namespaces
-NAMESPACE     NAME                          READY   STATUS             RESTARTS   AGE
-kube-system   kube-flannel-ds-amd64-vlwws   0/1     CrashLoopBackOff   4          2m44s
-[root@k8s-master1 temp]# 
 
-kubectl describe pod kube-flannel-ds-amd64-vlwws -n kube-system
-
-kubectl logs kube-flannel-ds-amd64-vlwws -n kube-system
-
-172.20.0.0/16
-
-
-kubectl --namespace=kube-system edit pod kube-flannel-ds-amd64-vlwws
-
-
+# 修改 ./kube-flannel.yml 文件，指定网段为：172.20.0.0/16，重新部署
 [root@k8s-master1 temp]# kubectl apply -f ./kube-flannel.yml 
 podsecuritypolicy.extensions/psp.flannel.unprivileged configured
 clusterrole.rbac.authorization.k8s.io/flannel unchanged
@@ -1867,6 +2027,16 @@ daemonset.extensions/kube-flannel-ds-s390x unchanged
 [root@k8s-master1 temp]# 
 
 
+# 启动 flannel 相关 pod 错误
+[root@k8s-master1 temp]# kubectl get pods --all-namespaces
+NAMESPACE     NAME                          READY   STATUS             RESTARTS   AGE
+kube-system   kube-flannel-ds-amd64-vlwws   0/1     CrashLoopBackOff   4          2m44s
+[root@k8s-master1 temp]# 
+
+# 排查 pod 启动错误
+kubectl describe pod kube-flannel-ds-amd64-vlwws -n kube-system
+
+kubectl logs kube-flannel-ds-amd64-vlwws -n kube-system
 
 [root@k8s-master1 temp]# kubectl logs kube-flannel-ds-amd64-vlwws -n kube-system
 I0521 12:11:07.515060       1 main.go:514] Determining IP address of default interface
@@ -1875,9 +2045,8 @@ I0521 12:11:07.516065       1 main.go:544] Defaulting external address to interf
 E0521 12:11:07.719918       1 main.go:241] Failed to create SubnetManager: error retrieving pod spec for 'kube-system/kube-flannel-ds-amd64-vlwws': Get https://10.68.0.1:443/api/v1/namespaces/kube-system/pods/kube-flannel-ds-amd64-vlwws: x509: certificate is valid for 127.0.0.1, 10.1.36.43, 10.1.36.44, 10.1.36.45, 10.68.0.2, not 10.68.0.1
 [root@k8s-master1 temp]# 
 
-
-
-# 增加 10.68.0.1
+# 10.68.0.1 验证失败
+# 在 hosts 中增加 10.68.0.1
 [root@k8s-master1 ssl]# vim ./kubernetes-csr.json
 [root@k8s-master1 ssl]# cat ./kubernetes-csr.json
 {
@@ -1911,31 +2080,31 @@ E0521 12:11:07.719918       1 main.go:241] Failed to create SubnetManager: error
 }
 [root@k8s-master1 ssl]# 
 
+# 重启服务
+
 [root@k8s-master1 ssl]# kubectl get pods --all-namespaces
 NAMESPACE     NAME                                    READY   STATUS              RESTARTS   AGE
 kube-system   kube-flannel-ds-amd64-vlwws             1/1     Running             16         58m
-kube-system   kubernetes-dashboard-5f7b999d65-9xqtz   0/1     ContainerCreating   0          50m
 [root@k8s-master1 ssl]# 
 
+```
 
 
 
 
+### 部署 dashboard
 
+```bash
 
+# 参考 https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/
 
+Dashboard 部署以下资源 
+Secrets
+ServiceAccount
+Role & Role Binding
+Deployment
+Service
 
-
-
-
-
-
-
-
-
-
-
-# https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/
 [root@k8s-master1 temp]# kubectl apply -f ./kubernetes-dashboard.yaml 
 secret/kubernetes-dashboard-certs created
 secret/kubernetes-dashboard-csrf created
@@ -1945,14 +2114,12 @@ rolebinding.rbac.authorization.k8s.io/kubernetes-dashboard-minimal created
 deployment.apps/kubernetes-dashboard created
 service/kubernetes-dashboard created
 [root@k8s-master1 temp]# 
+
+# 修改 service type 为 NodePort
 [root@k8s-master1 temp]# kubectl get service --all-namespaces
 NAMESPACE     NAME                   TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
 default       kubernetes             ClusterIP   10.68.0.1       <none>        443/TCP   3h38m
 kube-system   kubernetes-dashboard   ClusterIP   10.68.173.192   <none>        443/TCP   97s
-[root@k8s-master1 temp]# 
-[root@k8s-master1 temp]# kubectl --namespace=kube-system get service kubernetes-dashboard
-NAME                   TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
-kubernetes-dashboard   ClusterIP   10.68.173.192   <none>        443/TCP   7m42s
 [root@k8s-master1 temp]# 
 [root@k8s-master1 temp]# kubectl --namespace=kube-system get service kubernetes-dashboard -o yaml
 apiVersion: v1
@@ -1982,8 +2149,6 @@ spec:
 status:
   loadBalancer: {}
 [root@k8s-master1 temp]# 
-
-NodePort
 
 [root@k8s-master1 temp]# kubectl --namespace=kube-system edit service kubernetes-dashboard
 service/kubernetes-dashboard edited
@@ -2023,40 +2188,24 @@ NAME                   TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)         
 kubernetes-dashboard   NodePort   10.68.173.192   <none>        443:29118/TCP   9m59s
 [root@k8s-master1 temp]# 
 
-http://139.217.0.156:29118/
+# 访问地址
+https://139.217.0.156:29118/
+http://10.1.36.43:29118/
 
+http://139.217.6.21:29118/
+http://10.1.36.46:29118/
 
+# 检查 dashboard 相关 pod 状态
 [root@k8s-master1 ssl]# kubectl get pods --all-namespaces
 NAMESPACE     NAME                                    READY   STATUS              RESTARTS   AGE
 kube-system   kube-flannel-ds-amd64-vlwws             1/1     Running             16         58m
 kube-system   kubernetes-dashboard-5f7b999d65-9xqtz   0/1     ContainerCreating   0          50m
 [root@k8s-master1 ssl]# 
 
-
-
 [root@k8s-master1 ssl]# kubectl logs kubernetes-dashboard-5f7b999d65-9xqtz -n kube-system
 Error from server (BadRequest): container "kubernetes-dashboard" in pod "kubernetes-dashboard-5f7b999d65-9xqtz" is waiting to start: ContainerCreating
 [root@k8s-master1 ssl]# 
-
-
-
-[root@k8s-master1 temp]# kubectl get pods --all-namespaces
-NAMESPACE     NAME                                    READY   STATUS              RESTARTS   AGE
-kube-system   kube-flannel-ds-amd64-vlwws             1/1     Running             16         114m
-kube-system   kubernetes-dashboard-5f7b999d65-9xqtz   0/1     ContainerCreating   0          105m
-[root@k8s-master1 temp]# 
-[root@k8s-master1 temp]# 
-[root@k8s-master1 temp]# 
-
-
-
-
-
-[root@k8s-master1 temp]# kubectl get pods --all-namespaces
-NAMESPACE     NAME                                    READY   STATUS              RESTARTS   AGE
-kube-system   kube-flannel-ds-amd64-vlwws             1/1     Running             16         130m
-kube-system   kubernetes-dashboard-5f7b999d65-52qzn   0/1     ContainerCreating   0          8m56s
-[root@k8s-master1 temp]# 
+# 查看 pod 相关联的 event
 [root@k8s-master1 temp]# kubectl describe pod kubernetes-dashboard-5f7b999d65-52qzn --namespace=kube-system
 
 Events:
@@ -2068,39 +2217,24 @@ Events:
   Normal   SandboxChanged          18s (x26 over 5m24s)  kubelet, 10.1.36.46  Pod sandbox changed, it will be killed and re-created.
 [root@k8s-master1 temp]# 
 
+# 相关工具没有找到
+# 在 /opt/k8s/bin/ 目录中增加 bridge、host-local、loopback、flannel、portmap 工具
 [root@k8s-linux-worker1 temp]# ll /opt/k8s/bin/
-total 173008
+total 180236
 -rwxr-xr-x 1 root root   5009327 May 21 21:43 bridge
+-rwxr-xr-x 1 root root   3069034 May 21 22:15 flannel
 -rwxr-xr-x 1 root root   3957620 May 21 22:09 host-local
 -rwxr-xr-x 1 root root 127850432 May 21 17:32 kubelet
 -rwxr-xr-x 1 root root  36681344 May 21 18:38 kube-proxy
 -rwxr-xr-x 1 root root   3650379 May 21 22:09 loopback
+-rwxr-xr-x 1 root root   4327403 May 21 22:17 portmap
 [root@k8s-linux-worker1 temp]# 
 
-bridge
-host-local
-loopback
-flannel
-portmap
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+[root@k8s-master1 ~]# kubectl get pods --all-namespaces
+NAMESPACE     NAME                                    READY   STATUS    RESTARTS   AGE
+kube-system   kube-flannel-ds-amd64-vlwws             1/1     Running   0          2d16h
+kube-system   kubernetes-dashboard-5f7b999d65-52qzn   1/1     Running   0          2d14h
+[root@k8s-master1 ~]# 
 
 
 ```
