@@ -16,7 +16,8 @@ spec:
     - emptyDir
     - hostPath
   allowedHostPaths:
-    - pathPrefix: "/etc/cni/net.d"
+    #- pathPrefix: "/etc/cni/net.d"
+    - pathPrefix: "/opt/k8s/cni/net.d"
     - pathPrefix: "/etc/kube-flannel"
     - pathPrefix: "/run/flannel"
   readOnlyRootFilesystem: false
@@ -205,7 +206,7 @@ spec:
             path: /run/flannel
         - name: cni
           hostPath:
-            path: /etc/cni/net.d
+            path: /opt/k8s/cni/net.d
         - name: flannel-cfg
           configMap:
             name: kube-flannel-cfg
@@ -285,7 +286,7 @@ spec:
             path: /run/flannel
         - name: cni
           hostPath:
-            path: /etc/cni/net.d
+            path: /opt/k8s/cni/net.d
         - name: flannel-cfg
           configMap:
             name: kube-flannel-cfg
@@ -365,7 +366,7 @@ spec:
             path: /run/flannel
         - name: cni
           hostPath:
-            path: /etc/cni/net.d
+            path: /opt/k8s/cni/net.d
         - name: flannel-cfg
           configMap:
             name: kube-flannel-cfg
@@ -445,7 +446,7 @@ spec:
             path: /run/flannel
         - name: cni
           hostPath:
-            path: /etc/cni/net.d
+            path: /opt/k8s/cni/net.d
         - name: flannel-cfg
           configMap:
             name: kube-flannel-cfg
@@ -525,7 +526,7 @@ spec:
             path: /run/flannel
         - name: cni
           hostPath:
-            path: /etc/cni/net.d
+            path: /opt/k8s/cni/net.d
         - name: flannel-cfg
           configMap:
             name: kube-flannel-cfg
