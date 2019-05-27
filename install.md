@@ -341,9 +341,11 @@ UUID=852da811-4d2e-4108-bb17-8eb51d49689e /opt/k8s                ext4    defaul
 重启系统检查 hostname 和挂载是否生效
 
 
+```
 
+### 安装 master 节点
 
-
+```bash
 [root@k8s-master1 ssl]# pwd
 /opt/k8s/temp/ssl
 # 准备 CA 配置文件
@@ -808,11 +810,16 @@ drwx------ 2 root root 4096 May 20 14:54 volumes
 docker-compose version 1.24.0, build 0aa59064
 [root@k8s-master1 temp]# 
 
+```
 
+
+### 安装 etcd
 
 10.1.36.43
 10.1.36.44
 10.1.36.45
+
+```bash
 
 # 创建 etcd 证书请求文件
 [root@k8s-master1 ssl]# vim ./etcd-csr.json
@@ -1262,6 +1269,65 @@ WantedBy=multi-user.target
 [root@k8s-master1 temp]# 
 
 
+# 创建 kube-apiserver 的 systemd unit 文件，以 10.1.36.44 为例
+[root@k8s-master1 temp]# vim /etc/systemd/system/kube-apiserver.service
+[root@k8s-master1 temp]# cat /etc/systemd/system/kube-apiserver.service
+[Unit]
+Description=Kubernetes API Server
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=network.target
+
+[Service]
+ExecStart=/opt/k8s/bin/kube-apiserver \
+  --etcd-cafile=/opt/k8s/ssl/ca.pem \
+  --etcd-certfile=/opt/k8s/ssl/kubernetes.pem \
+  --etcd-keyfile=/opt/k8s/ssl/kubernetes-key.pem \
+  --etcd-servers=https://10.1.36.43:2379,https://10.1.36.44:2379,https://10.1.36.45:2379 \
+  --bind-address=10.1.36.44 \
+  --tls-cert-file=/opt/k8s/ssl/kubernetes.pem \
+  --tls-private-key-file=/opt/k8s/ssl/kubernetes-key.pem \
+  --insecure-bind-address=127.0.0.1 \
+  --audit-log-maxage=30 \
+  --audit-log-maxbackup=3 \
+  --audit-log-maxsize=100 \
+  --audit-log-path=/opt/k8s/log/audit.log \
+  --enable-swagger-ui=true \
+  --anonymous-auth=false \
+  --basic-auth-file=/opt/k8s/ssl/basic-auth.csv \
+  --client-ca-file=/opt/k8s/ssl/ca.pem \
+  --service-account-key-file=/opt/k8s/ssl/ca-key.pem \
+  --requestheader-client-ca-file=/opt/k8s/ssl/ca.pem \
+  --requestheader-allowed-names= \
+  --requestheader-extra-headers-prefix=X-Remote-Extra- \
+  --requestheader-group-headers=X-Remote-Group \
+  --requestheader-username-headers=X-Remote-User \
+  --authorization-mode=Node,RBAC \
+  --runtime-config=batch/v2alpha1=true \
+  --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota,NodeRestriction,MutatingAdmissionWebhook,ValidatingAdmissionWebhook \
+  --kubelet-https=true \
+  --kubelet-client-certificate=/opt/k8s/ssl/admin.pem \
+  --kubelet-client-key=/opt/k8s/ssl/admin-key.pem \
+  --service-cluster-ip-range=10.68.0.0/16 \
+  --service-node-port-range=20000-40000 \
+  --endpoint-reconciler-type=lease \
+  --allow-privileged=true \
+  --event-ttl=1h \
+  --proxy-client-cert-file=/opt/k8s/ssl/aggregator-proxy.pem \
+  --proxy-client-key-file=/opt/k8s/ssl/aggregator-proxy-key.pem \
+  --enable-aggregator-routing=true \
+  --v=2 \
+  --log-file=/opt/k8s/log/apiserver.log
+  
+Restart=on-failure
+RestartSec=5
+Type=notify
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+
+
+
 # 验证版本
 [root@k8s-master1 bin]# ./kube-apiserver --version
 Kubernetes v1.14.0
@@ -1276,6 +1342,12 @@ systemctl status kube-apiserver.service
 # 查看日志
 journalctl -xe
 journalctl -u kube-apiserver
+
+[root@k8s-master2 ssl]# netstat -tulnp | grep kube-apiserve
+tcp        0      0 10.1.36.44:6443         0.0.0.0:*               LISTEN      76377/kube-apiserve 
+tcp        0      0 127.0.0.1:8080          0.0.0.0:*               LISTEN      76377/kube-apiserve 
+[root@k8s-master2 ssl]# 
+
 
 [root@k8s-master1 temp]# netstat -tulnp | grep kube
 tcp        0      0 10.1.36.43:6443         0.0.0.0:*               LISTEN      98043/kube-apiserve 
@@ -1481,6 +1553,47 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
 
 
 
+# linux 网桥相关操作
+$ brctl show
+bridge name	bridge id		STP enabled	interfaces
+docker0		8000.0242e0b35f6c	no		
+mynet0		8000.7a584473c0b2	no		
+ 
+$ brctl delbr mynet0
+bridge mynet0 is still up; can't delete it
+
+$ ifconfig mynet0
+mynet0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.20.0.1  netmask 255.255.0.0  broadcast 172.20.255.255
+        inet6 fe80::1064:b3ff:fe95:82fa  prefixlen 64  scopeid 0x20<link>
+        ether 12:64:b3:95:82:fa  txqueuelen 1000  (Ethernet)
+        RX packets 2  bytes 56 (56.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 8  bytes 648 (648.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+
+$ ifconfig mynet0 down
+
+$ brctl show
+bridge name	bridge id		STP enabled	interfaces
+cni0		8000.46f5a3773999	no		veth26168cae
+							veth62a55947
+							vetha9fee21d
+							vethd83107da
+docker0		8000.0242efe67638	no		
+mynet0		8000.1264b39582fa	no		
+
+$ brctl delbr mynet0
+
+$ brctl show
+bridge name	bridge id		STP enabled	interfaces
+cni0		8000.46f5a3773999	no		veth26168cae
+							veth62a55947
+							vetha9fee21d
+							vethd83107da
+docker0		8000.0242efe67638	no		
+ 
 
 
 
@@ -1488,8 +1601,7 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
 
 
 
-
-
+# 这个文件不需要
 # 使 kubelet 设置 CNI 支持，cni 配置文件
 [root@k8s-linux-worker1 k8s]# vim /opt/k8s/cni/net.d/10-default.conf
 [root@k8s-linux-worker1 k8s]# cat /opt/k8s/cni/net.d/10-default.conf
@@ -1505,8 +1617,10 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
     "subnet": "172.20.0.0/16"
   }
 }
+    
 [root@k8s-linux-worker1 k8s]# 
 
+# 这个镜像不需要
 [root@k8s-linux-worker1 k8s]# docker pull mirrorgooglecontainers/pause-amd64:3.1
 3.1: Pulling from mirrorgooglecontainers/pause-amd64
 67ddbfb20a22: Pull complete 
@@ -1546,6 +1660,56 @@ mirrorgooglecontainers/pause-amd64   3.1                 da86e6ba6ca1        17 
   ]
 }
 [root@k8s-linux-worker1 ssl]# 
+
+# 准备 kubelet 证书签名请求，以 10.1.36.47 为例
+[root@k8s-linux-worker1 ssl]# vim ./kubelet-csr.json 
+[root@k8s-linux-worker1 ssl]# cat ./kubelet-csr.json 
+{
+  "CN": "system:node:10.1.36.47",
+  "hosts": [
+    "127.0.0.1",
+    "10.1.36.47"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "CN",
+      "ST": "hubeisheng",
+      "L": "wuhanshi",
+      "O": "system:nodes",
+      "OU": "System"
+    }
+  ]
+}
+
+# 准备 kubelet 证书签名请求，以 10.1.36.48 为例
+[root@k8s-linux-worker1 ssl]# vim ./kubelet-csr.json 
+[root@k8s-linux-worker1 ssl]# cat ./kubelet-csr.json 
+{
+  "CN": "system:node:10.1.36.48",
+  "hosts": [
+    "127.0.0.1",
+    "10.1.36.48"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "CN",
+      "ST": "hubeisheng",
+      "L": "wuhanshi",
+      "O": "system:nodes",
+      "OU": "System"
+    }
+  ]
+}
+
+
 [root@k8s-linux-worker1 ssl]# ./cfssl gencert -ca=./ca.pem -ca-key=./ca-key.pem -config=./ca-config.json -profile=kubernetes kubelet-csr.json | ./cfssljson -bare kubelet
 
 kubelet-csr.json 
@@ -1555,7 +1719,7 @@ kubelet-key.pem
 kubelet.pem
 
 
-# 设置 kubelet 集群参数
+# 设置 kubelet 集群参数（？集群参数问题）
 [root@k8s-linux-worker1 bin]# ./kubectl config set-cluster kubernetes --certificate-authority=/opt/k8s/ssl/ca.pem --embed-certs=true --server=https://10.1.36.43:6443 --kubeconfig=/opt/k8s/temp/ssl/kubelet.kubeconfig
 Cluster "kubernetes" set.
 [root@k8s-linux-worker1 bin]# 
@@ -1573,10 +1737,17 @@ preferences: {}
 users: []
 [root@k8s-linux-worker1 bin]# 
 
-# 设置 kubelet 客户端认证参数
+# 设置 kubelet 客户端认证参数，以 10.1.36.46 为例
 [root@k8s-linux-worker1 bin]# ./kubectl config set-credentials system:node:10.1.36.46 --client-certificate=/opt/k8s/ssl/kubelet.pem --embed-certs=true --client-key=/opt/k8s/ssl/kubelet-key.pem --kubeconfig=/opt/k8s/temp/ssl/kubelet.kubeconfig
 User "system:node:10.1.36.46" set.
 [root@k8s-linux-worker1 bin]# 
+
+# 设置 kubelet 客户端认证参数，以 10.1.36.47 为例
+[root@k8s-linux-worker1 bin]# ./kubectl config set-credentials system:node:10.1.36.47 --client-certificate=/opt/k8s/ssl/kubelet.pem --embed-certs=true --client-key=/opt/k8s/ssl/kubelet-key.pem --kubeconfig=/opt/k8s/temp/ssl/kubelet.kubeconfig
+
+# 设置 kubelet 客户端认证参数，以 10.1.36.48 为例
+[root@k8s-linux-worker1 bin]# ./kubectl config set-credentials system:node:10.1.36.48 --client-certificate=/opt/k8s/ssl/kubelet.pem --embed-certs=true --client-key=/opt/k8s/ssl/kubelet-key.pem --kubeconfig=/opt/k8s/temp/ssl/kubelet.kubeconfig
+
 [root@k8s-linux-worker1 bin]# cat /opt/k8s/temp/ssl/kubelet.kubeconfig
 apiVersion: v1
 clusters:
@@ -1595,10 +1766,18 @@ users:
     client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBdXhxalFsR3RhTGVIUzdYay9WSXNBTDk0Q2NnSW4wYXEvbDZzaUNkSTdraU0yRmE2ClBJRTFEZENRYUs2U3QvSUtWSWVEb29UVkg4UEJ6aGN0YWgweTY2KzJVQTRicWhjTm5va2hXNGdHMTYvTE1VRHgKanFsNms1ektCTXhxN2hkMHFWcm
 [root@k8s-linux-worker1 bin]# 
 
-# 设置 kubelet 上下文参数
+# 设置 kubelet 上下文参数，以 10.1.36.46 为例
 [root@k8s-linux-worker1 bin]# ./kubectl config set-context default --cluster=kubernetes --user=system:node:10.1.36.46 --kubeconfig=/opt/k8s/temp/ssl/kubelet.kubeconfig
 Context "default" created.
 [root@k8s-linux-worker1 bin]# 
+
+# 设置 kubelet 上下文参数，以 10.1.36.47 为例
+[root@k8s-linux-worker1 bin]# ./kubectl config set-context default --cluster=kubernetes --user=system:node:10.1.36.47 --kubeconfig=/opt/k8s/temp/ssl/kubelet.kubeconfig
+
+# 设置 kubelet 上下文参数，以 10.1.36.48 为例
+[root@k8s-linux-worker1 bin]# ./kubectl config set-context default --cluster=kubernetes --user=system:node:10.1.36.48 --kubeconfig=/opt/k8s/temp/ssl/kubelet.kubeconfig
+
+
 [root@k8s-linux-worker1 bin]# cat /opt/k8s/temp/ssl/kubelet.kubeconfig
 apiVersion: v1
 clusters:
@@ -1645,6 +1824,13 @@ users:
     client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVCRENDQXV5Z0F3SUJBZ0lVWkUwaFdiQnN0aC9BTFA3U0pQWEdFQzZ2OFA0d0RRWUpLb1pJaHZjTkFRRUwKQlFBd2FURUxNQWtHQTFVRUJoTUNRMDR4RXpBUkJnTlZCQWdUQ21oMVltVnBjMmhsYm1jeEVUQVBCZ05WQkFjVApDSGQxYUdGdWMyaHBNUXd3Q2dZRFZRUU
     client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBdXhxalFsR3RhTGVIUzdYay9WSXNBTDk0Q2NnSW4wYXEvbDZzaUNkSTdraU0yRmE2ClBJRTFEZENRYUs2U3QvSUtWSWVEb29UVkg4UEJ6aGN0YWgweTY2KzJVQTRicWhjTm5va2hXNGdHMTYvTE1VRHgKanFsNms1ektCTXhxN2hkMHFWcm
 [root@k8s-linux-worker1 bin]# 
+
+[root@k8s-linux-worker2 temp]# cp bridge /opt/k8s/bin/
+[root@k8s-linux-worker2 temp]# cp host-local /opt/k8s/bin/
+[root@k8s-linux-worker2 temp]# cp loopback /opt/k8s/bin/
+[root@k8s-linux-worker2 temp]# cp flannel /opt/k8s/bin/
+[root@k8s-linux-worker2 temp]# cp portmap /opt/k8s/bin/
+[root@k8s-linux-worker2 temp]# 
 
 
 
@@ -1729,6 +1915,103 @@ WantedBy=multi-user.target
 [root@k8s-linux-worker1 bin]# 
 
 
+# 创建 kubelet 的systemd unit文件，以 10.1.36.47 为例
+[root@k8s-linux-worker1 bin]# vim /etc/systemd/system/kubelet.service
+[root@k8s-linux-worker1 bin]# cat /etc/systemd/system/kubelet.service
+[Unit]
+Description=Kubernetes Kubelet
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+WorkingDirectory=/opt/k8s/kubelet
+ExecStartPre=/bin/mkdir -p /sys/fs/cgroup/cpuset/system.slice/kubelet.service
+ExecStartPre=/bin/mkdir -p /sys/fs/cgroup/hugetlb/system.slice/kubelet.service
+ExecStartPre=/bin/mkdir -p /sys/fs/cgroup/memory/system.slice/kubelet.service
+ExecStartPre=/bin/mkdir -p /sys/fs/cgroup/pids/system.slice/kubelet.service
+ExecStart=/opt/k8s/bin/kubelet \
+  --address=10.1.36.47 \
+  --allow-privileged=true \
+  --anonymous-auth=false \
+  --authentication-token-webhook \
+  --authorization-mode=Webhook \
+  --client-ca-file=/opt/k8s/ssl/ca.pem \
+  --cluster-dns=10.68.0.2 \
+  --cluster-domain=cluster.local. \
+  --cni-bin-dir=/opt/k8s/bin \
+  --cni-conf-dir=/opt/k8s/cni/net.d \
+  --fail-swap-on=false \
+  --hairpin-mode hairpin-veth \
+  --hostname-override=10.1.36.47 \
+  --kubeconfig=/opt/k8s/ssl/kubelet.kubeconfig \
+  --max-pods=110 \
+  --network-plugin=cni \
+  --pod-infra-container-image=k8s.gcr.io/pause:3.1 \
+  --register-node=true \
+  --root-dir=/opt/k8s/kubelet \
+  --tls-cert-file=/opt/k8s/ssl/kubelet.pem \
+  --tls-private-key-file=/opt/k8s/ssl/kubelet-key.pem \
+  --cgroups-per-qos=true \
+  --cgroup-driver=cgroupfs \
+  --enforce-node-allocatable=pods,kube-reserved \
+  --kube-reserved=cpu=200m,memory=500Mi,ephemeral-storage=1Gi \
+  --kube-reserved-cgroup=/system.slice/kubelet.service \
+  --eviction-hard=memory.available<200Mi,nodefs.available<10% \
+  --log-file=/opt/k8s/log/Kubelet.log \
+  --v=2
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+
+# 创建 kubelet 的systemd unit文件，以 10.1.36.48 为例
+[root@k8s-linux-worker1 bin]# vim /etc/systemd/system/kubelet.service
+[root@k8s-linux-worker1 bin]# cat /etc/systemd/system/kubelet.service
+[Unit]
+Description=Kubernetes Kubelet
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+WorkingDirectory=/opt/k8s/kubelet
+ExecStartPre=/bin/mkdir -p /sys/fs/cgroup/cpuset/system.slice/kubelet.service
+ExecStartPre=/bin/mkdir -p /sys/fs/cgroup/hugetlb/system.slice/kubelet.service
+ExecStartPre=/bin/mkdir -p /sys/fs/cgroup/memory/system.slice/kubelet.service
+ExecStartPre=/bin/mkdir -p /sys/fs/cgroup/pids/system.slice/kubelet.service
+ExecStart=/opt/k8s/bin/kubelet \
+  --address=10.1.36.48 \
+  --allow-privileged=true \
+  --anonymous-auth=false \
+  --authentication-token-webhook \
+  --authorization-mode=Webhook \
+  --client-ca-file=/opt/k8s/ssl/ca.pem \
+  --cluster-dns=10.68.0.2 \
+  --cluster-domain=cluster.local. \
+  --cni-bin-dir=/opt/k8s/bin \
+  --cni-conf-dir=/opt/k8s/cni/net.d \
+  --fail-swap-on=false \
+  --hairpin-mode hairpin-veth \
+  --hostname-override=10.1.36.48 \
+  --kubeconfig=/opt/k8s/ssl/kubelet.kubeconfig \
+  --max-pods=110 \
+  --network-plugin=cni \
+  --pod-infra-container-image=k8s.gcr.io/pause:3.1 \
+  --register-node=true \
+  --root-dir=/opt/k8s/kubelet \
+  --tls-cert-file=/opt/k8s/ssl/kubelet.pem \
+  --tls-private-key-file=/opt/k8s/ssl/kubelet-key.pem \
+  --cgroups-per-qos=true \
+  --cgroup-driver=cgroupfs \
+  --enforce-node-allocatable=pods,kube-reserved \
+  --kube-reserved=cpu=200m,memory=500Mi,ephemeral-storage=1Gi \
+  --kube-reserved-cgroup=/system.slice/kubelet.service \
+  --eviction-hard=memory.available<200Mi,nodefs.available<10% \
+  --log-file=/opt/k8s/log/Kubelet.log \
+  --v=2
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
 
 systemctl enable kubelet.service （ systemctl disable kubelet.service ）
 systemctl daemon-reload
@@ -1781,7 +2064,7 @@ kube-proxy.csr
 kube-proxy-key.pem
 kube-proxy.pem
 
-# 为 kube-proxy 设置集群参数，参数保存到 kube-proxy.kubeconfig 文件中
+# 为 kube-proxy 设置集群参数，参数保存到 kube-proxy.kubeconfig 文件中（？集群连接参数）
 [root@k8s-linux-worker1 bin]# ./kubectl config set-cluster kubernetes --certificate-authority=/opt/k8s/ssl/ca.pem --embed-certs=true --server=https://10.1.36.43:6443 --kubeconfig=/opt/k8s/temp/ssl/kube-proxy.kubeconfig
 Cluster "kubernetes" set.
 [root@k8s-linux-worker1 bin]# 
@@ -1826,6 +2109,58 @@ WorkingDirectory=/opt/k8s/kube-proxy
 ExecStart=/opt/k8s/bin/kube-proxy \
   --bind-address=10.1.36.46 \
   --hostname-override=10.1.36.46 \
+  --kubeconfig=/opt/k8s/ssl/kube-proxy.kubeconfig \
+  --logtostderr=true \
+  --proxy-mode=iptables
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+[root@k8s-linux-worker1 bin]# 
+
+
+# 创建 kube-proxy 服务文件，以 10.1.36.47 为例
+[root@k8s-linux-worker1 bin]# vim /etc/systemd/system/kube-proxy.service
+[root@k8s-linux-worker1 bin]# 
+[root@k8s-linux-worker1 bin]# cat /etc/systemd/system/kube-proxy.service
+[Unit]
+Description=Kubernetes Kube-Proxy Server
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/k8s/kube-proxy
+ExecStart=/opt/k8s/bin/kube-proxy \
+  --bind-address=10.1.36.47 \
+  --hostname-override=10.1.36.47 \
+  --kubeconfig=/opt/k8s/ssl/kube-proxy.kubeconfig \
+  --logtostderr=true \
+  --proxy-mode=iptables
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+[root@k8s-linux-worker1 bin]# 
+
+
+# 创建 kube-proxy 服务文件，以 10.1.36.48 为例
+[root@k8s-linux-worker1 bin]# vim /etc/systemd/system/kube-proxy.service
+[root@k8s-linux-worker1 bin]# 
+[root@k8s-linux-worker1 bin]# cat /etc/systemd/system/kube-proxy.service
+[Unit]
+Description=Kubernetes Kube-Proxy Server
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/k8s/kube-proxy
+ExecStart=/opt/k8s/bin/kube-proxy \
+  --bind-address=10.1.36.48 \
+  --hostname-override=10.1.36.48 \
   --kubeconfig=/opt/k8s/ssl/kube-proxy.kubeconfig \
   --logtostderr=true \
   --proxy-mode=iptables
@@ -2086,6 +2421,10 @@ E0521 12:11:07.719918       1 main.go:241] Failed to create SubnetManager: error
 NAMESPACE     NAME                                    READY   STATUS              RESTARTS   AGE
 kube-system   kube-flannel-ds-amd64-vlwws             1/1     Running             16         58m
 [root@k8s-master1 ssl]# 
+
+
+
+# 修改 flannel 挂载目录
 
 ```
 
@@ -2495,6 +2834,65 @@ ad5e361ac3ad        k8s.gcr.io/pause:3.1   "/pause"                 41 seconds a
 737bfd1141f8        ff281650a721           "/opt/bin/flanneld -…"   8 minutes ago       Up 8 minutes                            k8s_kube-flannel_kube-flannel-ds-amd64-vlwws_kube-system_5064723c-7bbc-11e9-8eb2-0017fa00a076_1
 0c6a01d3da7d        k8s.gcr.io/pause:3.1   "/pause"                 8 minutes ago       Up 8 minutes                            k8s_POD_kube-flannel-ds-amd64-vlwws_kube-system_5064723c-7bbc-11e9-8eb2-0017fa00a076_3
 [root@k8s-linux-worker1 net.d]# 
+
+
+
+
+
+[root@k8s-master1 ~]# kubectl run my-nginx --image=nginx --replicas=5 --port=80
+kubectl run --generator=deployment/apps.v1 is DEPRECATED and will be removed in a future version. Use kubectl run --generator=run-pod/v1 or kubectl create instead.
+deployment.apps/my-nginx created
+[root@k8s-master1 ~]# 
+[root@k8s-master1 ~]# 
+[root@k8s-master1 ~]# kubectl get pod -o wide
+NAME                        READY   STATUS              RESTARTS   AGE   IP           NODE         NOMINATED NODE   READINESS GATES
+my-nginx-86459cfc9f-cpfzg   1/1     Running             0          32s   172.20.0.2   10.1.36.47   <none>           <none>
+my-nginx-86459cfc9f-np8q2   0/1     ContainerCreating   0          31s   <none>       10.1.36.46   <none>           <none>
+my-nginx-86459cfc9f-wg287   1/1     Running             0          31s   172.20.0.3   10.1.36.47   <none>           <none>
+[root@k8s-master1 ~]# 
+[root@k8s-master1 ~]# 
+[root@k8s-master1 ssl]# kubectl get pod  -o wide
+NAME                        READY   STATUS    RESTARTS   AGE   IP            NODE         NOMINATED NODE   READINESS GATES
+my-nginx-86459cfc9f-2mbqq   1/1     Running   0          24m   172.20.2.2    10.1.36.48   <none>           <none>
+my-nginx-86459cfc9f-8ftlm   1/1     Running   0          24m   172.20.1.14   10.1.36.47   <none>           <none>
+my-nginx-86459cfc9f-cr7rh   1/1     Running   0          24m   172.20.0.2    10.1.36.46   <none>           <none>
+my-nginx-86459cfc9f-fqs4n   1/1     Running   0          24m   172.20.1.15   10.1.36.47   <none>           <none>
+my-nginx-86459cfc9f-klhw9   1/1     Running   0          24m   172.20.0.3    10.1.36.46   <none>           <none>
+[root@k8s-master1 ssl]# 
+
+[root@k8s-master1 ~]# 
+
+
+kubectl delete deployment  my-nginx
+
+root@my-nginx-86459cfc9f-klhw9:/etc/apt/sources.list.d# ping www.baidu.com
+PING www.a.shifen.com (180.97.33.107): 56 data bytes
+64 bytes from 180.97.33.107: icmp_seq=0 ttl=48 time=33.908 ms
+64 bytes from 180.97.33.107: icmp_seq=1 ttl=48 time=33.988 ms
+64 bytes from 180.97.33.107: icmp_seq=2 ttl=48 time=34.005 ms
+64 bytes from 180.97.33.107: icmp_seq=3 ttl=48 time=34.096 ms
+64 bytes from 180.97.33.107: icmp_seq=4 ttl=48 time=34.045 ms
+64 bytes from 180.97.33.107: icmp_seq=5 ttl=48 time=34.010 ms
+64 bytes from 180.97.33.107: icmp_seq=6 ttl=48 time=34.079 ms
+^C--- www.a.shifen.com ping statistics ---
+7 packets transmitted, 7 packets received, 0% packet loss
+round-trip min/avg/max/stddev = 33.908/34.019/34.096/0.058 ms
+root@my-nginx-86459cfc9f-klhw9:/etc/apt/sources.list.d# 
+root@my-nginx-86459cfc9f-klhw9:/etc/apt/sources.list.d# ping 172.20.2.2
+PING 172.20.2.2 (172.20.2.2): 56 data bytes
+64 bytes from 172.20.2.2: icmp_seq=0 ttl=62 time=1.372 ms
+64 bytes from 172.20.2.2: icmp_seq=1 ttl=62 time=1.072 ms
+64 bytes from 172.20.2.2: icmp_seq=2 ttl=62 time=1.069 ms
+64 bytes from 172.20.2.2: icmp_seq=3 ttl=62 time=0.978 ms
+64 bytes from 172.20.2.2: icmp_seq=4 ttl=62 time=1.144 ms
+64 bytes from 172.20.2.2: icmp_seq=5 ttl=62 time=1.121 ms
+^C--- 172.20.2.2 ping statistics ---
+6 packets transmitted, 6 packets received, 0% packet loss
+round-trip min/avg/max/stddev = 0.978/1.126/1.372/0.122 ms
+root@my-nginx-86459cfc9f-klhw9:/etc/apt/sources.list.d# 
+
+
+
 
 
 
