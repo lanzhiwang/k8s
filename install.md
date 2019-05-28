@@ -3258,6 +3258,8 @@ Switched to context "kubernetes".
 
 [root@k8s-master1 ssl]# 
 
+# https://www.cnblogs.com/xzkzzz/p/9920743.html
+# https://www.cnblogs.com/linuxk/p/9783510.html
 
 
 
