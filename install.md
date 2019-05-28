@@ -2439,6 +2439,7 @@ kube-system   kube-flannel-ds-amd64-vlwws             1/1     Running           
 ```bash
 
 # 参考 https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/
+# 参考 http://dockone.io/article/4884
 
 Dashboard 部署以下资源 
 Secrets
@@ -3138,6 +3139,77 @@ tcp        0      0 0.0.0.0:8443            0.0.0.0:*               LISTEN      
 
 
 
+# 准备 dashboard 使用的证书签名请求
+[root@k8s-master1 ssl]# vim ./dashboard.json
+[root@k8s-master1 ssl]# cat ./dashboard.json
+{
+  "CN": "admin",
+  "hosts": [
+    "127.0.0.1",
+    "10.1.36.43",
+    "10.1.36.44",
+    "10.1.36.45",
+    "10.1.36.46",
+    "10.1.36.47",
+    "10.1.36.48",
+    "10.1.36.49",
+    "kubernetes",
+    "kubernetes.default",
+    "kubernetes.default.svc",
+    "kubernetes.default.svc.cluster",
+    "kubernetes.default.svc.cluster.local"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "CN",
+      "ST": "hubeisheng",
+      "L": "wuhanshi",
+      "O": "system:masters",
+      "OU": "System"
+    }
+  ]
+}
+[root@k8s-master1 ssl]# 
+
+[root@k8s-master1 ssl]# ./cfssl gencert -ca=./ca.pem -ca-key=./ca-key.pem -config=./ca-config.json -profile=kubernetes dashboard.json | ./cfssljson -bare dashboard
+2019/05/28 15:31:27 [INFO] generate received request
+2019/05/28 15:31:27 [INFO] received CSR
+2019/05/28 15:31:27 [INFO] generating key: rsa-2048
+2019/05/28 15:31:27 [INFO] encoded CSR
+2019/05/28 15:31:27 [INFO] signed certificate with serial number 26305284186960759903685091901735121795326008234
+2019/05/28 15:31:27 [WARNING] This certificate lacks a "hosts" field. This makes it unsuitable for
+websites. For more information see the Baseline Requirements for the Issuance and Management
+of Publicly-Trusted Certificates, v.1.1.6, from the CA/Browser Forum (https://cabforum.org);
+specifically, section 10.2.3 ("Information Requirements").
+[root@k8s-master1 ssl]# 
+[root@k8s-master1 ssl]# 
+
+dashboard.json
+
+dashboard.csr
+dashboard-key.pem
+dashboard.pem
+
+
+[root@k8s-master1 ssl]# kubectl get secret --all-namespaces -o wide
+NAMESPACE         NAME                               TYPE                                  DATA   AGE
+default           default-token-lz2dc                kubernetes.io/service-account-token   3      6d23h
+kube-node-lease   default-token-wr6r8                kubernetes.io/service-account-token   3      6d23h
+kube-public       default-token-l9mvf                kubernetes.io/service-account-token   3      6d23h
+kube-system       default-token-w8zxk                kubernetes.io/service-account-token   3      6d23h
+kube-system       flannel-token-4f2g9                kubernetes.io/service-account-token   3      6d20h
+kube-system       kubernetes-dashboard-certs         Opaque                                0      6d19h
+kube-system       kubernetes-dashboard-csrf          Opaque                                1      6d19h
+kube-system       kubernetes-dashboard-key-holder    Opaque                                2      6d17h
+kube-system       kubernetes-dashboard-token-w6fdt   kubernetes.io/service-account-token   3      6d19h
+[root@k8s-master1 ssl]# 
+
+
+kubectl -n kube-system create secret generic kubernetes-dashboard-certs --from-file=./dashboard-key.pem --from-file=./dashboard.pem
 ```
 
 
