@@ -1,5 +1,8 @@
 ## kubernetes role 相关内容
 
+![](./images/role.svg)
+
+
 ```bash
 
 # 查看所有的 ClusterRole
