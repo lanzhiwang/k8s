@@ -2906,3 +2906,232 @@ root@my-nginx-86459cfc9f-klhw9:/etc/apt/sources.list.d#
 
 
 ```
+
+
+### 负载均衡
+
+nginx 做四层和七层负载均衡
+
+```bash
+[root@k8s-master1 ~]# rpm -ql nginx.x86_64
+/etc/logrotate.d/nginx
+/etc/nginx
+/etc/nginx/conf.d
+/etc/nginx/conf.d/default.conf
+/etc/nginx/fastcgi_params
+/etc/nginx/koi-utf
+/etc/nginx/koi-win
+/etc/nginx/mime.types
+/etc/nginx/modules
+/etc/nginx/nginx.conf
+/etc/nginx/scgi_params
+/etc/nginx/uwsgi_params
+/etc/nginx/win-utf
+/etc/sysconfig/nginx
+/etc/sysconfig/nginx-debug
+/usr/lib/systemd/system/nginx-debug.service
+/usr/lib/systemd/system/nginx.service
+/usr/lib64/nginx
+/usr/lib64/nginx/modules
+/usr/libexec/initscripts/legacy-actions/nginx
+/usr/libexec/initscripts/legacy-actions/nginx/check-reload
+/usr/libexec/initscripts/legacy-actions/nginx/upgrade
+/usr/sbin/nginx
+/usr/sbin/nginx-debug
+/usr/share/doc/nginx-1.16.0
+/usr/share/doc/nginx-1.16.0/COPYRIGHT
+/usr/share/man/man8/nginx.8.gz
+/usr/share/nginx
+/usr/share/nginx/html
+/usr/share/nginx/html/50x.html
+/usr/share/nginx/html/index.html
+/var/cache/nginx
+/var/log/nginx
+[root@k8s-master1 ~]# 
+
+
+[root@k8s-master1 nginx]# cat nginx.conf 
+
+user  nginx;
+worker_processes  1;
+
+error_log  /var/log/nginx/error.log warn;
+pid        /var/run/nginx.pid;
+
+
+events {
+    worker_connections  1024;
+}
+
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log  /var/log/nginx/access.log  main;
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    keepalive_timeout  65;
+
+    #gzip  on;
+
+    include /etc/nginx/conf.d/*.conf;
+}
+[root@k8s-master1 nginx]# 
+
+
+[root@k8s-master1 nginx]# cat conf.d/default.conf 
+server {
+    listen       80;
+    server_name  localhost;
+
+    #charset koi8-r;
+    #access_log  /var/log/nginx/host.access.log  main;
+
+    location / {
+        root   /usr/share/nginx/html;
+        index  index.html index.htm;
+    }
+
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+
+    # proxy the PHP scripts to Apache listening on 127.0.0.1:80
+    #
+    #location ~ \.php$ {
+    #    proxy_pass   http://127.0.0.1;
+    #}
+
+    # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+    #
+    #location ~ \.php$ {
+    #    root           html;
+    #    fastcgi_pass   127.0.0.1:9000;
+    #    fastcgi_index  index.php;
+    #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+    #    include        fastcgi_params;
+    #}
+
+    # deny access to .htaccess files, if Apache's document root
+    # concurs with nginx's one
+    #
+    #location ~ /\.ht {
+    #    deny  all;
+    #}
+}
+
+[root@k8s-master1 nginx]# 
+
+
+# nginx 做七层负载均衡
+[root@k8s-master1 nginx]# cat conf.d/k8s.conf
+upstream k8s {
+    server 10.1.36.43:6443;
+    server 10.1.36.44:6443;
+}
+
+server {
+    listen 8443;
+    
+    location / {
+        proxy_pass http://k8s;
+    }
+}
+
+
+# nginx 做四层负载均衡
+
+nginx 在 1.9.0 的时候，增加了一个 stream 模块，用来实现四层协议（网络层和传输层）的转发、代理、负载均衡等。stream 模块的用法跟 http 的用法类似，允许我们配置一组 TCP 或者 UDP 等协议的监听，然后通过 proxy_pass 来转发我们的请求，通过 upstream 添加多个后端服务，实现负载均衡。
+
+nginx 默认是没有编译这个模块的，要使用 stream 模块，编译的时候记得加上 --with-stream 这个参数即可。
+
+# 检查是否编译了 stream 模块（是否包含 --with-stream 选项）
+[root@k8s-master1 nginx]# /usr/sbin/nginx -V
+nginx version: nginx/1.16.0
+built by gcc 4.8.5 20150623 (Red Hat 4.8.5-36) (GCC) 
+built with OpenSSL 1.0.2k-fips  26 Jan 2017
+TLS SNI support enabled
+configure arguments: --prefix=/etc/nginx --sbin-path=/usr/sbin/nginx --modules-path=/usr/lib64/nginx/modules --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log --pid-path=/var/run/nginx.pid --lock-path=/var/run/nginx.lock --http-client-body-temp-path=/var/cache/nginx/client_temp --http-proxy-temp-path=/var/cache/nginx/proxy_temp --http-fastcgi-temp-path=/var/cache/nginx/fastcgi_temp --http-uwsgi-temp-path=/var/cache/nginx/uwsgi_temp --http-scgi-temp-path=/var/cache/nginx/scgi_temp --user=nginx --group=nginx --with-compat --with-file-aio --with-threads --with-http_addition_module --with-http_auth_request_module --with-http_dav_module --with-http_flv_module --with-http_gunzip_module --with-http_gzip_static_module --with-http_mp4_module --with-http_random_index_module --with-http_realip_module --with-http_secure_link_module --with-http_slice_module --with-http_ssl_module --with-http_stub_status_module --with-http_sub_module --with-http_v2_module --with-mail --with-mail_ssl_module --with-stream --with-stream_realip_module --with-stream_ssl_module --with-stream_ssl_preread_module --with-cc-opt='-O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -fPIC' --with-ld-opt='-Wl,-z,relro -Wl,-z,now -pie'
+[root@k8s-master1 nginx]# 
+
+
+
+
+在 nginx.conf 默认配置文件里面，默认没有 stream 的配置。stream 模块的配置跟 http 配置是同级的，因此要注意不要写到http里面。
+
+[root@k8s-master1 nginx]# cat nginx.conf 
+
+user  nginx;
+worker_processes  1;
+
+error_log  /var/log/nginx/error.log warn;
+pid        /var/run/nginx.pid;
+
+
+events {
+    worker_connections  1024;
+}
+
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log  /var/log/nginx/access.log  main;
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    keepalive_timeout  65;
+
+    #gzip  on;
+
+    include /etc/nginx/conf.d/*.conf;
+}
+
+# nginx 做四层负载均衡
+stream {
+    log_format main '$remote_addr $upstream_addr - [$time_local] $status $upstream_bytes_sent';
+    access_log /var/log/nginx/k8s-access.log main;
+    upstream k8s-apiserver {
+        server 10.1.36.43:6443;
+        server 10.1.36.44:6443;
+    }
+    server {
+        listen 8443;
+        proxy_pass k8s-apiserver;
+    }
+}
+
+[root@k8s-master1 nginx]# 
+
+# 检查配置是否正确
+[root@k8s-master1 nginx]# /usr/sbin/nginx -t
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+[root@k8s-master1 nginx]# 
+
+
+
+
+
+
+```
+
+
