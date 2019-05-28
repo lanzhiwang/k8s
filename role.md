@@ -1,14 +1,8 @@
+## kubernetes role 相关内容
+
 ```bash
 
-
-ClusterRoleBinding
-ClusterRole
-RoleBinding
-Role
-
-
-
-
+# 查看所有的 ClusterRole
 [root@k8s-master1 ssl]# kubectl get ClusterRole -o wide
 NAME                                                                   AGE
 admin                                                                  7d1h
@@ -69,6 +63,7 @@ view                                                                   7d1h
 [root@k8s-master1 ssl]# 
 
 
+# 查看某个具体的 ClusterRole 详细信息（显示详细的权限列表）
 [root@k8s-master1 ssl]# kubectl describe ClusterRole  admin
 Name:         admin
 Labels:       kubernetes.io/bootstrapping=rbac-defaults
@@ -140,11 +135,24 @@ PolicyRule:
              [*]                []              [*]
 [root@k8s-master1 ssl]# 
 
+# 查看所有的 Role
+[root@k8s-master1 ssl]# kubectl get Role --all-namespaces -o wide
+NAMESPACE     NAME                                             AGE
+kube-public   system:controller:bootstrap-signer               7d1h
+kube-system   extension-apiserver-authentication-reader        7d1h
+kube-system   kubernetes-dashboard-minimal                     6d22h
+kube-system   system::leader-locking-kube-controller-manager   7d1h
+kube-system   system::leader-locking-kube-scheduler            7d1h
+kube-system   system:controller:bootstrap-signer               7d1h
+kube-system   system:controller:cloud-provider                 7d1h
+kube-system   system:controller:token-cleaner                  7d1h
+[root@k8s-master1 ssl]# 
+
+# 显示 Role 的权限列表
 
 
-
-
-
+# 显示所有的 ClusterRoleBinding（ClusterRole->USERS、GROUPS、SERVICEACCOUNTS）
+# 没有 USERS、GROUPS 资源，只能从绑定信息中定义和显示 USERS、GROUPS 信息
 [root@k8s-master1 ssl]# kubectl get ClusterRoleBinding  -o wide
 NAME                                                   AGE     ROLE                                                               USERS                            GROUPS                                         SERVICEACCOUNTS
 cluster-admin                                          7d1h    ClusterRole/cluster-admin                                                                           system:masters                                 
@@ -186,6 +194,8 @@ system:node-proxier                                    7d1h    ClusterRole/syste
 system:public-info-viewer                              7d1h    ClusterRole/system:public-info-viewer                                                               system:authenticated, system:unauthenticated   
 system:volume-scheduler                                7d1h    ClusterRole/system:volume-scheduler                                system:kube-scheduler                                                           
 [root@k8s-master1 ssl]# 
+
+# 显示一个具体的 ClusterRoleBinding 详细信息
 [root@k8s-master1 ssl]# kubectl describe ClusterRoleBinding  cluster-admin
 Name:         cluster-admin
 Labels:       kubernetes.io/bootstrapping=rbac-defaults
@@ -199,8 +209,23 @@ Subjects:
   Group  system:masters  
 [root@k8s-master1 ssl]# 
 
+# 显示所有的 RoleBinding（Role->USERS、GROUPS、SERVICEACCOUNTS）
+# 没有 USERS、GROUPS 资源，只能从绑定信息中定义和显示 USERS、GROUPS 信息
+[root@k8s-master1 ssl]# kubectl get RoleBinding --all-namespaces -o wide
+NAMESPACE     NAME                                                AGE     ROLE                                                  USERS                                                   GROUPS   SERVICEACCOUNTS
+kube-public   system:controller:bootstrap-signer                  7d2h    Role/system:controller:bootstrap-signer                                                                                kube-system/bootstrap-signer
+kube-system   kubernetes-dashboard-minimal                        6d22h   Role/kubernetes-dashboard-minimal                                                                                      kube-system/kubernetes-dashboard
+kube-system   system::extension-apiserver-authentication-reader   7d2h    Role/extension-apiserver-authentication-reader        system:kube-controller-manager, system:kube-scheduler            
+kube-system   system::leader-locking-kube-controller-manager      7d2h    Role/system::leader-locking-kube-controller-manager   system:kube-controller-manager                                   kube-system/kube-controller-manager
+kube-system   system::leader-locking-kube-scheduler               7d2h    Role/system::leader-locking-kube-scheduler            system:kube-scheduler                                            kube-system/kube-scheduler
+kube-system   system:controller:bootstrap-signer                  7d2h    Role/system:controller:bootstrap-signer                                                                                kube-system/bootstrap-signer
+kube-system   system:controller:cloud-provider                    7d2h    Role/system:controller:cloud-provider                                                                                  kube-system/cloud-provider
+kube-system   system:controller:token-cleaner                     7d2h    Role/system:controller:token-cleaner                                                                                   kube-system/token-cleaner
+[root@k8s-master1 ssl]# 
 
 
+# 显示所有的 ServiceAccount
+# 没有 USERS、GROUPS 资源，只能从绑定信息中定义和显示 USERS、GROUPS 信息
 [root@k8s-master1 ssl]# kubectl get ServiceAccount --all-namespaces -o wide
 NAMESPACE         NAME                   SECRETS   AGE
 default           default                1         7d
@@ -211,7 +236,10 @@ kube-system       flannel                1         6d21h
 kube-system       kubernetes-dashboard   1         6d21h
 [root@k8s-master1 ssl]# 
 
-
+# 显示某个 ServiceAccount 的详细信息
+# 详细信息中有与 ServiceAccount 相关联的 secrets 信息
+# 详细信息中有与 ServiceAccount 相关联的 Tokens 信息
+# 没有 Tokens 资源，只有在相关联的 secrets 信息中查找 Tokens 信息
 [root@k8s-master1 ssl]# kubectl describe ServiceAccount default  -n kube-system  
 Name:                default
 Namespace:           kube-system
@@ -234,6 +262,8 @@ Tokens:              flannel-token-4f2g9
 Events:              <none>
 [root@k8s-master1 ssl]# 
 
+# 显示与 ServiceAccount 相关联的 secrets 信息
+# 同时显示 token 信息
 [root@k8s-master1 ssl]# kubectl describe secrets  default-token-w8zxk  -n kube-system  
 Name:         default-token-w8zxk
 Namespace:    kube-system
@@ -252,7 +282,7 @@ token:      eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2V
 [root@k8s-master1 ssl]# 
 
 
-
+# 显示所有的 secrets 信息
 [root@k8s-master1 ssl]# kubectl get secrets --all-namespaces -o wide
 NAMESPACE         NAME                               TYPE                                  DATA   AGE
 default           default-token-lz2dc                kubernetes.io/service-account-token   3      7d1h
@@ -266,10 +296,53 @@ kube-system       kubernetes-dashboard-key-holder    Opaque                     
 kube-system       kubernetes-dashboard-token-w6fdt   kubernetes.io/service-account-token   3      6d21h
 [root@k8s-master1 ssl]# 
 
+# secrets 有不同的类型
+# Opaque 类型的 secrets 没有 token 信息
+[root@k8s-master1 ssl]# kubectl describe secrets  kubernetes-dashboard-certs  -n kube-system  
+Name:         kubernetes-dashboard-certs
+Namespace:    kube-system
+Labels:       k8s-app=kubernetes-dashboard
+Annotations:  
+Type:         Opaque
+
+Data
+====
+[root@k8s-master1 ssl]# 
 
 
 
 
+# 在创建 binding 时创建 user 和 group 的方法
+[root@k8s-master1 ssl]# kubectl create rolebinding --help
+Create a RoleBinding for a particular Role or ClusterRole.
+
+Examples:
+  # Create a RoleBinding for user1, user2, and group1 using the admin ClusterRole
+  kubectl create rolebinding admin --clusterrole=admin --user=user1 --user=user2 --group=group1
+
+Options:
+      --allow-missing-template-keys=true: If true, ignore any errors in templates when a field or map key is missing in
+the template. Only applies to golang and jsonpath output formats.
+      --clusterrole='': ClusterRole this RoleBinding should reference
+      --dry-run=false: If true, only print the object that would be sent, without sending it.
+      --generator='rolebinding.rbac.authorization.k8s.io/v1alpha1': The name of the API generator to use.
+      --group=[]: Groups to bind to the role
+  -o, --output='': Output format. One of:
+json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-file.
+      --role='': Role this RoleBinding should reference
+      --save-config=false: If true, the configuration of current object will be saved in its annotation. Otherwise, the
+annotation will be unchanged. This flag is useful when you want to perform kubectl apply on this object in the future.
+      --serviceaccount=[]: Service accounts to bind to the role, in the format <namespace>:<name>
+      --template='': Template string or path to template file to use when -o=go-template, -o=go-template-file. The
+template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].
+      --validate=true: If true, use a schema to validate the input before sending it
+
+Usage:
+  kubectl create rolebinding NAME --clusterrole=NAME|--role=NAME [--user=username] [--group=groupname]
+[--serviceaccount=namespace:serviceaccountname] [--dry-run] [options]
+
+Use "kubectl options" for a list of global command-line options (applies to all commands).
+[root@k8s-master1 ssl]# 
 
 
 
