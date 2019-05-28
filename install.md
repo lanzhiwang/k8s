@@ -3261,11 +3261,48 @@ Switched to context "kubernetes".
 # https://www.cnblogs.com/xzkzzz/p/9920743.html
 # https://www.cnblogs.com/linuxk/p/9783510.html
 
+# 创建 ServiceAccount
+[root@k8s-master1 ssl]# kubectl create serviceaccount dashboard-admin -n default 
+serviceaccount/dashboard-admin created
+[root@k8s-master1 ssl]# 
+
+# service account 绑定到集群角色 admin
+[root@k8s-master1 ssl]# kubectl create rolebinding dashboard-admin --clusterrole=admin --serviceaccount=default:dashboard-admin
+rolebinding.rbac.authorization.k8s.io/dashboard-admin created
+[root@k8s-master1 ssl]# 
+
+
+[root@k8s-master1 ssl]# kubectl create clusterrolebinding dashboard-admin --clusterrole=cluster-admin --serviceaccount=default:dashboard-admin
+clusterrolebinding.rbac.authorization.k8s.io/dashboard-admin created
+[root@k8s-master1 ssl]# 
 
 
 
+[root@k8s-master1 ssl]# kubectl describe ServiceAccount dashboard-admin -n default
+Name:                dashboard-admin
+Namespace:           default
+Labels:              <none>
+Annotations:         <none>
+Image pull secrets:  <none>
+Mountable secrets:   dashboard-admin-token-f4vdx
+Tokens:              dashboard-admin-token-f4vdx
+Events:              <none>
+[root@k8s-master1 ssl]# 
+[root@k8s-master1 ssl]# kubectl describe secrets dashboard-admin-token-f4vdx -n default
+Name:         dashboard-admin-token-f4vdx
+Namespace:    default
+Labels:       <none>
+Annotations:  kubernetes.io/service-account.name: dashboard-admin
+              kubernetes.io/service-account.uid: 941d146a-8134-11e9-8f1f-0017fa00a076
 
+Type:  kubernetes.io/service-account-token
 
+Data
+====
+ca.crt:     1371 bytes
+namespace:  7 bytes
+token:      eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6ImRhc2hib2FyZC1hZG1pbi10b2tlbi1mNHZkeCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50Lm5hbWUiOiJkYXNoYm9hcmQtYWRtaW4iLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiI5NDFkMTQ2YS04MTM0LTExZTktOGYxZi0wMDE3ZmEwMGEwNzYiLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6ZGVmYXVsdDpkYXNoYm9hcmQtYWRtaW4ifQ.0V_4-Eys8ys45oU5QW7FDfuFupDd0uJMdIRkLt4kjTfT6rZ9_DvPHdJEZCwc9xjhTBiMEHVEoc67E16A65cSRPqEHfhMFwOV99oDy6hGigfdQNcNl4BPv7z40MfXek37VsTi0Gdip_GimOZEs1Z2kBCgy5Dm_rzX9KTrBYjwnUKwK3UXNigxOqyZdTq1Y4zExdFlevAJxM3hd59T1ClMYw43YjkFP88zgcS7T5AiOSvFlWaQ2FRHRIRAhNR3sA9RA0REf91o7KR0rerYL4pULvxfLG0dKlZBf9HpBbxNcdYnHvpNU-FCssB0RstTZsG9xBQ-gauFRBDkvykNsFTchA
+[root@k8s-master1 ssl]# 
 
 
 
