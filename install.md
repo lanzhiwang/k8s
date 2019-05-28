@@ -3128,6 +3128,11 @@ nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
 nginx: configuration file /etc/nginx/nginx.conf test is successful
 [root@k8s-master1 nginx]# 
 
+[root@k8s-linux-worker3 ssl]# netstat -tulnp | grep 8443
+tcp        0      0 0.0.0.0:8443            0.0.0.0:*               LISTEN      109929/nginx: maste 
+[root@k8s-linux-worker3 ssl]# 
+
+
 
 
 
