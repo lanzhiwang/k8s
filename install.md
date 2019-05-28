@@ -3138,7 +3138,7 @@ tcp        0      0 0.0.0.0:8443            0.0.0.0:*               LISTEN      
 
 
 
-
+# https://www.jianshu.com/p/c6d560d12d50
 # 准备 dashboard 使用的证书签名请求
 [root@k8s-master1 ssl]# vim ./dashboard.json
 [root@k8s-master1 ssl]# cat ./dashboard.json
@@ -3207,9 +3207,70 @@ kube-system       kubernetes-dashboard-csrf          Opaque                     
 kube-system       kubernetes-dashboard-key-holder    Opaque                                2      6d17h
 kube-system       kubernetes-dashboard-token-w6fdt   kubernetes.io/service-account-token   3      6d19h
 [root@k8s-master1 ssl]# 
+[root@k8s-master1 ssl]# kubectl delete secret -n kube-system kubernetes-dashboard-certs
+secret "kubernetes-dashboard-certs" deleted
+[root@k8s-master1 ssl]# 
+[root@k8s-master1 ssl]# kubectl get secret --all-namespaces -o wide
+NAMESPACE         NAME                               TYPE                                  DATA   AGE
+default           default-token-lz2dc                kubernetes.io/service-account-token   3      6d23h
+kube-node-lease   default-token-wr6r8                kubernetes.io/service-account-token   3      6d23h
+kube-public       default-token-l9mvf                kubernetes.io/service-account-token   3      6d23h
+kube-system       default-token-w8zxk                kubernetes.io/service-account-token   3      6d23h
+kube-system       flannel-token-4f2g9                kubernetes.io/service-account-token   3      6d20h
+kube-system       kubernetes-dashboard-csrf          Opaque                                1      6d19h
+kube-system       kubernetes-dashboard-key-holder    Opaque                                2      6d17h
+kube-system       kubernetes-dashboard-token-w6fdt   kubernetes.io/service-account-token   3      6d19h
+[root@k8s-master1 ssl]# 
+
+[root@k8s-master1 ssl]# 
+[root@k8s-master1 ssl]# kubectl -n kube-system create secret generic kubernetes-dashboard-certs --from-file=./dashboard-key.pem --from-file=./dashboard.pem
+secret/kubernetes-dashboard-certs created
+[root@k8s-master1 ssl]# 
+[root@k8s-master1 ssl]# kubectl get secret --all-namespaces -o wide
+NAMESPACE         NAME                               TYPE                                  DATA   AGE
+default           default-token-lz2dc                kubernetes.io/service-account-token   3      6d23h
+kube-node-lease   default-token-wr6r8                kubernetes.io/service-account-token   3      6d23h
+kube-public       default-token-l9mvf                kubernetes.io/service-account-token   3      6d23h
+kube-system       default-token-w8zxk                kubernetes.io/service-account-token   3      6d23h
+kube-system       flannel-token-4f2g9                kubernetes.io/service-account-token   3      6d20h
+kube-system       kubernetes-dashboard-certs         Opaque                                2      3s
+kube-system       kubernetes-dashboard-csrf          Opaque                                1      6d19h
+kube-system       kubernetes-dashboard-key-holder    Opaque                                2      6d17h
+kube-system       kubernetes-dashboard-token-w6fdt   kubernetes.io/service-account-token   3      6d19h
+[root@k8s-master1 ssl]# 
 
 
-kubectl -n kube-system create secret generic kubernetes-dashboard-certs --from-file=./dashboard-key.pem --from-file=./dashboard.pem
+
+[root@k8s-master1 ssl]# 
+[root@k8s-master1 ssl]# kubectl config set-cluster kubernetes --certificate-authority=./ca.pem --embed-certs=true --server=https://10.1.36.43:6443 --kubeconfig=./dashboard.kubeconfig
+Cluster "kubernetes" set.
+[root@k8s-master1 ssl]# 
+[root@k8s-master1 ssl]# kubectl config set-credentials admin --client-certificate=./dashboard.pem --embed-certs=true --client-key=./dashboard-key.pem --kubeconfig=./dashboard.kubeconfig
+User "admin" set.
+[root@k8s-master1 ssl]# 
+[root@k8s-master1 ssl]# kubectl config set-context kubernetes --cluster=kubernetes --user=admin --kubeconfig=./dashboard.kubeconfig
+Context "kubernetes" created.
+[root@k8s-master1 ssl]# 
+[root@k8s-master1 ssl]# kubectl config use-context kubernetes --kubeconfig=./dashboard.kubeconfig
+Switched to context "kubernetes".
+[root@k8s-master1 ssl]# 
+[root@k8s-master1 ssl]# sz dashboard.kubeconfig 
+
+[root@k8s-master1 ssl]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ```
 
 
