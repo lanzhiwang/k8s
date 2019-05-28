@@ -1,6 +1,6 @@
 ## k8s install
 
-
+[kubernetes高可用架构](https://blog.csdn.net/sinat_35930259/article/details/80411878)
 
 
 ### 相关配置
@@ -1452,7 +1452,8 @@ tcp6       0      0 :::10259                :::*                    LISTEN      
 
 
 # 为 kubectl 设置集群参数，指定 CA 证书和 apiserver 地址
-[root@k8s-master1 bin]# ./kubectl config set-cluster kubernetes --certificate-authority=/opt/k8s/ssl/ca.pem --embed-certs=true --server=https://10.1.36.43:6443
+# [root@k8s-master1 bin]# ./kubectl config set-cluster kubernetes --certificate-authority=/opt/k8s/ssl/ca.pem --embed-certs=true --server=https://10.1.36.43:6443
+[root@k8s-master1 bin]# ./kubectl config set-cluster kubernetes --certificate-authority=/opt/k8s/ssl/ca.pem --embed-certs=true --server=https://127.0.0.1:8443
 Cluster "kubernetes" set.
 [root@k8s-master1 bin]# 
 [root@k8s-master1 bin]# 
@@ -1719,8 +1720,9 @@ kubelet-key.pem
 kubelet.pem
 
 
-# 设置 kubelet 集群参数（？集群参数问题）
-[root@k8s-linux-worker1 bin]# ./kubectl config set-cluster kubernetes --certificate-authority=/opt/k8s/ssl/ca.pem --embed-certs=true --server=https://10.1.36.43:6443 --kubeconfig=/opt/k8s/temp/ssl/kubelet.kubeconfig
+# 设置 kubelet 集群参数（apiserver 地址使用 nginx 负载均衡的 8443 端口）
+# [root@k8s-linux-worker1 bin]# ./kubectl config set-cluster kubernetes --certificate-authority=/opt/k8s/ssl/ca.pem --embed-certs=true --server=https://10.1.36.43:6443 --kubeconfig=/opt/k8s/temp/ssl/kubelet.kubeconfig
+[root@k8s-linux-worker1 bin]# ./kubectl config set-cluster kubernetes --certificate-authority=/opt/k8s/ssl/ca.pem --embed-certs=true --server=https://127.0.0.1:8443 --kubeconfig=/opt/k8s/temp/ssl/kubelet.kubeconfig
 Cluster "kubernetes" set.
 [root@k8s-linux-worker1 bin]# 
 [root@k8s-linux-worker1 bin]# cat /opt/k8s/temp/ssl/kubelet.kubeconfig
@@ -1728,7 +1730,7 @@ apiVersion: v1
 clusters:
 - cluster:
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUR4akNDQXE2Z0F3SUJBZ0lVS2N0enNHZ2FXbkh5N3VWN2lUeHhyVm1tRHYwd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2FURUxNQWtHQTFVRUJoTUNRMDR4RXpBUkJnTlZCQWdUQ21oMVltVnBjMmhsYm1jeEVUQVBCZ05WQkFjVApDSGQxYUdGdWMyaHBNUXd3Q2dZRFZRUU
-    server: https://10.1.36.43:6443
+    server: https://127.0.0.1:8443
   name: kubernetes
 contexts: []
 current-context: ""
@@ -1753,7 +1755,7 @@ apiVersion: v1
 clusters:
 - cluster:
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUR4akNDQXE2Z0F3SUJBZ0lVS2N0enNHZ2FXbkh5N3VWN2lUeHhyVm1tRHYwd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2FURUxNQWtHQTFVRUJoTUNRMDR4RXpBUkJnTlZCQWdUQ21oMVltVnBjMmhsYm1jeEVUQVBCZ05WQkFjVApDSGQxYUdGdWMyaHBNUXd3Q2dZRFZRUU
-    server: https://10.1.36.43:6443
+    server: https://127.0.0.1:8443
   name: kubernetes
 contexts: []
 current-context: ""
@@ -1783,7 +1785,7 @@ apiVersion: v1
 clusters:
 - cluster:
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUR4akNDQXE2Z0F3SUJBZ0lVS2N0enNHZ2FXbkh5N3VWN2lUeHhyVm1tRHYwd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2FURUxNQWtHQTFVRUJoTUNRMDR4RXpBUkJnTlZCQWdUQ21oMVltVnBjMmhsYm1jeEVUQVBCZ05WQkFjVApDSGQxYUdGdWMyaHBNUXd3Q2dZRFZRUU
-    server: https://10.1.36.43:6443
+    server: https://127.0.0.1:8443
   name: kubernetes
 contexts:
 - context:
@@ -1808,7 +1810,7 @@ apiVersion: v1
 clusters:
 - cluster:
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUR4akNDQXE2Z0F3SUJBZ0lVS2N0enNHZ2FXbkh5N3VWN2lUeHhyVm1tRHYwd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2FURUxNQWtHQTFVRUJoTUNRMDR4RXpBUkJnTlZCQWdUQ21oMVltVnBjMmhsYm1jeEVUQVBCZ05WQkFjVApDSGQxYUdGdWMyaHBNUXd3Q2dZRFZRUU
-    server: https://10.1.36.43:6443
+    server: https://127.0.0.1:8443
   name: kubernetes
 contexts:
 - context:
@@ -2064,8 +2066,9 @@ kube-proxy.csr
 kube-proxy-key.pem
 kube-proxy.pem
 
-# 为 kube-proxy 设置集群参数，参数保存到 kube-proxy.kubeconfig 文件中（？集群连接参数）
-[root@k8s-linux-worker1 bin]# ./kubectl config set-cluster kubernetes --certificate-authority=/opt/k8s/ssl/ca.pem --embed-certs=true --server=https://10.1.36.43:6443 --kubeconfig=/opt/k8s/temp/ssl/kube-proxy.kubeconfig
+# 为 kube-proxy 设置集群参数，参数保存到 kube-proxy.kubeconfig 文件中（apiserver 地址使用 nginx 负载均衡的 8443 端口）
+# [root@k8s-linux-worker1 bin]# ./kubectl config set-cluster kubernetes --certificate-authority=/opt/k8s/ssl/ca.pem --embed-certs=true --server=https://10.1.36.43:6443 --kubeconfig=/opt/k8s/temp/ssl/kube-proxy.kubeconfig
+[root@k8s-linux-worker1 bin]# ./kubectl config set-cluster kubernetes --certificate-authority=/opt/k8s/ssl/ca.pem --embed-certs=true --server=https://127.0.0.1:8443 --kubeconfig=/opt/k8s/temp/ssl/kube-proxy.kubeconfig
 Cluster "kubernetes" set.
 [root@k8s-linux-worker1 bin]# 
 
@@ -2844,13 +2847,6 @@ kubectl run --generator=deployment/apps.v1 is DEPRECATED and will be removed in 
 deployment.apps/my-nginx created
 [root@k8s-master1 ~]# 
 [root@k8s-master1 ~]# 
-[root@k8s-master1 ~]# kubectl get pod -o wide
-NAME                        READY   STATUS              RESTARTS   AGE   IP           NODE         NOMINATED NODE   READINESS GATES
-my-nginx-86459cfc9f-cpfzg   1/1     Running             0          32s   172.20.0.2   10.1.36.47   <none>           <none>
-my-nginx-86459cfc9f-np8q2   0/1     ContainerCreating   0          31s   <none>       10.1.36.46   <none>           <none>
-my-nginx-86459cfc9f-wg287   1/1     Running             0          31s   172.20.0.3   10.1.36.47   <none>           <none>
-[root@k8s-master1 ~]# 
-[root@k8s-master1 ~]# 
 [root@k8s-master1 ssl]# kubectl get pod  -o wide
 NAME                        READY   STATUS    RESTARTS   AGE   IP            NODE         NOMINATED NODE   READINESS GATES
 my-nginx-86459cfc9f-2mbqq   1/1     Running   0          24m   172.20.2.2    10.1.36.48   <none>           <none>
@@ -2861,6 +2857,11 @@ my-nginx-86459cfc9f-klhw9   1/1     Running   0          24m   172.20.0.3    10.
 [root@k8s-master1 ssl]# 
 
 [root@k8s-master1 ~]# 
+
+[root@k8s-master2 ~]# kubectl get deployment  -o wide
+NAME       READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES   SELECTOR
+my-nginx   5/5     5            5           15h   my-nginx     nginx    run=my-nginx
+[root@k8s-master2 ~]# 
 
 
 kubectl delete deployment  my-nginx
