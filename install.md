@@ -3277,6 +3277,7 @@ stream {
     upstream k8s-apiserver {
         server 10.1.36.43:6443;
         server 10.1.36.44:6443;
+        server 10.1.36.45:6443;
     }
     server {
         listen 8443;
