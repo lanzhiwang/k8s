@@ -718,6 +718,8 @@ $ yum install -y yum-utils device-mapper-persistent-data lvm2
 $ yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 $ yum makecache fast
 $ yum install -y docker-ce
+
+# 还要加上连接参数
 [root@k8s-master1 temp]# mkdir -p /etc/docker /opt/k8s/docker
 [root@k8s-master1 temp]# vim /etc/docker/daemon.json
 [root@k8s-master1 temp]# cat /etc/docker/daemon.json
@@ -1326,6 +1328,62 @@ LimitNOFILE=65536
 [Install]
 WantedBy=multi-user.target
 
+# 创建 kube-apiserver 的 systemd unit 文件，以 10.1.36.45 为例
+[root@k8s-master1 temp]# vim /etc/systemd/system/kube-apiserver.service
+[root@k8s-master1 temp]# cat /etc/systemd/system/kube-apiserver.service
+[Unit]
+Description=Kubernetes API Server
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=network.target
+
+[Service]
+ExecStart=/opt/k8s/bin/kube-apiserver \
+  --etcd-cafile=/opt/k8s/ssl/ca.pem \
+  --etcd-certfile=/opt/k8s/ssl/kubernetes.pem \
+  --etcd-keyfile=/opt/k8s/ssl/kubernetes-key.pem \
+  --etcd-servers=https://10.1.36.43:2379,https://10.1.36.44:2379,https://10.1.36.45:2379 \
+  --bind-address=10.1.36.45 \
+  --tls-cert-file=/opt/k8s/ssl/kubernetes.pem \
+  --tls-private-key-file=/opt/k8s/ssl/kubernetes-key.pem \
+  --insecure-bind-address=127.0.0.1 \
+  --audit-log-maxage=30 \
+  --audit-log-maxbackup=3 \
+  --audit-log-maxsize=100 \
+  --audit-log-path=/opt/k8s/log/audit.log \
+  --enable-swagger-ui=true \
+  --anonymous-auth=false \
+  --basic-auth-file=/opt/k8s/ssl/basic-auth.csv \
+  --client-ca-file=/opt/k8s/ssl/ca.pem \
+  --service-account-key-file=/opt/k8s/ssl/ca-key.pem \
+  --requestheader-client-ca-file=/opt/k8s/ssl/ca.pem \
+  --requestheader-allowed-names= \
+  --requestheader-extra-headers-prefix=X-Remote-Extra- \
+  --requestheader-group-headers=X-Remote-Group \
+  --requestheader-username-headers=X-Remote-User \
+  --authorization-mode=Node,RBAC \
+  --runtime-config=batch/v2alpha1=true \
+  --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota,NodeRestriction,MutatingAdmissionWebhook,ValidatingAdmissionWebhook \
+  --kubelet-https=true \
+  --kubelet-client-certificate=/opt/k8s/ssl/admin.pem \
+  --kubelet-client-key=/opt/k8s/ssl/admin-key.pem \
+  --service-cluster-ip-range=10.68.0.0/16 \
+  --service-node-port-range=20000-40000 \
+  --endpoint-reconciler-type=lease \
+  --allow-privileged=true \
+  --event-ttl=1h \
+  --proxy-client-cert-file=/opt/k8s/ssl/aggregator-proxy.pem \
+  --proxy-client-key-file=/opt/k8s/ssl/aggregator-proxy-key.pem \
+  --enable-aggregator-routing=true \
+  --v=2 \
+  --log-file=/opt/k8s/log/apiserver.log
+  
+Restart=on-failure
+RestartSec=5
+Type=notify
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
 
 
 # 验证版本
@@ -1710,6 +1768,30 @@ mirrorgooglecontainers/pause-amd64   3.1                 da86e6ba6ca1        17 
   ]
 }
 
+# 准备 kubelet 证书签名请求，以 10.1.36.49 为例
+[root@k8s-linux-worker1 ssl]# vim ./kubelet-csr.json 
+[root@k8s-linux-worker1 ssl]# cat ./kubelet-csr.json 
+{
+  "CN": "system:node:10.1.36.49",
+  "hosts": [
+    "127.0.0.1",
+    "10.1.36.49"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "CN",
+      "ST": "hubeisheng",
+      "L": "wuhanshi",
+      "O": "system:nodes",
+      "OU": "System"
+    }
+  ]
+}
+
 
 [root@k8s-linux-worker1 ssl]# ./cfssl gencert -ca=./ca.pem -ca-key=./ca-key.pem -config=./ca-config.json -profile=kubernetes kubelet-csr.json | ./cfssljson -bare kubelet
 
@@ -1750,6 +1832,9 @@ User "system:node:10.1.36.46" set.
 # 设置 kubelet 客户端认证参数，以 10.1.36.48 为例
 [root@k8s-linux-worker1 bin]# ./kubectl config set-credentials system:node:10.1.36.48 --client-certificate=/opt/k8s/ssl/kubelet.pem --embed-certs=true --client-key=/opt/k8s/ssl/kubelet-key.pem --kubeconfig=/opt/k8s/temp/ssl/kubelet.kubeconfig
 
+# 设置 kubelet 客户端认证参数，以 10.1.36.49 为例
+[root@k8s-linux-worker1 bin]# ./kubectl config set-credentials system:node:10.1.36.49 --client-certificate=/opt/k8s/ssl/kubelet.pem --embed-certs=true --client-key=/opt/k8s/ssl/kubelet-key.pem --kubeconfig=/opt/k8s/temp/ssl/kubelet.kubeconfig
+
 [root@k8s-linux-worker1 bin]# cat /opt/k8s/temp/ssl/kubelet.kubeconfig
 apiVersion: v1
 clusters:
@@ -1779,6 +1864,8 @@ Context "default" created.
 # 设置 kubelet 上下文参数，以 10.1.36.48 为例
 [root@k8s-linux-worker1 bin]# ./kubectl config set-context default --cluster=kubernetes --user=system:node:10.1.36.48 --kubeconfig=/opt/k8s/temp/ssl/kubelet.kubeconfig
 
+# 设置 kubelet 上下文参数，以 10.1.36.49 为例
+[root@k8s-linux-worker1 bin]# ./kubectl config set-context default --cluster=kubernetes --user=system:node:10.1.36.49 --kubeconfig=/opt/k8s/temp/ssl/kubelet.kubeconfig
 
 [root@k8s-linux-worker1 bin]# cat /opt/k8s/temp/ssl/kubelet.kubeconfig
 apiVersion: v1
@@ -2015,6 +2102,56 @@ RestartSec=5
 [Install]
 WantedBy=multi-user.target
 
+
+# 创建 kubelet 的systemd unit文件，以 10.1.36.49 为例
+[root@k8s-linux-worker1 bin]# vim /etc/systemd/system/kubelet.service
+[root@k8s-linux-worker1 bin]# cat /etc/systemd/system/kubelet.service
+[Unit]
+Description=Kubernetes Kubelet
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+WorkingDirectory=/opt/k8s/kubelet
+ExecStartPre=/bin/mkdir -p /sys/fs/cgroup/cpuset/system.slice/kubelet.service
+ExecStartPre=/bin/mkdir -p /sys/fs/cgroup/hugetlb/system.slice/kubelet.service
+ExecStartPre=/bin/mkdir -p /sys/fs/cgroup/memory/system.slice/kubelet.service
+ExecStartPre=/bin/mkdir -p /sys/fs/cgroup/pids/system.slice/kubelet.service
+ExecStart=/opt/k8s/bin/kubelet \
+  --address=10.1.36.49 \
+  --allow-privileged=true \
+  --anonymous-auth=false \
+  --authentication-token-webhook \
+  --authorization-mode=Webhook \
+  --client-ca-file=/opt/k8s/ssl/ca.pem \
+  --cluster-dns=10.68.0.2 \
+  --cluster-domain=cluster.local. \
+  --cni-bin-dir=/opt/k8s/bin \
+  --cni-conf-dir=/opt/k8s/cni/net.d \
+  --fail-swap-on=false \
+  --hairpin-mode hairpin-veth \
+  --hostname-override=10.1.36.49 \
+  --kubeconfig=/opt/k8s/ssl/kubelet.kubeconfig \
+  --max-pods=110 \
+  --network-plugin=cni \
+  --pod-infra-container-image=k8s.gcr.io/pause:3.1 \
+  --register-node=true \
+  --root-dir=/opt/k8s/kubelet \
+  --tls-cert-file=/opt/k8s/ssl/kubelet.pem \
+  --tls-private-key-file=/opt/k8s/ssl/kubelet-key.pem \
+  --cgroups-per-qos=true \
+  --cgroup-driver=cgroupfs \
+  --enforce-node-allocatable=pods,kube-reserved \
+  --kube-reserved=cpu=200m,memory=500Mi,ephemeral-storage=1Gi \
+  --kube-reserved-cgroup=/system.slice/kubelet.service \
+  --eviction-hard=memory.available<200Mi,nodefs.available<10% \
+  --log-file=/opt/k8s/log/Kubelet.log \
+  --v=2
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+
 systemctl enable kubelet.service （ systemctl disable kubelet.service ）
 systemctl daemon-reload
 systemctl restart kubelet.service
@@ -2164,6 +2301,32 @@ WorkingDirectory=/opt/k8s/kube-proxy
 ExecStart=/opt/k8s/bin/kube-proxy \
   --bind-address=10.1.36.48 \
   --hostname-override=10.1.36.48 \
+  --kubeconfig=/opt/k8s/ssl/kube-proxy.kubeconfig \
+  --logtostderr=true \
+  --proxy-mode=iptables
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+[root@k8s-linux-worker1 bin]# 
+
+
+# 创建 kube-proxy 服务文件，以 10.1.36.49 为例
+[root@k8s-linux-worker1 bin]# vim /etc/systemd/system/kube-proxy.service
+[root@k8s-linux-worker1 bin]# 
+[root@k8s-linux-worker1 bin]# cat /etc/systemd/system/kube-proxy.service
+[Unit]
+Description=Kubernetes Kube-Proxy Server
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/k8s/kube-proxy
+ExecStart=/opt/k8s/bin/kube-proxy \
+  --bind-address=10.1.36.49 \
+  --hostname-override=10.1.36.49 \
   --kubeconfig=/opt/k8s/ssl/kube-proxy.kubeconfig \
   --logtostderr=true \
   --proxy-mode=iptables
@@ -3128,6 +3291,10 @@ stream {
 nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
 nginx: configuration file /etc/nginx/nginx.conf test is successful
 [root@k8s-master1 nginx]# 
+
+[root@k8s-linux-worker4 ssl]# systemctl start nginx.service
+[root@k8s-linux-worker4 ssl]# systemctl status nginx.service
+
 
 [root@k8s-linux-worker3 ssl]# netstat -tulnp | grep 8443
 tcp        0      0 0.0.0.0:8443            0.0.0.0:*               LISTEN      109929/nginx: maste 
