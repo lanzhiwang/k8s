@@ -1648,7 +1648,7 @@ exit
 
 
 
-################################### MySQL 映射端口启动容器 ###################################
+################################### MySQL 映射端口、环境变量启动容器 ###################################
 
 
 [root@lanzhiwang-centos7 mysql]# docker run --name=mysql1 -e MYSQL_ROOT_PASSWORD=rootpass --mount type=bind,src=/root/work/mysql/my.cnf,dst=/etc/my.cnf --mount type=bind,src=/root/work/mysql/data,dst=/var/lib/mysql --mount type=bind,src=/root/work/mysql/log/mysqld.log,dst=/var/log/mysqld.log -p 3306:3306 -p 33060:33060 -d mysql/mysql-server:5.7
@@ -1754,94 +1754,17 @@ mysql -u root -p -h 127.0.0.1
 
 
 
-
-
 ```
 
 
-### confluence 容器相关
+### MySQL kubernetes 相关
 
 ```bash
 
-[root@lanzhiwang-centos7 ~]# docker images
-REPOSITORY                    TAG                 IMAGE ID            CREATED             SIZE
-atlassian/confluence-server   latest              d843736462f7        13 days ago         862MB
-redis                         latest              d3e3588af517        2 weeks ago         95MB
-nginx                         latest              53f3fd8007f7        3 weeks ago         109MB
-nicolaka/netshoot             latest              b2b51767b54a        3 weeks ago         203MB
-mysql/mysql-server            5.7                 857eadf53a54        4 weeks ago         258MB
-k8s.gcr.io/kube-scheduler     v1.14.0             00638a24688b        2 months ago        81.6MB
-k8s.gcr.io/kube-apiserver     v1.14.0             ecf910f40d6e        2 months ago        210MB
-quay.io/coreos/flannel        v0.11.0-arm         ef3b5d63729b        4 months ago        48.9MB
-[root@lanzhiwang-centos7 ~]# 
-
-
-[root@lanzhiwang-centos7 docker_data]# docker run -v /root/work/confluence/docker_data/confluence_home:/var/atlassian/application-data/confluence --name="confluence" -d -p 8090:8090 -p 8091:8091 atlassian/confluence-server
-1fcb86fa81f94474fa03961a9b717ad86809cd98ba6146825f5c0da487b6b800
-[root@lanzhiwang-centos7 docker_data]# 
-[root@lanzhiwang-centos7 docker_data]# docker ps -a
-CONTAINER ID        IMAGE                         COMMAND                  CREATED             STATUS              PORTS                              NAMES
-1fcb86fa81f9        atlassian/confluence-server   "/tini -- /entrypoin…"   4 seconds ago       Up 3 seconds        0.0.0.0:8090-8091->8090-8091/tcp   confluence
-[root@lanzhiwang-centos7 docker_data]# 
-[root@lanzhiwang-centos7 docker_data]# ll confluence_home/
-total 4
--rw-r----- 1 bin bin 3462 May 30 11:51 confluence.cfg.xml
-drwxr-x--- 2 bin bin  102 May 30 11:51 logs
-drwxr-x--- 2 bin bin   32 May 30 11:51 shared-home
-[root@lanzhiwang-centos7 docker_data]# 
-[root@lanzhiwang-centos7 docker_data]# ll confluence_install/
-total 0
-[root@lanzhiwang-centos7 docker_data]# 
-
-
-[root@lanzhiwang-centos7 docker_data]# docker run -v /root/work/confluence/docker_data/confluence_home:/var/atlassian/application-data/confluence -v /root/work/confluence/docker_data/confluence_install:/opt/atlassian/confluence --name="confluence" -d -p 8090:8090 -p 8091:8091 atlassian/confluence-server
-4a50262c5a8b13e64444c063009c554be74f11f0f1c6fc58c9345f59ac968972
-[root@lanzhiwang-centos7 docker_data]# 
-[root@lanzhiwang-centos7 docker_data]# docker ps -a
-CONTAINER ID        IMAGE                         COMMAND                  CREATED             STATUS              PORTS                              NAMES
-4a50262c5a8b        atlassian/confluence-server   "/tini -- /entrypoin…"   6 seconds ago       Up 4 seconds        0.0.0.0:8090-8091->8090-8091/tcp   confluence
-[root@lanzhiwang-centos7 docker_data]# 
-[root@lanzhiwang-centos7 docker_data]# 
-[root@lanzhiwang-centos7 docker_data]# 
-[root@lanzhiwang-centos7 docker_data]# ll
-total 0
-drwx------  3 bin    bin     18 May 30 12:01 confluence_home
-drwxr-xr-x 12 daemon daemon 314 May  8 11:10 confluence_install
-[root@lanzhiwang-centos7 docker_data]# 
-[root@lanzhiwang-centos7 docker_data]# 
-[root@lanzhiwang-centos7 docker_data]# ll confluence_home/
-total 0
-drwxr-x--- 2 bin bin 102 May 30 12:01 logs
-[root@lanzhiwang-centos7 docker_data]# 
-[root@lanzhiwang-centos7 docker_data]# ll confluence_install/
-total 204
-drwxr-xr-x  3 daemon daemon  4096 May 30 12:00 bin
--rw-r--r--  1 daemon daemon 19743 Apr 12 23:24 BUILDING.txt
-drwxr-xr-x  3 daemon daemon   256 May 30 12:00 conf
-drwxr-xr-x 27 daemon daemon  4096 May 30 12:00 confluence
--rw-r--r--  1 daemon daemon  5543 Apr 12 23:24 CONTRIBUTING.md
-drwxr-xr-x  2 daemon daemon  4096 May 30 12:00 lib
--rw-r--r--  1 daemon daemon 58153 Apr 12 23:24 LICENSE
-drwxr-xr-x  2 daemon daemon 45056 May 30 12:00 licenses
-drwxr-xr-x  2 daemon daemon     6 Apr 12 23:22 logs
--rw-r--r--  1 daemon daemon  2401 Apr 12 23:24 NOTICE
--rw-r--r--  1 daemon daemon  2294 May  8 11:09 README.html
--rw-r--r--  1 daemon daemon  3334 Apr 12 23:24 README.md
--rw-r--r--  1 daemon daemon  1204 May  8 11:09 README.txt
--rw-r--r--  1 daemon daemon  7025 Apr 12 23:24 RELEASE-NOTES
--rw-r--r--  1 daemon daemon 16738 Apr 12 23:24 RUNNING.txt
-drwxr-xr-x  4 daemon daemon    37 May 30 12:00 synchrony-proxy
-drwxr-xr-x  2 daemon daemon    30 May 30 12:00 temp
-drwxr-xr-x  2 daemon daemon     6 May  8 11:10 webapps
-drwxr-xr-x  2 daemon daemon     6 Apr 12 23:22 work
-[root@lanzhiwang-centos7 docker_data]# 
-
-
-
-
-
+# 测试将文件挂载到 kubernetes pod 中
 # 将本地文件 /opt/k8s/volume_data/busybox/busybox.conf 挂载到容器 /home/busybox.conf
 # 要提前将相关目录和文件准备好
+
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -1862,14 +1785,19 @@ spec:
         volumeMounts:
         - mountPath: /home/busybox.conf
           name: conf
-          subPath: busybox.conf
+          subPath: busybox.conf  # 需要提前将 /opt/k8s/volume_data/busybox/busybox.conf 文件创建好
       volumes:
       - name: conf
         hostPath:
-          path: /opt/k8s/volume_data/busybox/
+          path: /opt/k8s/volume_data/busybox/  # 需要提前创建该目录
+
+总结：
+1、subPath 指令可以挂载子目录或者文件
+2、pod 启动之前需要提前创建相关目录和文件，要在所有的 kubernetes worker 节点上创建，因为不知道 pod 会被调度到哪个节点上
 
 
 
+# 提前准备 MySQL 配置文件
 [root@k8s-linux-worker4 volume_data]# cat mysql-config/my.cnf
 # For advice on how to change settings please see
 # http://dev.mysql.com/doc/refman/5.7/en/server-configuration-defaults.html
@@ -1978,164 +1906,25 @@ spec:
       volumes:
         - name: mysql-config
           hostPath:
-            path: /opt/k8s/volume_data/mysql-config/
+            path: /opt/k8s/volume_data/mysql-config/  # 需要提前创建并且准备好 my.cnf 文件，修改用户和用户组为 mysql
 
         - name: mysql-log
           hostPath:
-            path: /opt/k8s/volume_data/mysql-log/
+            path: /opt/k8s/volume_data/mysql-log/  # 需要提前创建，修改用户和用户组为 mysql
 
         - name: mysql-data
           hostPath:
-            path: /opt/k8s/volume_data/mysql-data
+            path: /opt/k8s/volume_data/mysql-data  # 需要提前创建，修改用户和用户组为 mysql
 
 [root@k8s-master1 temp]# 
 
 
 
 
-[root@k8s-master1 temp]# rm -rf mysql-deployment.yml 
-[root@k8s-master1 temp]# vim  mysql-deployment.yml 
-[root@k8s-master1 temp]# cat  mysql-deployment.yml 
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: confluence-mysql
-  labels:
-    app: confluence
-spec:
-  ports:
-    - port: 3306
-  selector:
-    app: confluence
-    tier: mysql
-  clusterIP: None
----
-
-apiVersion: extensions/v1beta1
-kind: Deployment
-metadata:
-  name: confluence-mysql
-  labels:
-    app: confluence
-spec:
-  strategy:
-    type: Recreate
-  template:
-    metadata:
-      labels:
-        app: confluence
-        tier: mysql
-    spec:
-      containers:
-        - image: mysql/mysql-server:5.7
-          name: mysql
-          env:
-            - name: MYSQL_ROOT_PASSWORD
-              value: rootpass
-          ports:
-            - containerPort: 3306
-              name: mysql
-          volumeMounts:
-            - name: mysql-config
-              subPath: my.cnf
-              mountPath: /etc/my.cnf
-
-            - name: mysql-log
-              subPath: mysqld.log
-              mountPath: /var/log/mysqld.log
-
-            - name: mysql-data
-              mountPath: /var/lib/mysql
-
-      volumes:
-        - name: mysql-config
-          hostPath:
-            path: /opt/k8s/volume_data/mysql-config/
-
-        - name: mysql-log
-          hostPath:
-            path: /opt/k8s/volume_data/mysql-log/
-
-        - name: mysql-data
-          hostPath:
-            path: /opt/k8s/volume_data/mysql-data
-
-[root@k8s-master1 temp]# 
 
 
-
-[root@k8s-master1 temp]# kubectl run -i -t mysql-test --image=mysql/mysql-server:5.7 --restart=Never bash
-If you don't see a command prompt, try pressing enter.
-bash-4.2# env
-HOSTNAME=mysql-test
-TERM=xterm
-KUBERNETES_PORT=tcp://10.68.0.1:443
-KUBERNETES_PORT_443_TCP_PORT=443
-KUBERNETES_SERVICE_PORT=443
-KUBERNETES_SERVICE_HOST=10.68.0.1
-CONFLUENCE_MYSQL_PORT_3306_TCP_PORT=3306
-CONFLUENCE_MYSQL_PORT_3306_TCP=tcp://10.68.8.175:3306
-CONFLUENCE_MYSQL_PORT_3306_TCP_PROTO=tcp
-PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-CONFLUENCE_MYSQL_SERVICE_HOST=10.68.8.175
-CONFLUENCE_MYSQL_SERVICE_PORT=3306
-PWD=/
-CONFLUENCE_MYSQL_PORT=tcp://10.68.8.175:3306
-HOME=/root
-SHLVL=1
-KUBERNETES_PORT_443_TCP_PROTO=tcp
-KUBERNETES_SERVICE_PORT_HTTPS=443
-CONFLUENCE_MYSQL_PORT_3306_TCP_ADDR=10.68.8.175
-KUBERNETES_PORT_443_TCP_ADDR=10.68.0.1
-KUBERNETES_PORT_443_TCP=tcp://10.68.0.1:443
-_=/usr/bin/env
-bash-4.2# 
-bash-4.2# mysql -u root -p -h 10.68.8.175 -P 3306
-Enter password: 
-ERROR 1045 (28000): Access denied for user 'root'@'172.20.3.7' (using password: YES)
-bash-4.2# mysql -u root -p -h 172.20.0.15 -P 3306
-
-
-[root@k8s-master1 ~]# kubectl get service -o wide
-NAME               TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)    AGE   SELECTOR
-confluence-mysql   ClusterIP   10.68.89.209   <none>        3306/TCP   51s   app=confluence,tier=mysql
-kubernetes         ClusterIP   10.68.0.1      <none>        443/TCP    9d    <none>
-[root@k8s-master1 ~]# 
-[root@k8s-master1 ~]# kubectl describe service confluence-mysql
-Name:              confluence-mysql
-Namespace:         default
-Labels:            app=confluence
-Annotations:       kubectl.kubernetes.io/last-applied-configuration:
-                     {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"confluence"},"name":"confluence-mysql","namespace":"defa...
-Selector:          app=confluence,tier=mysql
-Type:              ClusterIP
-IP:                10.68.89.209
-Port:              <unset>  3306/TCP
-TargetPort:        3306/TCP
-Endpoints:         172.20.0.15:3306
-Session Affinity:  None
-Events:            <none>
-[root@k8s-master1 ~]# 
-[root@k8s-master1 ~]# 
-[root@k8s-master1 ~]# kubectl get pod -o wide
-NAME                               READY   STATUS    RESTARTS   AGE    IP            NODE         NOMINATED NODE   READINESS GATES
-confluence-mysql-d464855bd-9ckm9   1/1     Running   7          133m   172.20.0.15   10.1.36.46   <none>           <none>
-my-nginx-86459cfc9f-29wdg          1/1     Running   0          31h    172.20.2.7    10.1.36.48   <none>           <none>
-my-nginx-86459cfc9f-6fgzv          1/1     Running   0          31h    172.20.1.21   10.1.36.47   <none>           <none>
-my-nginx-86459cfc9f-csg5l          1/1     Running   0          31h    172.20.1.20   10.1.36.47   <none>           <none>
-my-nginx-86459cfc9f-lvthq          1/1     Running   0          31h    172.20.3.2    10.1.36.49   <none>           <none>
-my-nginx-86459cfc9f-qhjww          1/1     Running   0          31h    172.20.0.11   10.1.36.46   <none>           <none>
-my-nginx-86459cfc9f-qwclj          1/1     Running   0          31h    172.20.0.12   10.1.36.46   <none>           <none>
-my-nginx-86459cfc9f-stx7p          1/1     Running   0          31h    172.20.2.6    10.1.36.48   <none>           <none>
-my-nginx-86459cfc9f-wx2hq          1/1     Running   0          31h    172.20.3.3    10.1.36.49   <none>           <none>
-mysql-test                         1/1     Running   0          19s    172.20.0.16   10.1.36.46   <none>           <none>
-[root@k8s-master1 ~]# 
-[root@k8s-master1 ~]# 
-[root@k8s-master1 ~]# 
-[root@k8s-master1 ~]# 
-[root@k8s-master1 ~]# 
-
+# 将 Deployment 和 Service 部署成功后启动新的 pod 测试 MySQL 是否可以连接
+# 在连接之前还是要进入 MySQL 的 pod 中修改 root 权限允许远程登录（后续要通过 pod 生命周期的相关指令自动执行 MySQL 中的授权指令）
 
 [root@k8s-master1 temp]# kubectl run -i -t mysql-test --image=mysql/mysql-server:5.7 --restart=Never bash
 If you don't see a command prompt, try pressing enter.
@@ -2200,7 +1989,12 @@ mysql>
 mysql> select * from user\G
 
 
+
+
+
+
 # 容器生命周期
+# 通过 pod 生命周期的相关指令自动执行 MySQL 中的授权指令（不成功）
 apiVersion: v1
 kind: Pod
 metadata:
@@ -2216,6 +2010,93 @@ spec:
       preStop:
         exec:
           command: ["/usr/sbin/nginx","-s","quit"]
+
+
+```
+
+
+
+### confluence 容器相关
+
+```bash
+
+[root@lanzhiwang-centos7 ~]# docker images
+REPOSITORY                    TAG                 IMAGE ID            CREATED             SIZE
+atlassian/confluence-server   latest              d843736462f7        13 days ago         862MB
+redis                         latest              d3e3588af517        2 weeks ago         95MB
+nginx                         latest              53f3fd8007f7        3 weeks ago         109MB
+nicolaka/netshoot             latest              b2b51767b54a        3 weeks ago         203MB
+mysql/mysql-server            5.7                 857eadf53a54        4 weeks ago         258MB
+k8s.gcr.io/kube-scheduler     v1.14.0             00638a24688b        2 months ago        81.6MB
+k8s.gcr.io/kube-apiserver     v1.14.0             ecf910f40d6e        2 months ago        210MB
+quay.io/coreos/flannel        v0.11.0-arm         ef3b5d63729b        4 months ago        48.9MB
+[root@lanzhiwang-centos7 ~]# 
+
+
+[root@lanzhiwang-centos7 docker_data]# docker run -v /root/work/confluence/docker_data/confluence_home:/var/atlassian/application-data/confluence --name="confluence" -d -p 8090:8090 -p 8091:8091 atlassian/confluence-server
+1fcb86fa81f94474fa03961a9b717ad86809cd98ba6146825f5c0da487b6b800
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# docker ps -a
+CONTAINER ID        IMAGE                         COMMAND                  CREATED             STATUS              PORTS                              NAMES
+1fcb86fa81f9        atlassian/confluence-server   "/tini -- /entrypoin…"   4 seconds ago       Up 3 seconds        0.0.0.0:8090-8091->8090-8091/tcp   confluence
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# ll confluence_home/
+total 4
+-rw-r----- 1 bin bin 3462 May 30 11:51 confluence.cfg.xml
+drwxr-x--- 2 bin bin  102 May 30 11:51 logs
+drwxr-x--- 2 bin bin   32 May 30 11:51 shared-home
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# ll confluence_install/
+total 0
+[root@lanzhiwang-centos7 docker_data]# 
+
+
+[root@lanzhiwang-centos7 docker_data]# docker run -v /root/work/confluence/docker_data/confluence_home:/var/atlassian/application-data/confluence -v /root/work/confluence/docker_data/confluence_install:/opt/atlassian/confluence --name="confluence" -d -p 8090:8090 -p 8091:8091 atlassian/confluence-server
+4a50262c5a8b13e64444c063009c554be74f11f0f1c6fc58c9345f59ac968972
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# docker ps -a
+CONTAINER ID        IMAGE                         COMMAND                  CREATED             STATUS              PORTS                              NAMES
+4a50262c5a8b        atlassian/confluence-server   "/tini -- /entrypoin…"   6 seconds ago       Up 4 seconds        0.0.0.0:8090-8091->8090-8091/tcp   confluence
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# ll
+total 0
+drwx------  3 bin    bin     18 May 30 12:01 confluence_home
+drwxr-xr-x 12 daemon daemon 314 May  8 11:10 confluence_install
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# ll confluence_home/
+total 0
+drwxr-x--- 2 bin bin 102 May 30 12:01 logs
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# ll confluence_install/
+total 204
+drwxr-xr-x  3 daemon daemon  4096 May 30 12:00 bin
+-rw-r--r--  1 daemon daemon 19743 Apr 12 23:24 BUILDING.txt
+drwxr-xr-x  3 daemon daemon   256 May 30 12:00 conf
+drwxr-xr-x 27 daemon daemon  4096 May 30 12:00 confluence
+-rw-r--r--  1 daemon daemon  5543 Apr 12 23:24 CONTRIBUTING.md
+drwxr-xr-x  2 daemon daemon  4096 May 30 12:00 lib
+-rw-r--r--  1 daemon daemon 58153 Apr 12 23:24 LICENSE
+drwxr-xr-x  2 daemon daemon 45056 May 30 12:00 licenses
+drwxr-xr-x  2 daemon daemon     6 Apr 12 23:22 logs
+-rw-r--r--  1 daemon daemon  2401 Apr 12 23:24 NOTICE
+-rw-r--r--  1 daemon daemon  2294 May  8 11:09 README.html
+-rw-r--r--  1 daemon daemon  3334 Apr 12 23:24 README.md
+-rw-r--r--  1 daemon daemon  1204 May  8 11:09 README.txt
+-rw-r--r--  1 daemon daemon  7025 Apr 12 23:24 RELEASE-NOTES
+-rw-r--r--  1 daemon daemon 16738 Apr 12 23:24 RUNNING.txt
+drwxr-xr-x  4 daemon daemon    37 May 30 12:00 synchrony-proxy
+drwxr-xr-x  2 daemon daemon    30 May 30 12:00 temp
+drwxr-xr-x  2 daemon daemon     6 May  8 11:10 webapps
+drwxr-xr-x  2 daemon daemon     6 Apr 12 23:22 work
+[root@lanzhiwang-centos7 docker_data]# 
+
+
+
+
+
 
 
 ```
