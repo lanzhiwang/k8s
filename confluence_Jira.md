@@ -1923,8 +1923,6 @@ pid-file=/var/run/mysqld/mysqld.pid
 
 
 [root@k8s-master1 temp]# vim mysql-deployment.yml 
-[root@k8s-master1 temp]# 
-[root@k8s-master1 temp]# 
 [root@k8s-master1 temp]# cat mysql-deployment.yml 
 ---
 apiVersion: v1
