@@ -1990,9 +1990,6 @@ mysql> select * from user\G
 
 
 
-
-
-
 # 容器生命周期
 # 通过 pod 生命周期的相关指令自动执行 MySQL 中的授权指令（不成功）
 apiVersion: v1
