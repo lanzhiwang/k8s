@@ -724,8 +724,11 @@ a76d26601b72
 1、将 atlassian-confluence-6.15.4.tar.gz 解压到 confluence_install 目录中
 2、容器启动后修改配置文件 confluence_install/confluence/WEB-INF/classes/confluence-init.properties
 
+/root/work/confluence/docker_data/confluence_install:/opt/atlassian/confluence
 
-
+mysql 驱动安装目录
+/opt/atlassian/confluence /confluence/WEB-INF/lib/
+/root/work/confluence/docker_data/confluence_install /confluence/WEB-INF/lib/
 
 
 
