@@ -120,35 +120,57 @@ total 0
 [root@lanzhiwang-centos7 docker_data]# 
 
 # 挂载 confluence 数据目录和 安装目录 启动容器
-[root@lanzhiwang-centos7 docker_data]# docker run -v /root/work/confluence/docker_data/confluence_home:/var/atlassian/application-data/confluence -v /root/work/confluence/docker_data/confluence_install:/opt/atlassian/confluence --name="confluence" -d -p 8090:8090 -p 8091:8091 atlassian/confluence-server
-4a50262c5a8b13e64444c063009c554be74f11f0f1c6fc58c9345f59ac968972
-[root@lanzhiwang-centos7 docker_data]# 
-[root@lanzhiwang-centos7 docker_data]# docker ps -a
-CONTAINER ID        IMAGE                         COMMAND                  CREATED             STATUS              PORTS                              NAMES
-4a50262c5a8b        atlassian/confluence-server   "/tini -- /entrypoin…"   6 seconds ago       Up 4 seconds        0.0.0.0:8090-8091->8090-8091/tcp   confluence
-[root@lanzhiwang-centos7 docker_data]# 
-[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# mkdir confluence_home
+[root@lanzhiwang-centos7 docker_data]# mkdir confluence_install
 [root@lanzhiwang-centos7 docker_data]# 
 [root@lanzhiwang-centos7 docker_data]# ll
 total 0
-drwx------  3 bin    bin     18 May 30 12:01 confluence_home
-drwxr-xr-x 12 daemon daemon 314 May  8 11:10 confluence_install
+drwxr-xr-x 2 root root 6 Jun  3 17:14 confluence_home
+drwxr-xr-x 2 root root 6 Jun  3 17:15 confluence_install
 [root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# docker run -v /root/work/confluence/docker_data/confluence_home:/var/atlassian/application-data/confluence -v /root/work/confluence/docker_data/confluence_install:/opt/atlassian/confluence --name="confluence" -d -p 8090:8090 -p 8091:8091 atlassian/confluence-server
+08b8e7e14c3bf888310e60d4565f9c440ca7553bf99a69b3e8e975dafeebff0d
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# docker ps -a
+CONTAINER ID        IMAGE                         COMMAND                  CREATED             STATUS                       PORTS               NAMES
+08b8e7e14c3b        atlassian/confluence-server   "/tini -- /entrypoin…"   8 seconds ago       Exited (127) 6 seconds ago                       confluence
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# docker logs 08b8e7e14c3b
+User is currently root. Will change directory ownership to daemon:daemon, then downgrade permission to daemon
+bash: /opt/atlassian/confluence/bin/start-confluence.sh: No such file or directory
+[root@lanzhiwang-centos7 docker_data]# 
+
+错误分析：
+1、要提前将 confluence tar 包内的目录和文件放入 /root/work/confluence/docker_data/confluence_install 目录中
+2、将 /root/work/confluence/docker_data/confluence_install 用户和用户组修改成 daemon:daemon
+
+
+[root@lanzhiwang-centos7 docker_data]# ll
+total 0
+drwxr-xr-x  2 root root   6 Jun  3 17:19 confluence_home
+drwxr-xr-x 12 1000 1000 314 May  8 11:10 confluence_install
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# chown -R daemon:daemon confluence_install/
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# ll
+total 0
+drwxr-xr-x  2 root   root     6 Jun  3 17:19 confluence_home
+drwxr-xr-x 12 daemon daemon 314 May  8 11:10 confluence_install
 [root@lanzhiwang-centos7 docker_data]# 
 [root@lanzhiwang-centos7 docker_data]# ll confluence_home/
 total 0
-drwxr-x--- 2 bin bin 102 May 30 12:01 logs
 [root@lanzhiwang-centos7 docker_data]# 
-[root@lanzhiwang-centos7 docker_data]# ll confluence_install/
+[root@lanzhiwang-centos7 docker_data]# ll confluence_install/  # 从 atlassian-confluence-6.15.4.tar.gz 解压而来
 total 204
-drwxr-xr-x  3 daemon daemon  4096 May 30 12:00 bin
+drwxr-xr-x  3 daemon daemon  4096 Jun  3 17:21 bin
 -rw-r--r--  1 daemon daemon 19743 Apr 12 23:24 BUILDING.txt
-drwxr-xr-x  3 daemon daemon   256 May 30 12:00 conf
-drwxr-xr-x 27 daemon daemon  4096 May 30 12:00 confluence
+drwxr-xr-x  3 daemon daemon   256 Jun  3 17:21 conf
+drwxr-xr-x 27 daemon daemon  4096 Jun  3 17:21 confluence
 -rw-r--r--  1 daemon daemon  5543 Apr 12 23:24 CONTRIBUTING.md
-drwxr-xr-x  2 daemon daemon  4096 May 30 12:00 lib
+drwxr-xr-x  2 daemon daemon  4096 Jun  3 17:21 lib
 -rw-r--r--  1 daemon daemon 58153 Apr 12 23:24 LICENSE
-drwxr-xr-x  2 daemon daemon 45056 May 30 12:00 licenses
+drwxr-xr-x  2 daemon daemon 45056 Jun  3 17:21 licenses
 drwxr-xr-x  2 daemon daemon     6 Apr 12 23:22 logs
 -rw-r--r--  1 daemon daemon  2401 Apr 12 23:24 NOTICE
 -rw-r--r--  1 daemon daemon  2294 May  8 11:09 README.html
@@ -156,11 +178,551 @@ drwxr-xr-x  2 daemon daemon     6 Apr 12 23:22 logs
 -rw-r--r--  1 daemon daemon  1204 May  8 11:09 README.txt
 -rw-r--r--  1 daemon daemon  7025 Apr 12 23:24 RELEASE-NOTES
 -rw-r--r--  1 daemon daemon 16738 Apr 12 23:24 RUNNING.txt
-drwxr-xr-x  4 daemon daemon    37 May 30 12:00 synchrony-proxy
-drwxr-xr-x  2 daemon daemon    30 May 30 12:00 temp
+drwxr-xr-x  4 daemon daemon    37 Jun  3 17:21 synchrony-proxy
+drwxr-xr-x  2 daemon daemon    30 Jun  3 17:21 temp
 drwxr-xr-x  2 daemon daemon     6 May  8 11:10 webapps
 drwxr-xr-x  2 daemon daemon     6 Apr 12 23:22 work
 [root@lanzhiwang-centos7 docker_data]# 
+
+
+[root@lanzhiwang-centos7 docker_data]# docker run -v /root/work/confluence/docker_data/confluence_home:/var/atlassian/application-data/confluence -v /root/work/confluence/docker_data/confluence_install:/opt/atlassian/confluence --name="confluence" -d -p 8090:8090 -p 8091:8091 atlassian/confluence-server
+458de9470f8fb9ff2410a56dfa68a5d282c5627db8c0130b31b086effe3c8145
+[root@lanzhiwang-centos7 docker_data]# 
+
+# 容器启动成功，但是log里面有报错，访问页面也会报错
+[root@lanzhiwang-centos7 docker_data]# docker ps -a
+CONTAINER ID        IMAGE                         COMMAND                  CREATED             STATUS              PORTS                              NAMES
+458de9470f8f        atlassian/confluence-server   "/tini -- /entrypoin…"   6 seconds ago       Up 5 seconds        0.0.0.0:8090-8091->8090-8091/tcp   confluence
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# docker logs 458de9470f8f
+User is currently root. Will change directory ownership to daemon:daemon, then downgrade permission to daemon
+executing as current user
+If you encounter issues starting up Confluence, please see the Installation guide at http://confluence.atlassian.com/display/DOC/Confluence+Installation+Guide
+
+Server startup logs are located in /opt/atlassian/confluence/logs/catalina.out
+---------------------------------------------------------------------------
+Using Java: /opt/java/openjdk/bin/java
+log4j:ERROR setFile(null,true) call failed.
+java.io.FileNotFoundException: /opt/atlassian/confluence/logs/synchrony-proxy-watchdog.log (Permission denied)
+	at java.io.FileOutputStream.open0(Native Method)
+	at java.io.FileOutputStream.open(Unknown Source)
+	at java.io.FileOutputStream.<init>(Unknown Source)
+	at java.io.FileOutputStream.<init>(Unknown Source)
+	at org.apache.log4j.FileAppender.setFile(FileAppender.java:294)
+	at org.apache.log4j.RollingFileAppender.setFile(RollingFileAppender.java:207)
+	at org.apache.log4j.FileAppender.activateOptions(FileAppender.java:165)
+	at com.atlassian.confluence.bootstrap.SynchronyProxyWatchdog.addLogFileAppender(SynchronyProxyWatchdog.java:106)
+	at com.atlassian.confluence.bootstrap.SynchronyProxyWatchdog.main(SynchronyProxyWatchdog.java:47)
+2019-06-03 09:24:01,038 INFO [main] [atlassian.confluence.bootstrap.SynchronyProxyWatchdog] A Context element for ${confluence.context.path}/synchrony-proxy is found in /opt/atlassian/confluence/conf/server.xml. No further action is required
+---------------------------------------------------------------------------
+OpenJDK 64-Bit Server VM warning: Cannot open file /opt/atlassian/confluence/logs/gc-2019-06-03_09-24-01.log due to Permission denied
+
+java.util.logging.ErrorManager: 4
+java.io.FileNotFoundException: /opt/atlassian/confluence/logs/catalina.2019-06-03.log (Permission denied)
+	at java.io.FileOutputStream.open0(Native Method)
+	at java.io.FileOutputStream.open(Unknown Source)
+	at java.io.FileOutputStream.<init>(Unknown Source)
+	at org.apache.juli.FileHandler.openWriter(FileHandler.java:513)
+	at org.apache.juli.FileHandler.<init>(FileHandler.java:180)
+	at org.apache.juli.FileHandler.<init>(FileHandler.java:167)
+	at org.apache.juli.AsyncFileHandler.<init>(AsyncFileHandler.java:82)
+	at org.apache.juli.AsyncFileHandler.<init>(AsyncFileHandler.java:78)
+	at org.apache.juli.AsyncFileHandler.<init>(AsyncFileHandler.java:74)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(Unknown Source)
+	at java.lang.reflect.Constructor.newInstance(Unknown Source)
+	at org.apache.juli.ClassLoaderLogManager.readConfiguration(ClassLoaderLogManager.java:602)
+	at org.apache.juli.ClassLoaderLogManager.readConfiguration(ClassLoaderLogManager.java:538)
+	at org.apache.juli.ClassLoaderLogManager.readConfiguration(ClassLoaderLogManager.java:336)
+	at java.util.logging.LogManager$3.run(Unknown Source)
+	at java.util.logging.LogManager$3.run(Unknown Source)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.util.logging.LogManager.readPrimordialConfiguration(Unknown Source)
+	at java.util.logging.LogManager.access$800(Unknown Source)
+	at java.util.logging.LogManager$2.run(Unknown Source)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.util.logging.LogManager.ensureLogManagerInitialized(Unknown Source)
+	at java.util.logging.LogManager.getLogManager(Unknown Source)
+	at java.util.logging.Logger.demandLogger(Unknown Source)
+	at java.util.logging.Logger.getLogger(Unknown Source)
+	at org.apache.juli.logging.DirectJDKLog.<init>(DirectJDKLog.java:61)
+	at org.apache.juli.logging.DirectJDKLog.getInstance(DirectJDKLog.java:181)
+	at org.apache.juli.logging.LogFactory.getInstance(LogFactory.java:130)
+	at org.apache.juli.logging.LogFactory.getInstance(LogFactory.java:153)
+	at org.apache.juli.logging.LogFactory.getLog(LogFactory.java:208)
+	at org.apache.catalina.startup.Bootstrap.<clinit>(Bootstrap.java:52)
+java.util.logging.ErrorManager: 4
+java.io.FileNotFoundException: /opt/atlassian/confluence/logs/localhost.2019-06-03.log (Permission denied)
+	at java.io.FileOutputStream.open0(Native Method)
+	at java.io.FileOutputStream.open(Unknown Source)
+	at java.io.FileOutputStream.<init>(Unknown Source)
+	at org.apache.juli.FileHandler.openWriter(FileHandler.java:513)
+	at org.apache.juli.FileHandler.<init>(FileHandler.java:180)
+	at org.apache.juli.FileHandler.<init>(FileHandler.java:167)
+	at org.apache.juli.AsyncFileHandler.<init>(AsyncFileHandler.java:82)
+	at org.apache.juli.AsyncFileHandler.<init>(AsyncFileHandler.java:78)
+	at org.apache.juli.AsyncFileHandler.<init>(AsyncFileHandler.java:74)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(Unknown Source)
+	at java.lang.reflect.Constructor.newInstance(Unknown Source)
+	at org.apache.juli.ClassLoaderLogManager.readConfiguration(ClassLoaderLogManager.java:602)
+	at org.apache.juli.ClassLoaderLogManager.readConfiguration(ClassLoaderLogManager.java:538)
+	at org.apache.juli.ClassLoaderLogManager.readConfiguration(ClassLoaderLogManager.java:336)
+	at java.util.logging.LogManager$3.run(Unknown Source)
+	at java.util.logging.LogManager$3.run(Unknown Source)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.util.logging.LogManager.readPrimordialConfiguration(Unknown Source)
+	at java.util.logging.LogManager.access$800(Unknown Source)
+	at java.util.logging.LogManager$2.run(Unknown Source)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.util.logging.LogManager.ensureLogManagerInitialized(Unknown Source)
+	at java.util.logging.LogManager.getLogManager(Unknown Source)
+	at java.util.logging.Logger.demandLogger(Unknown Source)
+	at java.util.logging.Logger.getLogger(Unknown Source)
+	at org.apache.juli.logging.DirectJDKLog.<init>(DirectJDKLog.java:61)
+	at org.apache.juli.logging.DirectJDKLog.getInstance(DirectJDKLog.java:181)
+	at org.apache.juli.logging.LogFactory.getInstance(LogFactory.java:130)
+	at org.apache.juli.logging.LogFactory.getInstance(LogFactory.java:153)
+	at org.apache.juli.logging.LogFactory.getLog(LogFactory.java:208)
+	at org.apache.catalina.startup.Bootstrap.<clinit>(Bootstrap.java:52)
+java.util.logging.ErrorManager: 4
+java.io.FileNotFoundException: /opt/atlassian/confluence/logs/manager.2019-06-03.log (Permission denied)
+	at java.io.FileOutputStream.open0(Native Method)
+	at java.io.FileOutputStream.open(Unknown Source)
+	at java.io.FileOutputStream.<init>(Unknown Source)
+	at org.apache.juli.FileHandler.openWriter(FileHandler.java:513)
+	at org.apache.juli.FileHandler.<init>(FileHandler.java:180)
+	at org.apache.juli.FileHandler.<init>(FileHandler.java:167)
+	at org.apache.juli.AsyncFileHandler.<init>(AsyncFileHandler.java:82)
+	at org.apache.juli.AsyncFileHandler.<init>(AsyncFileHandler.java:78)
+	at org.apache.juli.AsyncFileHandler.<init>(AsyncFileHandler.java:74)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(Unknown Source)
+	at java.lang.reflect.Constructor.newInstance(Unknown Source)
+	at org.apache.juli.ClassLoaderLogManager.readConfiguration(ClassLoaderLogManager.java:602)
+	at org.apache.juli.ClassLoaderLogManager.readConfiguration(ClassLoaderLogManager.java:538)
+	at org.apache.juli.ClassLoaderLogManager.readConfiguration(ClassLoaderLogManager.java:336)
+	at java.util.logging.LogManager$3.run(Unknown Source)
+	at java.util.logging.LogManager$3.run(Unknown Source)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.util.logging.LogManager.readPrimordialConfiguration(Unknown Source)
+	at java.util.logging.LogManager.access$800(Unknown Source)
+	at java.util.logging.LogManager$2.run(Unknown Source)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.util.logging.LogManager.ensureLogManagerInitialized(Unknown Source)
+	at java.util.logging.LogManager.getLogManager(Unknown Source)
+	at java.util.logging.Logger.demandLogger(Unknown Source)
+	at java.util.logging.Logger.getLogger(Unknown Source)
+	at org.apache.juli.logging.DirectJDKLog.<init>(DirectJDKLog.java:61)
+	at org.apache.juli.logging.DirectJDKLog.getInstance(DirectJDKLog.java:181)
+	at org.apache.juli.logging.LogFactory.getInstance(LogFactory.java:130)
+	at org.apache.juli.logging.LogFactory.getInstance(LogFactory.java:153)
+	at org.apache.juli.logging.LogFactory.getLog(LogFactory.java:208)
+	at org.apache.catalina.startup.Bootstrap.<clinit>(Bootstrap.java:52)
+java.util.logging.ErrorManager: 4
+java.io.FileNotFoundException: /opt/atlassian/confluence/logs/host-manager.2019-06-03.log (Permission denied)
+	at java.io.FileOutputStream.open0(Native Method)
+	at java.io.FileOutputStream.open(Unknown Source)
+	at java.io.FileOutputStream.<init>(Unknown Source)
+	at org.apache.juli.FileHandler.openWriter(FileHandler.java:513)
+	at org.apache.juli.FileHandler.<init>(FileHandler.java:180)
+	at org.apache.juli.FileHandler.<init>(FileHandler.java:167)
+	at org.apache.juli.AsyncFileHandler.<init>(AsyncFileHandler.java:82)
+	at org.apache.juli.AsyncFileHandler.<init>(AsyncFileHandler.java:78)
+	at org.apache.juli.AsyncFileHandler.<init>(AsyncFileHandler.java:74)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(Unknown Source)
+	at java.lang.reflect.Constructor.newInstance(Unknown Source)
+	at org.apache.juli.ClassLoaderLogManager.readConfiguration(ClassLoaderLogManager.java:602)
+	at org.apache.juli.ClassLoaderLogManager.readConfiguration(ClassLoaderLogManager.java:538)
+	at org.apache.juli.ClassLoaderLogManager.readConfiguration(ClassLoaderLogManager.java:336)
+	at java.util.logging.LogManager$3.run(Unknown Source)
+	at java.util.logging.LogManager$3.run(Unknown Source)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.util.logging.LogManager.readPrimordialConfiguration(Unknown Source)
+	at java.util.logging.LogManager.access$800(Unknown Source)
+	at java.util.logging.LogManager$2.run(Unknown Source)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.util.logging.LogManager.ensureLogManagerInitialized(Unknown Source)
+	at java.util.logging.LogManager.getLogManager(Unknown Source)
+	at java.util.logging.Logger.demandLogger(Unknown Source)
+	at java.util.logging.Logger.getLogger(Unknown Source)
+	at org.apache.juli.logging.DirectJDKLog.<init>(DirectJDKLog.java:61)
+	at org.apache.juli.logging.DirectJDKLog.getInstance(DirectJDKLog.java:181)
+	at org.apache.juli.logging.LogFactory.getInstance(LogFactory.java:130)
+	at org.apache.juli.logging.LogFactory.getInstance(LogFactory.java:153)
+	at org.apache.juli.logging.LogFactory.getLog(LogFactory.java:208)
+	at org.apache.catalina.startup.Bootstrap.<clinit>(Bootstrap.java:52)
+03-Jun-2019 09:24:01.428 WARNING [main] org.apache.tomcat.util.digester.SetPropertiesRule.begin Match [Server] failed to set property [debug] to [0]
+03-Jun-2019 09:24:01.540 WARNING [main] org.apache.catalina.startup.SetAllPropertiesRule.begin [SetAllPropertiesRule]{Server/Service/Connector} Setting property 'debug' to '0' did not find a matching property.
+03-Jun-2019 09:24:01.561 WARNING [main] org.apache.tomcat.util.digester.SetPropertiesRule.begin Match [Server/Service/Engine] failed to set property [debug] to [0]
+03-Jun-2019 09:24:01.565 WARNING [main] org.apache.tomcat.util.digester.SetPropertiesRule.begin Match [Server/Service/Engine/Host] failed to set property [debug] to [0]
+03-Jun-2019 09:24:01.591 WARNING [main] org.apache.tomcat.util.digester.SetPropertiesRule.begin Match [Server/Service/Engine/Host/Context] failed to set property [debug] to [0]
+03-Jun-2019 09:24:01.610 WARNING [main] org.apache.tomcat.util.digester.SetPropertiesRule.begin Match [Server/Service/Engine/Host/Context] failed to set property [debug] to [0]
+03-Jun-2019 09:24:01.877 INFO [main] org.apache.coyote.AbstractProtocol.init Initializing ProtocolHandler ["http-nio-8090"]
+03-Jun-2019 09:24:01.905 INFO [main] org.apache.catalina.startup.Catalina.load Server initialization in [546] milliseconds
+03-Jun-2019 09:24:01.912 INFO [main] org.apache.catalina.core.StandardService.startInternal Starting service [Tomcat-Standalone]
+03-Jun-2019 09:24:01.912 INFO [main] org.apache.catalina.core.StandardEngine.startInternal Starting Servlet engine: [Apache Tomcat/9.0.19]
+03-Jun-2019 09:24:01.930 WARNING [Catalina-utility-1] org.apache.catalina.core.StandardContext.postWorkDirectory Failed to create work directory [/opt/atlassian/confluence/work/Standalone/localhost/ROOT] for context []
+03-Jun-2019 09:24:01.945 WARNING [Catalina-utility-2] org.apache.catalina.core.StandardContext.postWorkDirectory Failed to create work directory [/opt/atlassian/confluence/work/Standalone/localhost/synchrony-proxy] for context [/synchrony-proxy]
+09:24:03,251 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Could NOT find resource [logback-test.xml]
+09:24:03,251 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Could NOT find resource [logback.groovy]
+09:24:03,251 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Found resource [logback.xml] at [file:/opt/atlassian/confluence/webapps/../synchrony-proxy/WEB-INF/classes/logback.xml]
+09:24:03,314 |-INFO in ch.qos.logback.classic.joran.action.ConfigurationAction - debug attribute not set
+09:24:03,320 |-INFO in ch.qos.logback.classic.joran.action.ConfigurationAction - Will scan for changes in [file:/opt/atlassian/confluence/webapps/../synchrony-proxy/WEB-INF/classes/logback.xml] 
+09:24:03,320 |-INFO in ch.qos.logback.classic.joran.action.ConfigurationAction - Setting ReconfigureOnChangeTask scanning period to 10 seconds
+09:24:03,326 |-INFO in ch.qos.logback.core.joran.action.AppenderAction - About to instantiate appender of type [ch.qos.logback.core.ConsoleAppender]
+09:24:03,332 |-INFO in ch.qos.logback.core.joran.action.AppenderAction - Naming appender as [console]
+09:24:03,341 |-INFO in ch.qos.logback.core.joran.action.NestedComplexPropertyIA - Assuming default type [ch.qos.logback.classic.encoder.PatternLayoutEncoder] for [encoder] property
+09:24:03,368 |-INFO in ch.qos.logback.core.joran.action.AppenderAction - About to instantiate appender of type [ch.qos.logback.core.rolling.RollingFileAppender]
+09:24:03,372 |-INFO in ch.qos.logback.core.joran.action.AppenderAction - Naming appender as [synchronyProxyLogAppender]
+09:24:03,378 |-INFO in ch.qos.logback.core.rolling.FixedWindowRollingPolicy@6427203b - No compression will be used
+09:24:03,382 |-INFO in ch.qos.logback.core.joran.action.NestedComplexPropertyIA - Assuming default type [ch.qos.logback.classic.encoder.PatternLayoutEncoder] for [encoder] property
+09:24:03,383 |-INFO in ch.qos.logback.core.rolling.RollingFileAppender[synchronyProxyLogAppender] - Active log file name: /opt/atlassian/confluence/logs/atlassian-synchrony-proxy.log
+09:24:03,383 |-INFO in ch.qos.logback.core.rolling.RollingFileAppender[synchronyProxyLogAppender] - File property is set to [/opt/atlassian/confluence/logs/atlassian-synchrony-proxy.log]
+09:24:03,384 |-ERROR in ch.qos.logback.core.rolling.RollingFileAppender[synchronyProxyLogAppender] - openFile(/opt/atlassian/confluence/logs/atlassian-synchrony-proxy.log,true) call failed. java.io.FileNotFoundException: /opt/atlassian/confluence/logs/atlassian-synchrony-proxy.log (Permission denied)
+	at java.io.FileNotFoundException: /opt/atlassian/confluence/logs/atlassian-synchrony-proxy.log (Permission denied)
+	at 	at java.io.FileOutputStream.open0(Native Method)
+	at 	at java.io.FileOutputStream.open(Unknown Source)
+	at 	at java.io.FileOutputStream.<init>(Unknown Source)
+	at 	at ch.qos.logback.core.recovery.ResilientFileOutputStream.<init>(ResilientFileOutputStream.java:26)
+	at 	at ch.qos.logback.core.FileAppender.openFile(FileAppender.java:204)
+	at 	at ch.qos.logback.core.FileAppender.start(FileAppender.java:127)
+	at 	at ch.qos.logback.core.rolling.RollingFileAppender.start(RollingFileAppender.java:100)
+	at 	at ch.qos.logback.core.joran.action.AppenderAction.end(AppenderAction.java:90)
+	at 	at ch.qos.logback.core.joran.spi.Interpreter.callEndAction(Interpreter.java:309)
+	at 	at ch.qos.logback.core.joran.spi.Interpreter.endElement(Interpreter.java:193)
+	at 	at ch.qos.logback.core.joran.spi.Interpreter.endElement(Interpreter.java:179)
+	at 	at ch.qos.logback.core.joran.spi.EventPlayer.play(EventPlayer.java:62)
+	at 	at ch.qos.logback.core.joran.GenericConfigurator.doConfigure(GenericConfigurator.java:165)
+	at 	at ch.qos.logback.core.joran.GenericConfigurator.doConfigure(GenericConfigurator.java:152)
+	at 	at ch.qos.logback.core.joran.GenericConfigurator.doConfigure(GenericConfigurator.java:110)
+	at 	at ch.qos.logback.core.joran.GenericConfigurator.doConfigure(GenericConfigurator.java:53)
+	at 	at ch.qos.logback.classic.util.ContextInitializer.configureByResource(ContextInitializer.java:75)
+	at 	at ch.qos.logback.classic.util.ContextInitializer.autoConfig(ContextInitializer.java:150)
+	at 	at org.slf4j.impl.StaticLoggerBinder.init(StaticLoggerBinder.java:84)
+	at 	at org.slf4j.impl.StaticLoggerBinder.<clinit>(StaticLoggerBinder.java:55)
+	at 	at org.slf4j.LoggerFactory.bind(LoggerFactory.java:150)
+	at 	at org.slf4j.LoggerFactory.performInitialization(LoggerFactory.java:124)
+	at 	at org.slf4j.LoggerFactory.getILoggerFactory(LoggerFactory.java:412)
+	at 	at ch.qos.logback.classic.util.StatusViaSLF4JLoggerFactory.addStatus(StatusViaSLF4JLoggerFactory.java:32)
+	at 	at ch.qos.logback.classic.util.StatusViaSLF4JLoggerFactory.addInfo(StatusViaSLF4JLoggerFactory.java:20)
+	at 	at ch.qos.logback.classic.servlet.LogbackServletContainerInitializer.onStartup(LogbackServletContainerInitializer.java:32)
+	at 	at org.apache.catalina.core.StandardContext.startInternal(StandardContext.java:5139)
+	at 	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:183)
+	at 	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1377)
+	at 	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1367)
+	at 	at java.util.concurrent.FutureTask.run(Unknown Source)
+	at 	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(Unknown Source)
+	at 	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(Unknown Source)
+	at 	at java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at 	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
+	at 	at java.lang.Thread.run(Unknown Source)
+09:24:03,384 |-INFO in ch.qos.logback.classic.joran.action.LoggerAction - Setting level of logger [com.atlassian.synchrony] to WARN
+09:24:03,384 |-INFO in ch.qos.logback.classic.joran.action.LoggerAction - Setting additivity of logger [com.atlassian.synchrony] to false
+09:24:03,385 |-INFO in ch.qos.logback.core.joran.action.AppenderRefAction - Attaching appender named [synchronyProxyLogAppender] to Logger[com.atlassian.synchrony]
+09:24:03,385 |-INFO in ch.qos.logback.classic.joran.action.LoggerAction - Setting level of logger [org.springframework.web] to WARN
+09:24:03,385 |-INFO in ch.qos.logback.classic.joran.action.LoggerAction - Setting additivity of logger [org.springframework.web] to false
+09:24:03,388 |-INFO in ch.qos.logback.core.joran.action.AppenderRefAction - Attaching appender named [synchronyProxyLogAppender] to Logger[org.springframework.web]
+09:24:03,388 |-INFO in ch.qos.logback.classic.joran.action.LoggerAction - Setting level of logger [org.springframework.web.socket] to WARN
+09:24:03,388 |-INFO in ch.qos.logback.classic.joran.action.LoggerAction - Setting additivity of logger [org.springframework.web.socket] to false
+09:24:03,388 |-INFO in ch.qos.logback.core.joran.action.AppenderRefAction - Attaching appender named [synchronyProxyLogAppender] to Logger[org.springframework.web.socket]
+09:24:03,388 |-INFO in ch.qos.logback.classic.joran.action.RootLoggerAction - Setting level of ROOT logger to WARN
+09:24:03,388 |-INFO in ch.qos.logback.core.joran.action.AppenderRefAction - Attaching appender named [console] to Logger[ROOT]
+09:24:03,388 |-INFO in ch.qos.logback.classic.joran.action.ConfigurationAction - End of configuration.
+09:24:03,389 |-INFO in ch.qos.logback.classic.joran.JoranConfigurator@68f05bac - Registering current configuration as safe fallback point
+
+03-Jun-2019 09:24:03.407 INFO [Catalina-utility-2] org.apache.catalina.core.ApplicationContext.log Spring WebApplicationInitializers detected on classpath: [com.atlassian.synchrony.proxy.SynchronyDispatcherServletInitializer@1e158ec6]
+03-Jun-2019 09:24:03.473 INFO [Catalina-utility-2] org.apache.jasper.servlet.TldScanner.scanJars At least one JAR was scanned for TLDs yet contained no TLDs. Enable debug logging for this logger for a complete list of JARs that were scanned but no TLDs were found in them. Skipping unneeded JARs during scanning can improve startup time and JSP compilation time.
+03-Jun-2019 09:24:03.731 INFO [Catalina-utility-2] org.apache.catalina.core.ApplicationContext.log Initializing Spring FrameworkServlet 'dispatcher'
+03-Jun-2019 09:24:03.731 INFO [Catalina-utility-2] org.springframework.web.servlet.DispatcherServlet.initServletBean FrameworkServlet 'dispatcher': initialization started
+03-Jun-2019 09:24:03.734 INFO [Catalina-utility-2] org.springframework.web.context.support.AnnotationConfigWebApplicationContext.prepareRefresh Refreshing WebApplicationContext for namespace 'dispatcher-servlet': startup date [Mon Jun 03 09:24:03 GMT 2019]; root of context hierarchy
+03-Jun-2019 09:24:03.839 INFO [Catalina-utility-2] org.springframework.web.context.support.AnnotationConfigWebApplicationContext.loadBeanDefinitions Registering annotated classes: [class com.atlassian.synchrony.proxy.websocket.WebSocketConfig,class com.atlassian.synchrony.proxy.web.SynchronyWebMvcConfig]
+2019-06-03 09:24:04,207 INFO [Catalina-utility-1] [com.atlassian.confluence.lifecycle] contextInitialized Starting Confluence 6.15.4 [build 8100 based on commit hash b0984b7297905b7c7bd946458f753ce0130bfc8c] - synchrony version 2.1.0-master-9d112c9d
+03-Jun-2019 09:24:04.411 INFO [Catalina-utility-2] org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler.initialize Initializing ExecutorService  'defaultSockJsTaskScheduler'
+03-Jun-2019 09:24:04.471 INFO [Catalina-utility-2] org.springframework.web.socket.server.support.WebSocketHandlerMapping.registerHandler Mapped URL path [/v1/bayeux-sync1] onto handler of type [class org.springframework.web.socket.server.support.WebSocketHttpRequestHandler]
+03-Jun-2019 09:24:05.364 INFO [Catalina-utility-2] org.springframework.web.servlet.handler.SimpleUrlHandlerMapping.registerHandler Mapped URL path [/**] onto handler of type [class org.springframework.web.servlet.resource.DefaultServletHttpRequestHandler]
+03-Jun-2019 09:24:05.407 INFO [Catalina-utility-2] org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.initControllerAdviceCache Looking for @ControllerAdvice: WebApplicationContext for namespace 'dispatcher-servlet': startup date [Mon Jun 03 09:24:03 GMT 2019]; root of context hierarchy
+03-Jun-2019 09:24:05.496 INFO [Catalina-utility-2] org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping.register Mapped "{[/healthcheck]}" onto public com.atlassian.synchrony.proxy.web.HealthCheckResult com.atlassian.synchrony.proxy.web.SynchronyProxyRestController.getSynchronyProxyInfo()
+03-Jun-2019 09:24:05.500 INFO [Catalina-utility-2] org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping.register Mapped "{[/reload],methods=[PUT]}" onto public org.springframework.http.ResponseEntity com.atlassian.synchrony.proxy.web.SynchronyProxyRestController.reloadConfiguration(com.atlassian.synchrony.proxy.web.SynchronyProxyConfigPayload)
+03-Jun-2019 09:24:05.621 INFO [Catalina-utility-2] org.springframework.context.support.DefaultLifecycleProcessor.start Starting beans in phase 2147483647
+03-Jun-2019 09:24:05.653 INFO [Catalina-utility-2] org.springframework.web.servlet.DispatcherServlet.initServletBean FrameworkServlet 'dispatcher': initialization completed in 1922 ms
+03-Jun-2019 09:24:05.655 SEVERE [Catalina-utility-2] org.apache.jasper.EmbeddedServletOptions.<init> The scratchDir you specified: [/opt/atlassian/confluence/work/Standalone/localhost/synchrony-proxy] is unusable.
+2019-06-03 09:24:07,620 ERROR [Catalina-utility-1] [confluence.impl.health.DefaultHealthCheckRunner] logEvent We can't locate your Confluence home directory.
+2019-06-03 09:24:07,623 ERROR [Catalina-utility-1] [confluence.impl.health.DefaultHealthCheckRunner] logEvent You'll need to specify a home directory. Confluence can't start without this.
+See our documentation for more information on setting your home directory.
+2019-06-03 09:24:07,624 WARN [Catalina-utility-1] [atlassian.config.bootstrap.DefaultAtlassianBootstrapManager] init Unable to set up application config: no home set
+03-Jun-2019 09:24:08.456 INFO [main] org.apache.coyote.AbstractProtocol.start Starting ProtocolHandler ["http-nio-8090"]
+03-Jun-2019 09:24:08.478 INFO [main] org.apache.catalina.startup.Catalina.start Server startup in [6,572] milliseconds
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# 
+
+http://10.5.106.26:8090/
+
+错误分析：
+显示无法在 /opt/atlassian/confluence/logs 目录中写入日志，权限不够，而 /opt/atlassian/confluence/logs 是挂载在宿主机的 /root/work/confluence/docker_data/confluence_install/logs 上，因此将宿主机目录修改为最大权限 777
+
+[root@lanzhiwang-centos7 docker_data]# ll
+total 0
+drwxr-xr-x  2 root root   6 Jun  3 17:35 confluence_home
+drwxr-xr-x 12 1000 1000 314 May  8 11:10 confluence_install
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# chown -R daemon:daemon confluence_install/
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# chmod -R 777 confluence_install/logs/
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# ll confluence_home/
+total 0
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# ll confluence_install/  # 从 atlassian-confluence-6.15.4.tar.gz 解压而来
+total 204
+drwxr-xr-x  3 daemon daemon  4096 Jun  3 17:34 bin
+-rw-r--r--  1 daemon daemon 19743 Apr 12 23:24 BUILDING.txt
+drwxr-xr-x  3 daemon daemon   256 Jun  3 17:34 conf
+drwxr-xr-x 27 daemon daemon  4096 Jun  3 17:34 confluence
+-rw-r--r--  1 daemon daemon  5543 Apr 12 23:24 CONTRIBUTING.md
+drwxr-xr-x  2 daemon daemon  4096 Jun  3 17:34 lib
+-rw-r--r--  1 daemon daemon 58153 Apr 12 23:24 LICENSE
+drwxr-xr-x  2 daemon daemon 45056 Jun  3 17:34 licenses
+drwxrwxrwx  2 daemon daemon     6 Apr 12 23:22 logs
+-rw-r--r--  1 daemon daemon  2401 Apr 12 23:24 NOTICE
+-rw-r--r--  1 daemon daemon  2294 May  8 11:09 README.html
+-rw-r--r--  1 daemon daemon  3334 Apr 12 23:24 README.md
+-rw-r--r--  1 daemon daemon  1204 May  8 11:09 README.txt
+-rw-r--r--  1 daemon daemon  7025 Apr 12 23:24 RELEASE-NOTES
+-rw-r--r--  1 daemon daemon 16738 Apr 12 23:24 RUNNING.txt
+drwxr-xr-x  4 daemon daemon    37 Jun  3 17:34 synchrony-proxy
+drwxr-xr-x  2 daemon daemon    30 Jun  3 17:34 temp
+drwxr-xr-x  2 daemon daemon     6 May  8 11:10 webapps
+drwxr-xr-x  2 daemon daemon     6 Apr 12 23:22 work
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# ll confluence_install/logs/
+total 0
+[root@lanzhiwang-centos7 docker_data]# 
+
+[root@lanzhiwang-centos7 docker_data]# docker run -v /root/work/confluence/docker_data/confluence_home:/var/atlassian/application-data/confluence -v /root/work/confluence/docker_data/confluence_install:/opt/atlassian/confluence --name="confluence" -d -p 8090:8090 -p 8091:8091 atlassian/confluence-server
+6493ffb38df891db48613f325be0d21e6e2ee96d44309d45c1eec1fe734c8005
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# docker ps -a
+CONTAINER ID        IMAGE                         COMMAND                  CREATED             STATUS              PORTS                              NAMES
+6493ffb38df8        atlassian/confluence-server   "/tini -- /entrypoin…"   5 seconds ago       Up 5 seconds        0.0.0.0:8090-8091->8090-8091/tcp   confluence
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# docker ps -a
+CONTAINER ID        IMAGE                         COMMAND                  CREATED             STATUS              PORTS                              NAMES
+6493ffb38df8        atlassian/confluence-server   "/tini -- /entrypoin…"   11 seconds ago      Up 10 seconds       0.0.0.0:8090-8091->8090-8091/tcp   confluence
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# docker ps -a
+CONTAINER ID        IMAGE                         COMMAND                  CREATED             STATUS              PORTS                              NAMES
+6493ffb38df8        atlassian/confluence-server   "/tini -- /entrypoin…"   12 seconds ago      Up 11 seconds       0.0.0.0:8090-8091->8090-8091/tcp   confluence
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# docker logs 6493ffb38df8
+User is currently root. Will change directory ownership to daemon:daemon, then downgrade permission to daemon
+executing as current user
+If you encounter issues starting up Confluence, please see the Installation guide at http://confluence.atlassian.com/display/DOC/Confluence+Installation+Guide
+
+Server startup logs are located in /opt/atlassian/confluence/logs/catalina.out
+---------------------------------------------------------------------------
+Using Java: /opt/java/openjdk/bin/java
+2019-06-03 09:37:58,269 INFO [main] [atlassian.confluence.bootstrap.SynchronyProxyWatchdog] A Context element for ${confluence.context.path}/synchrony-proxy is found in /opt/atlassian/confluence/conf/server.xml. No further action is required
+---------------------------------------------------------------------------
+03-Jun-2019 09:37:58.694 WARNING [main] org.apache.tomcat.util.digester.SetPropertiesRule.begin Match [Server] failed to set property [debug] to [0]
+03-Jun-2019 09:37:58.743 WARNING [main] org.apache.catalina.startup.SetAllPropertiesRule.begin [SetAllPropertiesRule]{Server/Service/Connector} Setting property 'debug' to '0' did not find a matching property.
+03-Jun-2019 09:37:58.759 WARNING [main] org.apache.tomcat.util.digester.SetPropertiesRule.begin Match [Server/Service/Engine] failed to set property [debug] to [0]
+03-Jun-2019 09:37:58.763 WARNING [main] org.apache.tomcat.util.digester.SetPropertiesRule.begin Match [Server/Service/Engine/Host] failed to set property [debug] to [0]
+03-Jun-2019 09:37:58.790 WARNING [main] org.apache.tomcat.util.digester.SetPropertiesRule.begin Match [Server/Service/Engine/Host/Context] failed to set property [debug] to [0]
+03-Jun-2019 09:37:58.805 WARNING [main] org.apache.tomcat.util.digester.SetPropertiesRule.begin Match [Server/Service/Engine/Host/Context] failed to set property [debug] to [0]
+03-Jun-2019 09:37:59.083 INFO [main] org.apache.coyote.AbstractProtocol.init Initializing ProtocolHandler ["http-nio-8090"]
+03-Jun-2019 09:37:59.115 INFO [main] org.apache.catalina.startup.Catalina.load Server initialization in [495] milliseconds
+03-Jun-2019 09:37:59.122 INFO [main] org.apache.catalina.core.StandardService.startInternal Starting service [Tomcat-Standalone]
+03-Jun-2019 09:37:59.122 INFO [main] org.apache.catalina.core.StandardEngine.startInternal Starting Servlet engine: [Apache Tomcat/9.0.19]
+03-Jun-2019 09:37:59.149 WARNING [Catalina-utility-1] org.apache.catalina.core.StandardContext.postWorkDirectory Failed to create work directory [/opt/atlassian/confluence/work/Standalone/localhost/ROOT] for context []
+03-Jun-2019 09:37:59.160 WARNING [Catalina-utility-2] org.apache.catalina.core.StandardContext.postWorkDirectory Failed to create work directory [/opt/atlassian/confluence/work/Standalone/localhost/synchrony-proxy] for context [/synchrony-proxy]
+03-Jun-2019 09:38:00.820 INFO [Catalina-utility-2] org.apache.catalina.core.ApplicationContext.log Spring WebApplicationInitializers detected on classpath: [com.atlassian.synchrony.proxy.SynchronyDispatcherServletInitializer@79c40942]
+03-Jun-2019 09:38:00.913 INFO [Catalina-utility-2] org.apache.jasper.servlet.TldScanner.scanJars At least one JAR was scanned for TLDs yet contained no TLDs. Enable debug logging for this logger for a complete list of JARs that were scanned but no TLDs were found in them. Skipping unneeded JARs during scanning can improve startup time and JSP compilation time.
+03-Jun-2019 09:38:01.285 INFO [Catalina-utility-2] org.apache.catalina.core.ApplicationContext.log Initializing Spring FrameworkServlet 'dispatcher'
+03-Jun-2019 09:38:01.285 INFO [Catalina-utility-2] org.springframework.web.servlet.DispatcherServlet.initServletBean FrameworkServlet 'dispatcher': initialization started
+03-Jun-2019 09:38:01.288 INFO [Catalina-utility-2] org.springframework.web.context.support.AnnotationConfigWebApplicationContext.prepareRefresh Refreshing WebApplicationContext for namespace 'dispatcher-servlet': startup date [Mon Jun 03 09:38:01 GMT 2019]; root of context hierarchy
+03-Jun-2019 09:38:01.355 INFO [Catalina-utility-2] org.springframework.web.context.support.AnnotationConfigWebApplicationContext.loadBeanDefinitions Registering annotated classes: [class com.atlassian.synchrony.proxy.websocket.WebSocketConfig,class com.atlassian.synchrony.proxy.web.SynchronyWebMvcConfig]
+2019-06-03 09:38:01,513 INFO [Catalina-utility-1] [com.atlassian.confluence.lifecycle] contextInitialized Starting Confluence 6.15.4 [build 8100 based on commit hash b0984b7297905b7c7bd946458f753ce0130bfc8c] - synchrony version 2.1.0-master-9d112c9d
+03-Jun-2019 09:38:01.805 INFO [Catalina-utility-2] org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler.initialize Initializing ExecutorService  'defaultSockJsTaskScheduler'
+03-Jun-2019 09:38:01.852 INFO [Catalina-utility-2] org.springframework.web.socket.server.support.WebSocketHandlerMapping.registerHandler Mapped URL path [/v1/bayeux-sync1] onto handler of type [class org.springframework.web.socket.server.support.WebSocketHttpRequestHandler]
+03-Jun-2019 09:38:02.553 INFO [Catalina-utility-2] org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.initControllerAdviceCache Looking for @ControllerAdvice: WebApplicationContext for namespace 'dispatcher-servlet': startup date [Mon Jun 03 09:38:01 GMT 2019]; root of context hierarchy
+03-Jun-2019 09:38:02.670 INFO [Catalina-utility-2] org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping.register Mapped "{[/healthcheck]}" onto public com.atlassian.synchrony.proxy.web.HealthCheckResult com.atlassian.synchrony.proxy.web.SynchronyProxyRestController.getSynchronyProxyInfo()
+03-Jun-2019 09:38:02.671 INFO [Catalina-utility-2] org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping.register Mapped "{[/reload],methods=[PUT]}" onto public org.springframework.http.ResponseEntity com.atlassian.synchrony.proxy.web.SynchronyProxyRestController.reloadConfiguration(com.atlassian.synchrony.proxy.web.SynchronyProxyConfigPayload)
+03-Jun-2019 09:38:02.701 INFO [Catalina-utility-2] org.springframework.web.servlet.handler.SimpleUrlHandlerMapping.registerHandler Mapped URL path [/**] onto handler of type [class org.springframework.web.servlet.resource.DefaultServletHttpRequestHandler]
+03-Jun-2019 09:38:02.859 INFO [Catalina-utility-2] org.springframework.context.support.DefaultLifecycleProcessor.start Starting beans in phase 2147483647
+03-Jun-2019 09:38:02.943 INFO [Catalina-utility-2] org.springframework.web.servlet.DispatcherServlet.initServletBean FrameworkServlet 'dispatcher': initialization completed in 1633 ms
+03-Jun-2019 09:38:02.945 SEVERE [Catalina-utility-2] org.apache.jasper.EmbeddedServletOptions.<init> The scratchDir you specified: [/opt/atlassian/confluence/work/Standalone/localhost/synchrony-proxy] is unusable.
+2019-06-03 09:38:04,904 ERROR [Catalina-utility-1] [confluence.impl.health.DefaultHealthCheckRunner] logEvent We can't locate your Confluence home directory.
+2019-06-03 09:38:04,907 ERROR [Catalina-utility-1] [confluence.impl.health.DefaultHealthCheckRunner] logEvent You'll need to specify a home directory. Confluence can't start without this.
+See our documentation for more information on setting your home directory.
+2019-06-03 09:38:04,908 WARN [Catalina-utility-1] [atlassian.config.bootstrap.DefaultAtlassianBootstrapManager] init Unable to set up application config: no home set
+03-Jun-2019 09:38:05.943 INFO [main] org.apache.coyote.AbstractProtocol.start Starting ProtocolHandler ["http-nio-8090"]
+03-Jun-2019 09:38:05.970 INFO [main] org.apache.catalina.startup.Catalina.start Server startup in [6,854] milliseconds
+[root@lanzhiwang-centos7 docker_data]# docker ps -a
+CONTAINER ID        IMAGE                         COMMAND                  CREATED             STATUS              PORTS                              NAMES
+6493ffb38df8        atlassian/confluence-server   "/tini -- /entrypoin…"   3 minutes ago       Up 3 minutes        0.0.0.0:8090-8091->8090-8091/tcp   confluence
+[root@lanzhiwang-centos7 docker_data]# docker ps -a
+CONTAINER ID        IMAGE                         COMMAND                  CREATED             STATUS              PORTS                              NAMES
+6493ffb38df8        atlassian/confluence-server   "/tini -- /entrypoin…"   3 minutes ago       Up 3 minutes        0.0.0.0:8090-8091->8090-8091/tcp   confluence
+[root@lanzhiwang-centos7 docker_data]# 
+
+
+错误分析：
+修改 /root/work/confluence/docker_data/confluence_install/confluence/WEB-INF/classes/confluence-init.properties 配置文件 confluence.home=/var/atlassian/application-data/confluence/
+
+[root@lanzhiwang-centos7 docker_data]# ll
+total 0
+drwxr-xr-x  2 root root   6 Jun  3 18:54 confluence_home
+drwxr-xr-x 12 1000 1000 314 May  8 11:10 confluence_install
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# chown -R daemon:daemon confluence_install/
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# chmod -R 777 confluence_install/logs/
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# ll
+total 0
+drwxr-xr-x  2 root   root     6 Jun  3 18:54 confluence_home
+drwxr-xr-x 12 daemon daemon 314 May  8 11:10 confluence_install
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# vim confluence_install/confluence/WEB-INF/classes/confluence-init.properties
+[root@lanzhiwang-centos7 docker_data]# cat confluence_install/confluence/WEB-INF/classes/confluence-init.properties
+# This file allows you to set the directory for Confluence to store its configuration files.
+#
+###########################
+# Note for Windows Users  #
+###########################
+#
+# Each backslash in your path must be written as a forward slash.
+# - For example:
+# c:\confluence\data
+#
+# should be written as:
+#
+# c:/confluence/data
+
+###########################
+# Note for Unix Users     #
+###########################
+# - For example:
+# confluence.home=/var/confluence
+#
+# NOTE: If the path of your confluence.home directory contains symlinks,
+# please set confluence.home to the absolute path, otherwise problems may occur.
+# - For example:
+# confluence.home=/data/confluence/ (where /data is a symlink to -> /var/data/)
+# should be written as:
+# confluence.home=/var/data/confluence/
+confluence.home=/var/atlassian/application-data/confluence/
+
+###########################
+# Configuration Directory #
+###########################
+
+# specify your directory below (don't forget to remove the '#' in front)
+
+# confluence.home=c:/confluence/data
+[root@lanzhiwang-centos7 docker_data]# 
+
+[root@lanzhiwang-centos7 docker_data]# ll
+total 0
+drwxr-xr-x  2 root root   6 Jun  3 18:54 confluence_home
+drwxr-xr-x 12 1000 1000 314 May  8 11:10 confluence_install
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# chown -R daemon:daemon confluence_install/
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# chmod -R 777 confluence_install/logs/
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# docker run -v /root/work/confluence/docker_data/confluence_home:/var/atlassian/application-data/confluence -v /root/work/confluence/docker_data/confluence_install:/opt/atlassian/confluence --name="confluence" -d -p 8090:8090 -p 8091:8091 atlassian/confluence-server
+0081a963bfc5776fbdafc69ce51327380e24995dd07b22a3b89dbff420481652
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# docker ps -a
+CONTAINER ID        IMAGE                         COMMAND                  CREATED             STATUS              PORTS                              NAMES
+0081a963bfc5        atlassian/confluence-server   "/tini -- /entrypoin…"   7 seconds ago       Up 6 seconds        0.0.0.0:8090-8091->8090-8091/tcp   confluence
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# docker logs 0081a963bfc5
+
+
+http://10.5.106.26:8090
+
+
+还是有错误。错误分析：
+在启动容器后再修改配置文件 confluence_install/confluence/WEB-INF/classes/confluence-init.properties，不能提前修改
+
+[root@lanzhiwang-centos7 docker_data]# ll
+total 0
+drwxr-xr-x  2 root root   6 Jun  3 19:06 confluence_home
+drwxr-xr-x 12 1000 1000 314 May  8 11:10 confluence_install
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# chown -R daemon:daemon confluence_install/
+[root@lanzhiwang-centos7 docker_data]# chmod -R 777 confluence_install/logs/
+[root@lanzhiwang-centos7 docker_data]# ll
+total 0
+drwxr-xr-x  2 root   root     6 Jun  3 19:06 confluence_home
+drwxr-xr-x 12 daemon daemon 314 May  8 11:10 confluence_install
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# vim confluence_install/confluence/WEB-INF/classes/confluence-init.properties
+[root@lanzhiwang-centos7 docker_data]# cat confluence_install/confluence/WEB-INF/classes/confluence-init.properties
+# This file allows you to set the directory for Confluence to store its configuration files.
+#
+###########################
+# Note for Windows Users  #
+###########################
+#
+# Each backslash in your path must be written as a forward slash.
+# - For example:
+# c:\confluence\data
+#
+# should be written as:
+#
+# c:/confluence/data
+
+###########################
+# Note for Unix Users     #
+###########################
+# - For example:
+# confluence.home=/var/confluence
+#
+# NOTE: If the path of your confluence.home directory contains symlinks,
+# please set confluence.home to the absolute path, otherwise problems may occur.
+# - For example:
+# confluence.home=/data/confluence/ (where /data is a symlink to -> /var/data/)
+# should be written as:
+# confluence.home=/var/data/confluence/
+confluence.home=/var/atlassian/application-data/confluence/
+
+###########################
+# Configuration Directory #
+###########################
+
+# specify your directory below (don't forget to remove the '#' in front)
+
+# confluence.home=c:/confluence/data
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# docker ps -a
+CONTAINER ID        IMAGE                         COMMAND                  CREATED              STATUS              PORTS                              NAMES
+a76d26601b72        atlassian/confluence-server   "/tini -- /entrypoin…"   About a minute ago   Up About a minute   0.0.0.0:8090-8091->8090-8091/tcp   confluence
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# docker restart a76d26601b72
+a76d26601b72
+[root@lanzhiwang-centos7 docker_data]# chmod -R 777 confluence_install/  # 要将整个 confluence_install 目录设置为最大权限
+[root@lanzhiwang-centos7 docker_data]# 
+[root@lanzhiwang-centos7 docker_data]# docker restart a76d26601b72
+a76d26601b72
+[root@lanzhiwang-centos7 docker_data]# 
+
+总结：
+1、将 atlassian-confluence-6.15.4.tar.gz 解压到 confluence_install 目录中
+2、容器启动后修改配置文件 confluence_install/confluence/WEB-INF/classes/confluence-init.properties
 
 
 
