@@ -726,9 +726,22 @@ a76d26601b72
 
 /root/work/confluence/docker_data/confluence_install:/opt/atlassian/confluence
 
+Confluence 需要一个驱动程序以连接到 MySQL 。 您将需要：
+
+下载 MySQL驱动程序  # https://confluence.atlassian.com/doc/database-jdbc-drivers-171742.html  mysql-connector-java-5.1.47.tar.gz
+将 .jar 文件放入 /opt/atlassian/confluence/confluence/WEB-INF/lib
+重启 Confluence 并继续安装过程。
+    
 mysql 驱动安装目录
 /opt/atlassian/confluence /confluence/WEB-INF/lib/
 /root/work/confluence/docker_data/confluence_install /confluence/WEB-INF/lib/
+
+添加驱动后要重启容器
+
+也需要提前创建数据库
+
+rootpassword
+
 
 
 ```
@@ -1266,8 +1279,132 @@ CONFLUENCE_MYSQL_PORT=tcp://10.68.89.209:3306
 _=/usr/bin/env
 root@confluence-deployment-7577774698-psgz2:/var/atlassian/application-data/confluence# 
 
+http://10.1.36.46:24248
 
+# confluence 数据表
+mysql> show tables;
++--------------------------------+
+| Tables_in_confluence           |
++--------------------------------+
+| AO_187CCC_SIDEBAR_LINK         |
+| AO_21D670_WHITELIST_RULES      |
+| AO_21F425_MESSAGE_AO           |
+| AO_21F425_MESSAGE_MAPPING_AO   |
+| AO_21F425_USER_PROPERTY_AO     |
+| AO_26DB7F_ENTITIES_TO_ROOMS    |
+| AO_26DB7F_ENTITIES_TO_ROOM_CFG |
+| AO_38321B_CUSTOM_CONTENT_LINK  |
+| AO_4789DD_HEALTH_CHECK_STATUS  |
+| AO_4789DD_PROPERTIES           |
+| AO_4789DD_READ_NOTIFICATIONS   |
+| AO_4789DD_TASK_MONITOR         |
+| AO_54C900_CONTENT_BLUEPRINT_AO |
+| AO_54C900_C_TEMPLATE_REF       |
+| AO_54C900_SPACE_BLUEPRINT_AO   |
+| AO_563AEE_ACTIVITY_ENTITY      |
+| AO_563AEE_ACTOR_ENTITY         |
+| AO_563AEE_MEDIA_LINK_ENTITY    |
+| AO_563AEE_OBJECT_ENTITY        |
+| AO_563AEE_TARGET_ENTITY        |
+| AO_5F3884_FEATURE_DISCOVERY    |
+| AO_5FB9D7_AOHIP_CHAT_LINK      |
+| AO_5FB9D7_AOHIP_CHAT_USER      |
+| AO_6384AB_DISCOVERED           |
+| AO_6384AB_FEATURE_METADATA_AO  |
+| AO_7CDE43_EVENT                |
+| AO_7CDE43_FILTER_PARAM         |
+| AO_7CDE43_NOTIFICATION         |
+| AO_7CDE43_NOTIFICATION_SCHEME  |
+| AO_7CDE43_RECIPIENT            |
+| AO_7CDE43_SERVER_CONFIG        |
+| AO_7CDE43_SERVER_PARAM         |
+| AO_88BB94_BATCH_NOTIFICATION   |
+| AO_92296B_AORECENTLY_VIEWED    |
+| AO_9412A1_AONOTIFICATION       |
+| AO_9412A1_AOREGISTRATION       |
+| AO_9412A1_AOTASK               |
+| AO_9412A1_AOUSER               |
+| AO_9412A1_USER_APP_LINK        |
+| AO_954A21_PUSH_NOTIFICATION_AO |
+| AO_A0B856_WEB_HOOK_LISTENER_AO |
+| AO_BAF3AA_AOINLINE_TASK        |
+| AO_DC98AE_AOHELP_TIP           |
+| AO_ED669C_SEEN_ASSERTIONS      |
+| ATTACHMENTDATA                 |
+| AUDITRECORD                    |
+| AUDIT_AFFECTED_OBJECT          |
+| AUDIT_CHANGED_VALUE            |
+| BANDANA                        |
+| BODYCONTENT                    |
+| CLUSTERSAFETY                  |
+| CONFANCESTORS                  |
+| CONFVERSION                    |
+| CONTENT                        |
+| CONTENTPROPERTIES              |
+| CONTENT_LABEL                  |
+| CONTENT_PERM                   |
+| CONTENT_PERM_SET               |
+| CONTENT_RELATION               |
+| DECORATOR                      |
+| DIAGNOSTICS_ALERTS             |
+| EVENTS                         |
+| EXTRNLNKS                      |
+| FOLLOW_CONNECTIONS             |
+| IMAGEDETAILS                   |
+| INDEXQUEUEENTRIES              |
+| KEYSTORE                       |
+| LABEL                          |
+| LIKES                          |
+| LINKS                          |
+| MIG_ATTACHMENT                 |
+| MIG_CLOUD_SITE                 |
+| MIG_DB_CHANGELOG               |
+| MIG_DB_CHANGELOG_LOCK          |
+| MIG_PLAN                       |
+| MIG_SEQUENCES                  |
+| MIG_STATS                      |
+| MIG_STEP                       |
+| MIG_TASK                       |
+| MIG_WORK_ITEM                  |
+| NOTIFICATIONS                  |
+| OS_PROPERTYENTRY               |
+| PAGETEMPLATES                  |
+| PLUGINDATA                     |
+| SECRETS                        |
+| SNAPSHOTS                      |
+| SPACEPERMISSIONS               |
+| SPACES                         |
+| TRACKBACKLINKS                 |
+| TRUSTEDAPP                     |
+| TRUSTEDAPPRESTRICTION          |
+| USERCONTENT_RELATION           |
+| USER_RELATION                  |
+| cwd_app_dir_group_mapping      |
+| cwd_app_dir_mapping            |
+| cwd_app_dir_operation          |
+| cwd_application                |
+| cwd_application_address        |
+| cwd_application_attribute      |
+| cwd_directory                  |
+| cwd_directory_attribute        |
+| cwd_directory_operation        |
+| cwd_group                      |
+| cwd_group_attribute            |
+| cwd_membership                 |
+| cwd_user                       |
+| cwd_user_attribute             |
+| cwd_user_credential_record     |
+| hibernate_unique_key           |
+| journalentry                   |
+| logininfo                      |
+| remembermetoken                |
+| scheduler_clustered_jobs       |
+| scheduler_run_details          |
+| user_mapping                   |
++--------------------------------+
+115 rows in set (0.01 sec)
 
+mysql> 
 
 
 
@@ -1284,6 +1421,24 @@ root@confluence-deployment-7577774698-psgz2:/var/atlassian/application-data/conf
 
 JIRA Core、JIRA Software、JIRA Service Desk 的区别
 参考 https://blog.csdn.net/cabinhe/article/details/78165832
+
+
+
+https://confluence.atlassian.com/adminjiraserver/connecting-jira-applications-to-mysql-5-7-966063305.html
+
+
+
+
+### docker 安装 jira
+
+```bash
+# https://hub.docker.com/r/cptactionhank/atlassian-jira-software
+docker pull cptactionhank/atlassian-jira-software
+
+
+```
+
+
 
 
 ### MySQL
