@@ -1607,6 +1607,72 @@ CREATE DATABASE jiradb CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 docker run --detach --publish 8080:8080 cptactionhank/atlassian-jira-software:latest
 # -d, --detach                         Run container in background and print container ID
 
+# JIRA_HOME     
+/root/work/jira/jira_home:/var/atlassian/jira
+
+# JIRA_INSTALL  
+/root/work/jira/jira_install:/opt/atlassian/jira
+
+
+docker run -v /root/work/jira/jira_home:/var/atlassian/jira -v /root/work/jira/jira_install:/opt/atlassian/jira --name="jira" -d -p 8080:8080 cptactionhank/atlassian-jira-software:latest
+
+# 需要准备的软件
+[root@lanzhiwang-centos7 jira]# ll
+total 312016
+drwxr-xr-x 13 1000 1000       282 May 27 23:37 atlassian-jira-software-8.2.1-standalone
+-rw-r--r--  1 root root 314763916 May 29 15:19 atlassian-jira-software-8.2.1.tar.gz
+drwxr-xr-x  4 root root       151 Dec  2  2015 mysql-connector-java-5.1.38
+-rw-r--r--  1 root root   3938241 Dec  2  2015 mysql-connector-java-5.1.38.tar.gz
+-rw-r--r--  1 root root    794639 Jan 25  2018 postgresql-42.2.1.jar
+[root@lanzhiwang-centos7 jira]# 
+
+[root@lanzhiwang-centos7 jira]# mkdir jira_home
+[root@lanzhiwang-centos7 jira]# mkdir -p jira_home/caches/indexes
+[root@lanzhiwang-centos7 jira]# chmod -R 700 jira_home/
+[root@lanzhiwang-centos7 jira]# chown -R daemon:daemon jira_home/
+[root@lanzhiwang-centos7 jira]#  
+[root@lanzhiwang-centos7 jira]# cp -R atlassian-jira-software-8.2.1-standalone/ jira_install
+[root@lanzhiwang-centos7 jira]# mkdir -p jira_install/conf/Catalina
+[root@lanzhiwang-centos7 jira]# 
+[root@lanzhiwang-centos7 jira]# cp mysql-connector-java-5.1.38/mysql-connector-java-5.1.38-bin.jar jira_install/lib/
+[root@lanzhiwang-centos7 jira]# rm -rf jira_install/lib/postgresql-9.4.1212.jar 
+[root@lanzhiwang-centos7 jira]# cp postgresql-42.2.1.jar jira_install/lib/
+[root@lanzhiwang-centos7 jira]# chmod -R 700 jira_install/
+[root@lanzhiwang-centos7 jira]# chown -R daemon:daemon jira_install/
+[root@lanzhiwang-centos7 jira]# 
+[root@lanzhiwang-centos7 jira]# sed --in-place "s/java version/openjdk version/g" "jira_install/bin/check-java.sh"  # 其实没有作用
+[root@lanzhiwang-centos7 jira]# 
+[root@lanzhiwang-centos7 jira]# echo -e "\njira.home=/var/atlassian/jira" >> "jira_install/atlassian-jira/WEB-INF/classes/jira-application.properties"
+[root@lanzhiwang-centos7 jira]# cat jira_install//atlassian-jira/WEB-INF/classes/jira-application.properties
+# Do not modify this file unless instructed. It is here to store the location of the JIRA home directory only and is typically written to by the installer.
+jira.home =
+
+jira.home=/var/atlassian/jira
+[root@lanzhiwang-centos7 jira]# 
+
+[root@lanzhiwang-centos7 jira]# ll jira_install/conf/server.xml
+-rwx------ 1 daemon daemon 6466 Jun  4 19:01 jira_install/conf/server.xml
+[root@lanzhiwang-centos7 jira]# 
+# -d 设定时间与日期，可以使用各种不同的格式
+[root@lanzhiwang-centos7 jira]# touch -d "@0" jira_install/conf/server.xml  
+[root@lanzhiwang-centos7 jira]# ll jira_install/conf/server.xml
+-rwx------ 1 daemon daemon 6466 Jan  1  1970 jira_install/conf/server.xml
+[root@lanzhiwang-centos7 jira]# 
+
+[root@lanzhiwang-centos7 jira]# docker run -v /root/work/jira/jira_home:/var/atlassian/jira -v /root/work/jira/jira_install:/opt/atlassian/jira --name="jira" -d -p 8080:8080 cptactionhank/atlassian-jira-software:latest
+a13a1e84723071bd57e69fc22cca3d83e2d4275a74df575fc9e90389c007d1ce
+[root@lanzhiwang-centos7 jira]# 
+[root@lanzhiwang-centos7 jira]# docker ps -a
+CONTAINER ID        IMAGE                                          COMMAND                  CREATED             STATUS              PORTS                    NAMES
+a13a1e847230        cptactionhank/atlassian-jira-software:latest   "/docker-entrypoint.…"   8 seconds ago       Up 7 seconds        0.0.0.0:8080->8080/tcp   jira
+[root@lanzhiwang-centos7 jira]# 
+[root@lanzhiwang-centos7 jira]# docker logs a13a1e847230
+
+
+
+
+
+
 
 
 
