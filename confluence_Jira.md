@@ -731,9 +731,551 @@ mysql 驱动安装目录
 /root/work/confluence/docker_data/confluence_install /confluence/WEB-INF/lib/
 
 
-
 ```
 
+### 在 k8s 上部署 confluence
+
+```bash
+[root@k8s-master1 temp]# vim ./confluence.yml
+[root@k8s-master1 temp]# cat ./confluence.yml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: confluence
+  labels:
+    app: confluence
+spec:
+  ports:
+  - name: http
+    port: 8090
+    targetPort: 8090
+    protocol: TCP
+  selector:
+    app: confluence
+    service: confluence
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: confluence-deployment
+  labels:
+    service: confluence
+    app: confluence
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: confluence
+      service: confluence
+  template:
+    metadata:
+      labels:
+        app: confluence
+        service: confluence
+    spec:
+      containers:
+        - name: confluence
+          image: atlassian/confluence-server:latest
+          imagePullPolicy: Always
+          env:
+            - name: JVM_MINIMUM_MEMORY
+              value: 2048m
+            - name: JVM_MAXIMUM_MEMORY
+              value: 2048m
+          ports:
+            - containerPort: 8090
+
+          volumeMounts:
+          - name: confluence_home
+            mountPath: /var/atlassian/application-data/confluence
+          - name: confluence_install
+            mountPath: /opt/atlassian/confluence
+
+      volumes:
+        - name: confluence_home
+          hostPath:
+            path: /opt/k8s/volume_data/confluence_home/
+        - name: confluence_install
+          hostPath:
+            path: /opt/k8s/volume_data/confluence_install/
+
+[root@k8s-master1 temp]# kubectl apply -f ./confluence.yml
+service/confluence unchanged
+The Deployment "confluence-deployment" is invalid: 
+* spec.template.spec.volumes[0].name: Invalid value: "confluence_home": a DNS-1123 label must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?')
+* spec.template.spec.volumes[1].name: Invalid value: "confluence_install": a DNS-1123 label must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?')
+* spec.template.spec.containers[0].volumeMounts[0].name: Not found: "confluence_home"
+* spec.template.spec.containers[0].volumeMounts[1].name: Not found: "confluence_install"
+[root@k8s-master1 temp]# 
+
+错误分析：
+confluence_home 和 confluence_install 不能使用下划线，要使用中划线 confluence-home 和 confluence-install
+
+[root@k8s-master1 temp]# vim  ./confluence.yml
+[root@k8s-master1 temp]# cat  ./confluence.yml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: confluence
+  labels:
+    app: confluence
+spec:
+  ports:
+  - name: http
+    port: 8090
+    targetPort: 8090
+    protocol: TCP
+  selector:
+    app: confluence
+    service: confluence
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: confluence-deployment
+  labels:
+    service: confluence
+    app: confluence
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: confluence
+      service: confluence
+  template:
+    metadata:
+      labels:
+        app: confluence
+        service: confluence
+    spec:
+      containers:
+        - name: confluence
+          image: atlassian/confluence-server:latest
+          imagePullPolicy: Always
+          env:
+            - name: JVM_MINIMUM_MEMORY
+              value: 2048m
+            - name: JVM_MAXIMUM_MEMORY
+              value: 2048m
+          ports:
+            - containerPort: 8090
+
+          volumeMounts:
+          - name: confluence-home
+            mountPath: /var/atlassian/application-data/confluence
+          - name: confluence-install
+            mountPath: /opt/atlassian/confluence
+
+      volumes:
+        - name: confluence-home
+          hostPath:
+            path: /opt/k8s/volume_data/confluence_home/
+        - name: confluence-install
+          hostPath:
+            path: /opt/k8s/volume_data/confluence_install/
+
+[root@k8s-master1 temp]# kubectl apply -f ./confluence.yml
+service/confluence unchanged
+deployment.apps/confluence-deployment created
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get deployment -o wide
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES                               SELECTOR
+confluence-deployment   1/1     1            1           36s     confluence   atlassian/confluence-server:latest   app=confluence,service=confluence
+confluence-mysql        1/1     1            1           4d18h   mysql        mysql/mysql-server:5.7               app=confluence,tier=mysql
+my-nginx                8/8     8            8           5d23h   my-nginx     nginx                                run=my-nginx
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get pod -o wide
+NAME                                     READY   STATUS             RESTARTS   AGE     IP            NODE         NOMINATED NODE   READINESS GATES
+confluence-deployment-7577774698-psgz2   1/1     Running            0          54s     172.20.0.17   10.1.36.46   <none>           <none>
+confluence-mysql-d464855bd-9ckm9         1/1     Running            7          4d18h   172.20.0.15   10.1.36.46   <none>           <none>
+my-nginx-86459cfc9f-29wdg                1/1     Running            0          5d23h   172.20.2.7    10.1.36.48   <none>           <none>
+my-nginx-86459cfc9f-6fgzv                1/1     Running            0          5d23h   172.20.1.21   10.1.36.47   <none>           <none>
+my-nginx-86459cfc9f-csg5l                1/1     Running            0          5d23h   172.20.1.20   10.1.36.47   <none>           <none>
+my-nginx-86459cfc9f-lvthq                1/1     Running            0          5d23h   172.20.3.2    10.1.36.49   <none>           <none>
+my-nginx-86459cfc9f-qhjww                1/1     Running            0          5d23h   172.20.0.11   10.1.36.46   <none>           <none>
+my-nginx-86459cfc9f-qwclj                1/1     Running            0          5d23h   172.20.0.12   10.1.36.46   <none>           <none>
+my-nginx-86459cfc9f-stx7p                1/1     Running            0          5d23h   172.20.2.6    10.1.36.48   <none>           <none>
+my-nginx-86459cfc9f-wx2hq                1/1     Running            0          5d23h   172.20.3.3    10.1.36.49   <none>           <none>
+mysql-test                               0/1     CrashLoopBackOff   1024       3d23h   172.20.3.8    10.1.36.49   <none>           <none>
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl describe pod confluence-deployment-7577774698-psgz2
+Name:           confluence-deployment-7577774698-psgz2
+Namespace:      default
+Node:           10.1.36.46/10.1.36.46
+Start Time:     Tue, 04 Jun 2019 09:56:42 +0800
+Labels:         app=confluence
+                pod-template-hash=7577774698
+                service=confluence
+Annotations:    <none>
+Status:         Running
+IP:             172.20.0.17
+Controlled By:  ReplicaSet/confluence-deployment-7577774698
+Containers:
+  confluence:
+    Container ID:   docker://19120f7d60eeda1bdc3a037bc5bd7b1d87d31b3324a05ad974cc91b2cf04c821
+    Image:          atlassian/confluence-server:latest
+    Image ID:       docker-pullable://atlassian/confluence-server@sha256:2b8513e2fc80990c9ca8d0c69fef1ce8a2ff33658a01a42dc98a853b28ea39d7
+    Port:           8090/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Tue, 04 Jun 2019 09:56:46 +0800
+    Ready:          True
+    Restart Count:  0
+    Environment:
+      JVM_MINIMUM_MEMORY:  2048m
+      JVM_MAXIMUM_MEMORY:  2048m
+    Mounts:
+      /opt/atlassian/confluence from confluence-install (rw)
+      /var/atlassian/application-data/confluence from confluence-home (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from default-token-lz2dc (ro)
+Conditions:
+  Type              Status
+  Initialized       True 
+  Ready             True 
+  ContainersReady   True 
+  PodScheduled      True 
+Volumes:
+  confluence-home:
+    Type:          HostPath (bare host directory volume)
+    Path:          /opt/k8s/volume_data/confluence_home/
+    HostPathType:  
+  confluence-install:
+    Type:          HostPath (bare host directory volume)
+    Path:          /opt/k8s/volume_data/confluence_install/
+    HostPathType:  
+  default-token-lz2dc:
+    Type:        Secret (a volume populated by a Secret)
+    SecretName:  default-token-lz2dc
+    Optional:    false
+QoS Class:       BestEffort
+Node-Selectors:  <none>
+Tolerations:     <none>
+Events:
+  Type    Reason     Age   From                 Message
+  ----    ------     ----  ----                 -------
+  Normal  Scheduled  2m8s  default-scheduler    Successfully assigned default/confluence-deployment-7577774698-psgz2 to 10.1.36.46
+  Normal  Pulling    2m7s  kubelet, 10.1.36.46  Pulling image "atlassian/confluence-server:latest"
+  Normal  Pulled     2m4s  kubelet, 10.1.36.46  Successfully pulled image "atlassian/confluence-server:latest"
+  Normal  Created    2m4s  kubelet, 10.1.36.46  Created container confluence
+  Normal  Started    2m4s  kubelet, 10.1.36.46  Started container confluence
+[root@k8s-master1 temp]# 
+
+[root@k8s-linux-worker1 volume_data]# docker ps -a
+CONTAINER ID        IMAGE                         COMMAND                  CREATED             STATUS                  PORTS               NAMES
+19120f7d60ee        atlassian/confluence-server   "/tini -- /entrypoin…"   4 minutes ago       Up 4 minutes                                k8s_confluence_confluence-deployment-7577774698-psgz2_default_ffd2c5df-866b-11e9-8f1f-0017fa00a076_0
+b4a031e2564c        k8s.gcr.io/pause:3.1          "/pause"                 4 minutes ago       Up 4 minutes                                k8s_POD_confluence-deployment-7577774698-psgz2_default_ffd2c5df-866b-11e9-8f1f-0017fa00a076_0
+cd4ad9dabcd9        ff281650a721                  "cp -f /etc/kube-fla…"   4 days ago          Exited (0) 4 days ago                       k8s_install-cni_kube-flannel-ds-amd64-vlwws_kube-system_5064723c-7bbc-11e9-8eb2-0017fa00a076_0
+516e95531598        857eadf53a54                  "/entrypoint.sh mysq…"   4 days ago          Up 4 days                                   k8s_mysql_confluence-mysql-d464855bd-9ckm9_default_fc148672-82ae-11e9-8f1f-0017fa00a076_7
+e442817adadf        k8s.gcr.io/pause:3.1          "/pause"                 4 days ago          Up 4 days                                   k8s_POD_confluence-mysql-d464855bd-9ckm9_default_fc148672-82ae-11e9-8f1f-0017fa00a076_0
+ff2443f44b3a        nginx                         "nginx -g 'daemon of…"   5 days ago          Up 5 days                                   k8s_my-nginx_my-nginx-86459cfc9f-qwclj_default_e5ff59c0-81ba-11e9-8f1f-0017fa00a076_0
+01083b94ed24        nginx                         "nginx -g 'daemon of…"   5 days ago          Up 5 days                                   k8s_my-nginx_my-nginx-86459cfc9f-qhjww_default_e5ff0ba3-81ba-11e9-8f1f-0017fa00a076_0
+3b01b7d98e57        k8s.gcr.io/pause:3.1          "/pause"                 5 days ago          Up 5 days                                   k8s_POD_my-nginx-86459cfc9f-qwclj_default_e5ff59c0-81ba-11e9-8f1f-0017fa00a076_0
+c12093c6eb0e        k8s.gcr.io/pause:3.1          "/pause"                 5 days ago          Up 5 days                                   k8s_POD_my-nginx-86459cfc9f-qhjww_default_e5ff0ba3-81ba-11e9-8f1f-0017fa00a076_0
+6d2174182b5d        f9aed6605b81                  "/dashboard --insecu…"   6 days ago          Up 6 days                                   k8s_kubernetes-dashboard_kubernetes-dashboard-5f7b999d65-sw96f_kube-system_62c2ea91-810f-11e9-8f1f-0017fa00a076_0
+2938cb474079        ff281650a721                  "/opt/bin/flanneld -…"   6 days ago          Up 6 days                                   k8s_kube-flannel_kube-flannel-ds-amd64-vlwws_kube-system_5064723c-7bbc-11e9-8eb2-0017fa00a076_4
+975e00897c33        k8s.gcr.io/pause:3.1          "/pause"                 6 days ago          Up 6 days                                   k8s_POD_kube-flannel-ds-amd64-vlwws_kube-system_5064723c-7bbc-11e9-8eb2-0017fa00a076_4
+f2a933f2127f        k8s.gcr.io/pause:3.1          "/pause"                 6 days ago          Up 6 days                                   k8s_POD_kubernetes-dashboard-5f7b999d65-sw96f_kube-system_62c2ea91-810f-11e9-8f1f-0017fa00a076_3
+[root@k8s-linux-worker1 volume_data]# 
+[root@k8s-linux-worker1 volume_data]# docker logs 19120f7d60ee
+User is currently root. Will change directory ownership to daemon:daemon, then downgrade permission to daemon
+executing as current user
+If you encounter issues starting up Confluence, please see the Installation guide at http://confluence.atlassian.com/display/DOC/Confluence+Installation+Guide
+
+Server startup logs are located in /opt/atlassian/confluence/logs/catalina.out
+---------------------------------------------------------------------------
+Using Java: /opt/java/openjdk/bin/java
+2019-06-04 01:56:47,498 INFO [main] [atlassian.confluence.bootstrap.SynchronyProxyWatchdog] A Context element for ${confluence.context.path}/synchrony-proxy is found in /opt/atlassian/confluence/conf/server.xml. No further action is required
+---------------------------------------------------------------------------
+04-Jun-2019 01:56:48.022 WARNING [main] org.apache.tomcat.util.digester.SetPropertiesRule.begin Match [Server] failed to set property [debug] to [0]
+04-Jun-2019 01:56:48.094 WARNING [main] org.apache.catalina.startup.SetAllPropertiesRule.begin [SetAllPropertiesRule]{Server/Service/Connector} Setting property 'debug' to '0' did not find a matching property.
+04-Jun-2019 01:56:48.115 WARNING [main] org.apache.tomcat.util.digester.SetPropertiesRule.begin Match [Server/Service/Engine] failed to set property [debug] to [0]
+04-Jun-2019 01:56:48.121 WARNING [main] org.apache.tomcat.util.digester.SetPropertiesRule.begin Match [Server/Service/Engine/Host] failed to set property [debug] to [0]
+04-Jun-2019 01:56:48.159 WARNING [main] org.apache.tomcat.util.digester.SetPropertiesRule.begin Match [Server/Service/Engine/Host/Context] failed to set property [debug] to [0]
+04-Jun-2019 01:56:48.182 WARNING [main] org.apache.tomcat.util.digester.SetPropertiesRule.begin Match [Server/Service/Engine/Host/Context] failed to set property [debug] to [0]
+04-Jun-2019 01:56:48.514 INFO [main] org.apache.coyote.AbstractProtocol.init Initializing ProtocolHandler ["http-nio-8090"]
+04-Jun-2019 01:56:48.553 INFO [main] org.apache.catalina.startup.Catalina.load Server initialization in [642] milliseconds
+04-Jun-2019 01:56:48.562 INFO [main] org.apache.catalina.core.StandardService.startInternal Starting service [Tomcat-Standalone]
+04-Jun-2019 01:56:48.562 INFO [main] org.apache.catalina.core.StandardEngine.startInternal Starting Servlet engine: [Apache Tomcat/9.0.19]
+04-Jun-2019 01:56:50.477 INFO [Catalina-utility-2] org.apache.catalina.core.ApplicationContext.log Spring WebApplicationInitializers detected on classpath: [com.atlassian.synchrony.proxy.SynchronyDispatcherServletInitializer@61a170e6]
+04-Jun-2019 01:56:50.619 INFO [Catalina-utility-2] org.apache.jasper.servlet.TldScanner.scanJars At least one JAR was scanned for TLDs yet contained no TLDs. Enable debug logging for this logger for a complete list of JARs that were scanned but no TLDs were found in them. Skipping unneeded JARs during scanning can improve startup time and JSP compilation time.
+2019-06-04 01:56:50,832 INFO [Catalina-utility-1] [com.atlassian.confluence.lifecycle] contextInitialized Starting Confluence 6.15.4 [build 8100 based on commit hash b0984b7297905b7c7bd946458f753ce0130bfc8c] - synchrony version 2.1.0-master-9d112c9d
+04-Jun-2019 01:56:50.880 INFO [Catalina-utility-2] org.apache.catalina.core.ApplicationContext.log Initializing Spring FrameworkServlet 'dispatcher'
+04-Jun-2019 01:56:50.880 INFO [Catalina-utility-2] org.springframework.web.servlet.DispatcherServlet.initServletBean FrameworkServlet 'dispatcher': initialization started
+04-Jun-2019 01:56:50.887 INFO [Catalina-utility-2] org.springframework.web.context.support.AnnotationConfigWebApplicationContext.prepareRefresh Refreshing WebApplicationContext for namespace 'dispatcher-servlet': startup date [Tue Jun 04 01:56:50 GMT 2019]; root of context hierarchy
+04-Jun-2019 01:56:50.969 INFO [Catalina-utility-2] org.springframework.web.context.support.AnnotationConfigWebApplicationContext.loadBeanDefinitions Registering annotated classes: [class com.atlassian.synchrony.proxy.websocket.WebSocketConfig,class com.atlassian.synchrony.proxy.web.SynchronyWebMvcConfig]
+04-Jun-2019 01:56:51.523 INFO [Catalina-utility-2] org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler.initialize Initializing ExecutorService  'defaultSockJsTaskScheduler'
+04-Jun-2019 01:56:51.579 INFO [Catalina-utility-2] org.springframework.web.socket.server.support.WebSocketHandlerMapping.registerHandler Mapped URL path [/v1/bayeux-sync1] onto handler of type [class org.springframework.web.socket.server.support.WebSocketHttpRequestHandler]
+04-Jun-2019 01:56:52.209 INFO [Catalina-utility-2] org.springframework.web.servlet.handler.SimpleUrlHandlerMapping.registerHandler Mapped URL path [/**] onto handler of type [class org.springframework.web.servlet.resource.DefaultServletHttpRequestHandler]
+04-Jun-2019 01:56:52.257 INFO [Catalina-utility-2] org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.initControllerAdviceCache Looking for @ControllerAdvice: WebApplicationContext for namespace 'dispatcher-servlet': startup date [Tue Jun 04 01:56:50 GMT 2019]; root of context hierarchy
+04-Jun-2019 01:56:52.361 INFO [Catalina-utility-2] org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping.register Mapped "{[/healthcheck]}" onto public com.atlassian.synchrony.proxy.web.HealthCheckResult com.atlassian.synchrony.proxy.web.SynchronyProxyRestController.getSynchronyProxyInfo()
+04-Jun-2019 01:56:52.362 INFO [Catalina-utility-2] org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping.register Mapped "{[/reload],methods=[PUT]}" onto public org.springframework.http.ResponseEntity com.atlassian.synchrony.proxy.web.SynchronyProxyRestController.reloadConfiguration(com.atlassian.synchrony.proxy.web.SynchronyProxyConfigPayload)
+04-Jun-2019 01:56:52.443 INFO [Catalina-utility-2] org.springframework.context.support.DefaultLifecycleProcessor.start Starting beans in phase 2147483647
+04-Jun-2019 01:56:52.475 INFO [Catalina-utility-2] org.springframework.web.servlet.DispatcherServlet.initServletBean FrameworkServlet 'dispatcher': initialization completed in 1595 ms
+2019-06-04 01:56:55,009 ERROR [Catalina-utility-1] [confluence.impl.health.DefaultHealthCheckRunner] logEvent We can't locate your Confluence home directory.
+2019-06-04 01:56:55,015 ERROR [Catalina-utility-1] [confluence.impl.health.DefaultHealthCheckRunner] logEvent You'll need to specify a home directory. Confluence can't start without this.
+See our documentation for more information on setting your home directory.
+2019-06-04 01:56:55,017 WARN [Catalina-utility-1] [atlassian.config.bootstrap.DefaultAtlassianBootstrapManager] init Unable to set up application config: no home set
+04-Jun-2019 01:57:04.330 INFO [main] org.apache.coyote.AbstractProtocol.start Starting ProtocolHandler ["http-nio-8090"]
+04-Jun-2019 01:57:04.344 INFO [main] org.apache.catalina.startup.Catalina.start Server startup in [15,789] milliseconds
+[root@k8s-linux-worker1 volume_data]# 
+
+
+错误分析：
+检查 docker 容器本身还是有错误，没有配置 Confluence home directory，所以在配置文件中修改 Confluence home directory 选项，重启容器
+
+[root@k8s-linux-worker1 volume_data]# vim confluence_install/confluence/WEB-INF/classes/confluence-init.properties
+[root@k8s-linux-worker1 volume_data]# cat confluence_install/confluence/WEB-INF/classes/confluence-init.properties
+# This file allows you to set the directory for Confluence to store its configuration files.
+#
+###########################
+# Note for Windows Users  #
+###########################
+#
+# Each backslash in your path must be written as a forward slash.
+# - For example:
+# c:\confluence\data
+#
+# should be written as:
+#
+# c:/confluence/data
+
+###########################
+# Note for Unix Users     #
+###########################
+# - For example:
+# confluence.home=/var/confluence
+#
+# NOTE: If the path of your confluence.home directory contains symlinks,
+# please set confluence.home to the absolute path, otherwise problems may occur.
+# - For example:
+# confluence.home=/data/confluence/ (where /data is a symlink to -> /var/data/)
+# should be written as:
+# confluence.home=/var/data/confluence/
+confluence.home=/var/atlassian/application-data/confluence/
+
+###########################
+# Configuration Directory #
+###########################
+
+# specify your directory below (don't forget to remove the '#' in front)
+
+# confluence.home=c:/confluence/data
+[root@k8s-linux-worker1 volume_data]# 
+
+[root@k8s-linux-worker1 volume_data]# docker ps -a
+CONTAINER ID        IMAGE                         COMMAND                  CREATED             STATUS                  PORTS               NAMES
+19120f7d60ee        atlassian/confluence-server   "/tini -- /entrypoin…"   11 minutes ago      Up 25 seconds                               k8s_confluence_confluence-deployment-7577774698-psgz2_default_ffd2c5df-866b-11e9-8f1f-0017fa00a076_0
+b4a031e2564c        k8s.gcr.io/pause:3.1          "/pause"                 11 minutes ago      Up 11 minutes                               k8s_POD_confluence-deployment-7577774698-psgz2_default_ffd2c5df-866b-11e9-8f1f-0017fa00a076_0
+cd4ad9dabcd9        ff281650a721                  "cp -f /etc/kube-fla…"   4 days ago          Exited (0) 4 days ago                       k8s_install-cni_kube-flannel-ds-amd64-vlwws_kube-system_5064723c-7bbc-11e9-8eb2-0017fa00a076_0
+516e95531598        857eadf53a54                  "/entrypoint.sh mysq…"   4 days ago          Up 4 days                                   k8s_mysql_confluence-mysql-d464855bd-9ckm9_default_fc148672-82ae-11e9-8f1f-0017fa00a076_7
+e442817adadf        k8s.gcr.io/pause:3.1          "/pause"                 4 days ago          Up 4 days                                   k8s_POD_confluence-mysql-d464855bd-9ckm9_default_fc148672-82ae-11e9-8f1f-0017fa00a076_0
+ff2443f44b3a        nginx                         "nginx -g 'daemon of…"   5 days ago          Up 5 days                                   k8s_my-nginx_my-nginx-86459cfc9f-qwclj_default_e5ff59c0-81ba-11e9-8f1f-0017fa00a076_0
+01083b94ed24        nginx                         "nginx -g 'daemon of…"   5 days ago          Up 5 days                                   k8s_my-nginx_my-nginx-86459cfc9f-qhjww_default_e5ff0ba3-81ba-11e9-8f1f-0017fa00a076_0
+3b01b7d98e57        k8s.gcr.io/pause:3.1          "/pause"                 5 days ago          Up 5 days                                   k8s_POD_my-nginx-86459cfc9f-qwclj_default_e5ff59c0-81ba-11e9-8f1f-0017fa00a076_0
+c12093c6eb0e        k8s.gcr.io/pause:3.1          "/pause"                 5 days ago          Up 5 days                                   k8s_POD_my-nginx-86459cfc9f-qhjww_default_e5ff0ba3-81ba-11e9-8f1f-0017fa00a076_0
+6d2174182b5d        f9aed6605b81                  "/dashboard --insecu…"   6 days ago          Up 6 days                                   k8s_kubernetes-dashboard_kubernetes-dashboard-5f7b999d65-sw96f_kube-system_62c2ea91-810f-11e9-8f1f-0017fa00a076_0
+2938cb474079        ff281650a721                  "/opt/bin/flanneld -…"   6 days ago          Up 6 days                                   k8s_kube-flannel_kube-flannel-ds-amd64-vlwws_kube-system_5064723c-7bbc-11e9-8eb2-0017fa00a076_4
+975e00897c33        k8s.gcr.io/pause:3.1          "/pause"                 6 days ago          Up 6 days                                   k8s_POD_kube-flannel-ds-amd64-vlwws_kube-system_5064723c-7bbc-11e9-8eb2-0017fa00a076_4
+f2a933f2127f        k8s.gcr.io/pause:3.1          "/pause"                 6 days ago          Up 6 days                                   k8s_POD_kubernetes-dashboard-5f7b999d65-sw96f_kube-system_62c2ea91-810f-11e9-8f1f-0017fa00a076_3
+[root@k8s-linux-worker1 volume_data]# 
+[root@k8s-linux-worker1 volume_data]# docker restart 19120f7d60ee
+19120f7d60ee
+[root@k8s-linux-worker1 volume_data]# 
+
+
+[root@k8s-master1 temp]# kubectl get deployment -o wide
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES                               SELECTOR
+confluence-deployment   1/1     1            1           12m     confluence   atlassian/confluence-server:latest   app=confluence,service=confluence
+confluence-mysql        1/1     1            1           4d18h   mysql        mysql/mysql-server:5.7               app=confluence,tier=mysql
+my-nginx                8/8     8            8           5d23h   my-nginx     nginx                                run=my-nginx
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get pod -o wide
+NAME                                     READY   STATUS             RESTARTS   AGE     IP            NODE         NOMINATED NODE   READINESS GATES
+confluence-deployment-7577774698-psgz2   1/1     Running            0          12m     172.20.0.17   10.1.36.46   <none>           <none>
+confluence-mysql-d464855bd-9ckm9         1/1     Running            7          4d18h   172.20.0.15   10.1.36.46   <none>           <none>
+my-nginx-86459cfc9f-29wdg                1/1     Running            0          5d23h   172.20.2.7    10.1.36.48   <none>           <none>
+my-nginx-86459cfc9f-6fgzv                1/1     Running            0          5d23h   172.20.1.21   10.1.36.47   <none>           <none>
+my-nginx-86459cfc9f-csg5l                1/1     Running            0          5d23h   172.20.1.20   10.1.36.47   <none>           <none>
+my-nginx-86459cfc9f-lvthq                1/1     Running            0          5d23h   172.20.3.2    10.1.36.49   <none>           <none>
+my-nginx-86459cfc9f-qhjww                1/1     Running            0          5d23h   172.20.0.11   10.1.36.46   <none>           <none>
+my-nginx-86459cfc9f-qwclj                1/1     Running            0          5d23h   172.20.0.12   10.1.36.46   <none>           <none>
+my-nginx-86459cfc9f-stx7p                1/1     Running            0          5d23h   172.20.2.6    10.1.36.48   <none>           <none>
+my-nginx-86459cfc9f-wx2hq                1/1     Running            0          5d23h   172.20.3.3    10.1.36.49   <none>           <none>
+mysql-test                               0/1     CrashLoopBackOff   1026       4d      172.20.3.8    10.1.36.49   <none>           <none>
+[root@k8s-master1 temp]# kubectl get service -o wide
+NAME               TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE     SELECTOR
+confluence         ClusterIP   10.68.241.111   <none>        8090/TCP   22m     app=confluence,service=confluence
+confluence-mysql   ClusterIP   10.68.89.209    <none>        3306/TCP   4d16h   app=confluence,tier=mysql
+kubernetes         ClusterIP   10.68.0.1       <none>        443/TCP    13d     <none>
+[root@k8s-master1 temp]# 
+
+修改服务的类型为：NodePort
+
+[root@k8s-master1 temp]# vim ./confluence.yml 
+[root@k8s-master1 temp]# cat ./confluence.yml 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: confluence
+  labels:
+    app: confluence
+spec:
+  ports:
+  - name: http
+    port: 8090
+    targetPort: 8090
+    protocol: TCP
+  selector:
+    app: confluence
+    service: confluence
+  type: NodePort
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: confluence-deployment
+  labels:
+    service: confluence
+    app: confluence
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: confluence
+      service: confluence
+  template:
+    metadata:
+      labels:
+        app: confluence
+        service: confluence
+    spec:
+      containers:
+        - name: confluence
+          image: atlassian/confluence-server:latest
+          imagePullPolicy: Always
+          env:
+            - name: JVM_MINIMUM_MEMORY
+              value: 2048m
+            - name: JVM_MAXIMUM_MEMORY
+              value: 2048m
+          ports:
+            - containerPort: 8090
+
+          volumeMounts:
+          - name: confluence-home
+            mountPath: /var/atlassian/application-data/confluence
+          - name: confluence-install
+            mountPath: /opt/atlassian/confluence
+
+      volumes:
+        - name: confluence-home
+          hostPath:
+            path: /opt/k8s/volume_data/confluence_home/
+        - name: confluence-install
+          hostPath:
+            path: /opt/k8s/volume_data/confluence_install/
+
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl apply -f ./confluence.yml
+service/confluence configured
+deployment.apps/confluence-deployment unchanged
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get deployment -o wide
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES                               SELECTOR
+confluence-deployment   1/1     1            1           16m     confluence   atlassian/confluence-server:latest   app=confluence,service=confluence
+confluence-mysql        1/1     1            1           4d18h   mysql        mysql/mysql-server:5.7               app=confluence,tier=mysql
+my-nginx                8/8     8            8           5d23h   my-nginx     nginx                                run=my-nginx
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get pod -o wide
+NAME                                     READY   STATUS             RESTARTS   AGE     IP            NODE         NOMINATED NODE   READINESS GATES
+confluence-deployment-7577774698-psgz2   1/1     Running            0          16m     172.20.0.17   10.1.36.46   <none>           <none>
+confluence-mysql-d464855bd-9ckm9         1/1     Running            7          4d18h   172.20.0.15   10.1.36.46   <none>           <none>
+my-nginx-86459cfc9f-29wdg                1/1     Running            0          5d23h   172.20.2.7    10.1.36.48   <none>           <none>
+my-nginx-86459cfc9f-6fgzv                1/1     Running            0          5d23h   172.20.1.21   10.1.36.47   <none>           <none>
+my-nginx-86459cfc9f-csg5l                1/1     Running            0          5d23h   172.20.1.20   10.1.36.47   <none>           <none>
+my-nginx-86459cfc9f-lvthq                1/1     Running            0          5d23h   172.20.3.2    10.1.36.49   <none>           <none>
+my-nginx-86459cfc9f-qhjww                1/1     Running            0          5d23h   172.20.0.11   10.1.36.46   <none>           <none>
+my-nginx-86459cfc9f-qwclj                1/1     Running            0          5d23h   172.20.0.12   10.1.36.46   <none>           <none>
+my-nginx-86459cfc9f-stx7p                1/1     Running            0          5d23h   172.20.2.6    10.1.36.48   <none>           <none>
+my-nginx-86459cfc9f-wx2hq                1/1     Running            0          5d23h   172.20.3.3    10.1.36.49   <none>           <none>
+mysql-test                               0/1     CrashLoopBackOff   1027       4d      172.20.3.8    10.1.36.49   <none>           <none>
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get service -o wide
+NAME               TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE     SELECTOR
+confluence         NodePort    10.68.241.111   <none>        8090:24248/TCP   26m     app=confluence,service=confluence
+confluence-mysql   ClusterIP   10.68.89.209    <none>        3306/TCP         4d16h   app=confluence,tier=mysql
+kubernetes         ClusterIP   10.68.0.1       <none>        443/TCP          13d     <none>
+[root@k8s-master1 temp]# 
+
+
+
+
+# confluence 连接 MySQL
+[root@k8s-linux-worker1 volume_data]# docker exec -ti 19120f7d60ee bash
+root@confluence-deployment-7577774698-psgz2:/var/atlassian/application-data/confluence# env
+LC_ALL=en_US.UTF-8
+LS_COLORS=rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:
+CONFLUENCE_INSTALL_DIR=/opt/atlassian/confluence
+CONFLUENCE_SERVICE_PORT_HTTP=8090
+LANG=en_US.UTF-8
+CONFLUENCE_PORT_8090_TCP=tcp://10.68.241.111:8090
+HOSTNAME=confluence-deployment-7577774698-psgz2
+CONFLUENCE_MYSQL_SERVICE_PORT=3306
+JVM_MINIMUM_MEMORY=2048m
+CONFLUENCE_PORT=tcp://10.68.241.111:8090
+CONFLUENCE_MYSQL_PORT_3306_TCP=tcp://10.68.89.209:3306
+JAVA_HOME=/opt/java/openjdk
+JVM_MAXIMUM_MEMORY=2048m
+RUN_USER=daemon
+KUBERNETES_PORT_443_TCP_PROTO=tcp
+CONFLUENCE_SERVICE_HOST=10.68.241.111
+KUBERNETES_PORT_443_TCP_ADDR=10.68.0.1
+CONFLUENCE_MYSQL_PORT_3306_TCP_PROTO=tcp
+JAVA_VERSION=jdk8u212-b03
+KUBERNETES_PORT=tcp://10.68.0.1:443
+PWD=/var/atlassian/application-data/confluence
+HOME=/root
+CONFLUENCE_SERVICE_PORT=8090
+KUBERNETES_SERVICE_PORT_HTTPS=443
+KUBERNETES_PORT_443_TCP_PORT=443
+RUN_GROUP=daemon
+CONFLUENCE_PORT_8090_TCP_PROTO=tcp
+KUBERNETES_PORT_443_TCP=tcp://10.68.0.1:443
+CONFLUENCE_PORT_8090_TCP_ADDR=10.68.241.111
+CONFLUENCE_HOME=/var/atlassian/application-data/confluence
+TERM=xterm
+CONFLUENCE_MYSQL_PORT_3306_TCP_PORT=3306
+CONFLUENCE_PORT_8090_TCP_PORT=8090
+SHLVL=1
+LANGUAGE=en_US:en
+CONFLUENCE_MYSQL_PORT_3306_TCP_ADDR=10.68.89.209
+KUBERNETES_SERVICE_PORT=443
+PATH=/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+KUBERNETES_SERVICE_HOST=10.68.0.1
+CONFLUENCE_MYSQL_SERVICE_HOST=10.68.89.209
+CONFLUENCE_MYSQL_PORT=tcp://10.68.89.209:3306
+_=/usr/bin/env
+root@confluence-deployment-7577774698-psgz2:/var/atlassian/application-data/confluence# 
+
+
+
+
+
+
+
+
+
+
+```
 
 
 
