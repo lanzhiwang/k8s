@@ -738,7 +738,7 @@ mysql 驱动安装目录
 
 添加驱动后要重启容器
 
-也需要提前创建数据库
+也需要提前创建数据库 CREATE DATABASE confluence CHARACTER SET utf8 COLLATE utf8_bin;
 
 rootpassword
 
@@ -1422,9 +1422,175 @@ mysql>
 JIRA Core、JIRA Software、JIRA Service Desk 的区别
 参考 https://blog.csdn.net/cabinhe/article/details/78165832
 
+docker 镜像信息，dockerfile 信息
 
+https://hub.docker.com/r/cptactionhank/atlassian-jira-software
+
+运行 jira 对 MySQL 数据库的要求
 
 https://confluence.atlassian.com/adminjiraserver/connecting-jira-applications-to-mysql-5-7-966063305.html
+
+jira 对 MySQL 数据库的要求
+
+```bash
+[root@lanzhiwang-centos7 jira]# cat /etc/my.cnf
+# For advice on how to change settings please see
+# http://dev.mysql.com/doc/refman/5.7/en/server-configuration-defaults.html
+
+[mysqld]
+#
+# Remove leading # and set to the amount of RAM for the most important data
+# cache in MySQL. Start at 70% of total RAM for dedicated server, else 10%.
+# innodb_buffer_pool_size = 128M
+#
+# Remove leading # to turn on a very important data integrity option: logging
+# changes to the binary log between backups.
+# log_bin
+#
+# Remove leading # to set options mainly useful for reporting servers.
+# The server defaults are faster for transactions and fast SELECTs.
+# Adjust sizes as needed, experiment to find the optimal values.
+# join_buffer_size = 128M
+# sort_buffer_size = 2M
+# read_rnd_buffer_size = 2M
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+bind-address=0.0.0.0
+
+# character-set-server=utf8
+# collation-server=utf8_bin
+
+default-storage-engine=INNODB
+
+max_allowed_packet=256M
+
+innodb_log_file_size=2GB
+
+# sql_mode = sql_mode=NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES
+
+transaction-isolation=READ-COMMITTED
+
+binlog_format=row
+
+
+# Disabling symbolic-links is recommended to prevent assorted security risks
+symbolic-links=0
+
+log-error=/var/log/mysqld.log
+pid-file=/var/run/mysqld/mysqld.pid
+
+# 
+character_set_server=utf8mb4
+collation_server=utf8mb4_bin
+innodb_default_row_format=DYNAMIC
+innodb_large_prefix=ON
+innodb_file_format=Barracuda
+# innodb_log_file_size=2G
+
+# sql_mode = NO_AUTO_VALUE_ON_ZERO
+[root@lanzhiwang-centos7 jira]# 
+
+
+```
+
+
+### dockerfile
+
+```bash
+FROM openjdk:8-alpine
+
+# Configuration variables.
+ENV JIRA_HOME     /var/atlassian/jira
+ENV JIRA_INSTALL  /opt/atlassian/jira
+ENV JIRA_VERSION  8.2.1
+
+# Install Atlassian JIRA and helper tools and setup initial home
+# directory structure.
+RUN set -x \
+    && apk add --no-cache curl xmlstarlet bash ttf-dejavu libc6-compat \
+    && mkdir -p                "${JIRA_HOME}" \
+    && mkdir -p                "${JIRA_HOME}/caches/indexes" \
+    && chmod -R 700            "${JIRA_HOME}" \
+    && chown -R daemon:daemon  "${JIRA_HOME}" \
+    && mkdir -p                "${JIRA_INSTALL}/conf/Catalina" \
+    && curl -Ls                "https://www.atlassian.com/software/jira/downloads/binary/atlassian-jira-software-8.2.1.tar.gz" | tar -xz --directory "${JIRA_INSTALL}" --strip-components=1 --no-same-owner \
+    && curl -Ls                "https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.38.tar.gz" | tar -xz --directory "${JIRA_INSTALL}/lib" --strip-components=1 --no-same-owner "mysql-connector-java-5.1.38/mysql-connector-java-5.1.38-bin.jar" \
+    && rm -f                   "${JIRA_INSTALL}/lib/postgresql-9.1-903.jdbc4-atlassian-hosted.jar" \
+    && curl -Ls                "https://jdbc.postgresql.org/download/postgresql-42.2.1.jar" -o "${JIRA_INSTALL}/lib/postgresql-42.2.1.jar" \
+    && chmod -R 700            "${JIRA_INSTALL}/conf" \
+    && chmod -R 700            "${JIRA_INSTALL}/logs" \
+    && chmod -R 700            "${JIRA_INSTALL}/temp" \
+    && chmod -R 700            "${JIRA_INSTALL}/work" \
+    && chown -R daemon:daemon  "${JIRA_INSTALL}/conf" \
+    && chown -R daemon:daemon  "${JIRA_INSTALL}/logs" \
+    && chown -R daemon:daemon  "${JIRA_INSTALL}/temp" \
+    && chown -R daemon:daemon  "${JIRA_INSTALL}/work" \
+    && sed --in-place          "s/java version/openjdk version/g" "${JIRA_INSTALL}/bin/check-java.sh" \
+    && echo -e                 "\njira.home=$JIRA_HOME" >> "${JIRA_INSTALL}/atlassian-jira/WEB-INF/classes/jira-application.properties" \
+    && touch -d "@0"           "${JIRA_INSTALL}/conf/server.xml"
+
+# Use the default unprivileged account. This could be considered bad practice
+# on systems where multiple processes end up being executed by 'daemon' but
+# here we only ever run one process anyway.
+USER daemon:daemon
+
+# Expose default HTTP connector port.
+EXPOSE 8080
+
+# Set volume mount points for installation and home directory. Changes to the
+# home directory needs to be persisted as well as parts of the installation
+# directory due to eg. logs.
+VOLUME ["/var/atlassian/jira", "/opt/atlassian/jira/logs"]
+
+# Set the default working directory as the installation directory.
+WORKDIR /var/atlassian/jira
+
+COPY "docker-entrypoint.sh" "/"
+ENTRYPOINT ["/docker-entrypoint.sh"]
+
+# Run Atlassian JIRA as a foreground process by default.
+CMD ["/opt/atlassian/jira/bin/start-jira.sh", "-fg"]
+
+
+
+```
+
+### docker-entrypoint.sh
+
+```bash
+
+#!/bin/bash
+
+# check if the `server.xml` file has been changed since the creation of this
+# Docker image. If the file has been changed the entrypoint script will not
+# perform modifications to the configuration file.
+if [ "$(stat -c "%Y" "${JIRA_INSTALL}/conf/server.xml")" -eq "0" ]; then
+  if [ -n "${X_PROXY_NAME}" ]; then
+    xmlstarlet ed --inplace --pf --ps --insert '//Connector[@port="8080"]' --type "attr" --name "proxyName" --value "${X_PROXY_NAME}" "${JIRA_INSTALL}/conf/server.xml"
+  fi
+  if [ -n "${X_PROXY_PORT}" ]; then
+    xmlstarlet ed --inplace --pf --ps --insert '//Connector[@port="8080"]' --type "attr" --name "proxyPort" --value "${X_PROXY_PORT}" "${JIRA_INSTALL}/conf/server.xml"
+  fi
+  if [ -n "${X_PROXY_SCHEME}" ]; then
+    xmlstarlet ed --inplace --pf --ps --insert '//Connector[@port="8080"]' --type "attr" --name "scheme" --value "${X_PROXY_SCHEME}" "${JIRA_INSTALL}/conf/server.xml"
+  fi
+  if [ -n "${X_PATH}" ]; then
+    xmlstarlet ed --inplace --pf --ps --update '//Context/@path' --value "${X_PATH}" "${JIRA_INSTALL}/conf/server.xml"
+  fi
+fi
+
+exec "$@"
+
+
+```
+
+
+
+
+
+
+
+
 
 
 
@@ -1434,6 +1600,14 @@ https://confluence.atlassian.com/adminjiraserver/connecting-jira-applications-to
 ```bash
 # https://hub.docker.com/r/cptactionhank/atlassian-jira-software
 docker pull cptactionhank/atlassian-jira-software
+
+CREATE DATABASE jiradb CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+
+# 基础应用
+docker run --detach --publish 8080:8080 cptactionhank/atlassian-jira-software:latest
+# -d, --detach                         Run container in background and print container ID
+
+
 
 
 ```
