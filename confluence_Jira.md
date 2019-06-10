@@ -1406,6 +1406,117 @@ mysql> show tables;
 
 mysql> 
 
+[root@k8s-master1 temp]# vim confluence.yml 
+[root@k8s-master1 temp]# cat confluence.yml 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: confluence
+  labels:
+    app: confluence
+spec:
+  ports:
+  - name: http
+    port: 8090
+    targetPort: 8090
+    protocol: TCP
+  selector:
+    app: confluence
+    service: confluence
+  type: NodePort
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: confluence-deployment
+  labels:
+    service: confluence
+    app: confluence
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: confluence
+      service: confluence
+  template:
+    metadata:
+      labels:
+        app: confluence
+        service: confluence
+    spec:
+      containers:
+        - name: confluence
+          image: atlassian/confluence-server:latest
+          imagePullPolicy: Always
+          env:
+            - name: JVM_MINIMUM_MEMORY
+              value: 8g
+            - name: JVM_MAXIMUM_MEMORY
+              value: 8g
+          ports:
+            - containerPort: 8090
+
+          volumeMounts:
+          - name: confluence-home
+            mountPath: /var/atlassian/application-data/confluence
+          - name: confluence-install
+            mountPath: /opt/atlassian/confluence
+
+      nodeSelector:
+        nodename:
+          k8s-linux-worker3
+
+      volumes:
+        - name: confluence-home
+          hostPath:
+            path: /opt/k8s/volume_data/confluence_home/
+        - name: confluence-install
+          hostPath:
+            path: /opt/k8s/volume_data/confluence_install/
+
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl apply -f ./confluence.yml 
+service/confluence unchanged
+deployment.apps/confluence-deployment created
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get deployment -o wide
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES                                         SELECTOR
+confluence-deployment   1/1     1            1           6s      confluence   atlassian/confluence-server:latest             app=confluence,service=confluence
+confluence-mysql        1/1     1            1           21m     mysql        mysql/mysql-server:5.7                         app=confluence,tier=mysql
+edusoho-deployment      1/1     1            1           45m     edusoho      edusoho/edusoho                                app=edusoho,service=edusoho
+edusoho-mysql           1/1     1            1           72m     mysql        mysql/mysql-server:5.7                         app=edusoho,tier=mysql
+jira-deployment         1/1     1            1           8h      jira         cptactionhank/atlassian-jira-software:latest   app=jira,service=jira
+my-nginx                8/8     8            8           7d11h   my-nginx     nginx                                          run=my-nginx
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get pod -o wide
+NAME                                     READY   STATUS      RESTARTS   AGE     IP            NODE         NOMINATED NODE   READINESS GATES
+confluence-deployment-59c98447bf-996dc   1/1     Running     0          16s     172.20.2.18   10.1.36.48   <none>           <none>
+confluence-mysql-859d7f788b-24l27        1/1     Running     0          21m     172.20.0.19   10.1.36.46   <none>           <none>
+edusoho-deployment-57cb7946df-9nn6l      1/1     Running     0          45m     172.20.2.17   10.1.36.48   <none>           <none>
+edusoho-mysql-fc4f549f5-hv9sw            1/1     Running     0          72m     172.20.1.26   10.1.36.47   <none>           <none>
+jira-deployment-ccc84bffd-r9mzz          1/1     Running     0          8h      172.20.2.16   10.1.36.48   <none>           <none>
+my-nginx-86459cfc9f-29wdg                1/1     Running     0          7d11h   172.20.2.7    10.1.36.48   <none>           <none>
+my-nginx-86459cfc9f-6fgzv                1/1     Running     0          7d11h   172.20.1.21   10.1.36.47   <none>           <none>
+my-nginx-86459cfc9f-csg5l                1/1     Running     0          7d11h   172.20.1.20   10.1.36.47   <none>           <none>
+my-nginx-86459cfc9f-lvthq                1/1     Running     0          7d11h   172.20.3.2    10.1.36.49   <none>           <none>
+my-nginx-86459cfc9f-qhjww                1/1     Running     0          7d11h   172.20.0.11   10.1.36.46   <none>           <none>
+my-nginx-86459cfc9f-qwclj                1/1     Running     0          7d11h   172.20.0.12   10.1.36.46   <none>           <none>
+my-nginx-86459cfc9f-stx7p                1/1     Running     0          7d11h   172.20.2.6    10.1.36.48   <none>           <none>
+my-nginx-86459cfc9f-wx2hq                1/1     Running     0          7d11h   172.20.3.3    10.1.36.49   <none>           <none>
+mysql-test                               0/1     Completed   0          17m     172.20.1.28   10.1.36.47   <none>           <none>
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get service -o wide
+NAME               TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE    SELECTOR
+confluence         NodePort    10.68.241.111   <none>        8090:24248/TCP   36h    app=confluence,service=confluence
+confluence-mysql   ClusterIP   10.68.89.209    <none>        3306/TCP         6d4h   app=confluence,tier=mysql
+edusoho            NodePort    10.68.215.211   <none>        80:27118/TCP     46m    app=edusoho,service=edusoho
+edusoho-mysql      ClusterIP   10.68.42.16     <none>        3306/TCP         59m    app=edusoho,tier=mysql
+jira               NodePort    10.68.191.95    <none>        8080:26286/TCP   8h     app=jira,service=jira
+kubernetes         ClusterIP   10.68.0.1       <none>        443/TCP          15d    <none>
+[root@k8s-master1 temp]# 
 
 
 
@@ -4281,6 +4392,74 @@ owners.
 Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
 
 mysql> 
+
+
+
+
+[root@k8s-master1 temp]# cat jira.yml 
+apiVersion: v1
+kind: Service
+metadata:
+  name: jira
+  labels:
+    app: jira
+spec:
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  selector:
+    app: jira
+    service: jira
+  type: NodePort
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jira-deployment
+  labels:
+    service: jira
+    app: jira
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jira
+      service: jira
+  template:
+    metadata:
+      labels:
+        app: jira
+        service: jira
+    spec:
+      containers:
+        - name: jira
+          image: cptactionhank/atlassian-jira-software:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+
+          volumeMounts:
+          - name: jira-home
+            mountPath: /var/atlassian/jira
+          - name: jira-install
+            mountPath: /opt/atlassian/jira
+
+      volumes:
+        - name: jira-home
+          hostPath:
+            path: /opt/k8s/volume_data/jira_home/
+        - name: jira-install
+          hostPath:
+            path: /opt/k8s/volume_data/jira_install/
+[root@k8s-master1 temp]# 
 
 
 

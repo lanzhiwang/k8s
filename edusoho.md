@@ -686,6 +686,273 @@ Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
 
 mysql> 
 
+[root@k8s-master1 temp]# vim ./edusoho.yml 
+[root@k8s-master1 temp]# cat ./edusoho.yml 
+apiVersion: v1
+kind: Service
+metadata:
+  name: edusoho
+  labels:
+    app: edusoho
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: edusoho
+    service: edusoho
+  type: NodePort
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edusoho-deployment
+  labels:
+    service: edusoho
+    app: edusoho
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: edusoho
+      service: edusoho
+  template:
+    metadata:
+      labels:
+        app: edusoho
+        service: edusoho
+    spec:
+      containers:
+        - name: edusoho
+          image: edusoho/edusoho
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          env:
+            - name: DOMAIN
+              value: course.mingyuanyun.com
+            - name: MYSQL_USER
+              value: root
+            - name: MYSQL_PASSWORD
+              value: rootpassword
+
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl apply -f ./edusoho.yml 
+service/edusoho created
+deployment.apps/edusoho-deployment created
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get deployment -o wide
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES                                         SELECTOR
+confluence-deployment   1/1     1            1           35h     confluence   atlassian/confluence-server:latest             app=confluence,service=confluence
+confluence-mysql        0/1     1            0           7h11m   mysql        mysql/mysql-server:5.7                         app=confluence,tier=mysql
+edusoho-deployment      1/1     1            1           22s     edusoho      edusoho/edusoho                                app=edusoho,service=edusoho
+edusoho-mysql           1/1     1            1           26m     mysql        mysql/mysql-server:5.7                         app=edusoho,tier=mysql
+jira-deployment         1/1     1            1           7h47m   jira         cptactionhank/atlassian-jira-software:latest   app=jira,service=jira
+my-nginx                8/8     8            8           7d10h   my-nginx     nginx                                          run=my-nginx
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get pod -o wide
+NAME                                     READY   STATUS             RESTARTS   AGE     IP            NODE         NOMINATED NODE   READINESS GATES
+confluence-deployment-7577774698-psgz2   1/1     Running            0          35h     172.20.0.17   10.1.36.46   <none>           <none>
+confluence-mysql-d464855bd-cp7sz         0/1     CrashLoopBackOff   86         7h11m   172.20.3.10   10.1.36.49   <none>           <none>
+edusoho-deployment-57cb7946df-9nn6l      1/1     Running            0          38s     172.20.2.17   10.1.36.48   <none>           <none>
+edusoho-mysql-fc4f549f5-hv9sw            1/1     Running            0          27m     172.20.1.26   10.1.36.47   <none>           <none>
+jira-deployment-ccc84bffd-r9mzz          1/1     Running            0          7h47m   172.20.2.16   10.1.36.48   <none>           <none>
+my-nginx-86459cfc9f-29wdg                1/1     Running            0          7d10h   172.20.2.7    10.1.36.48   <none>           <none>
+my-nginx-86459cfc9f-6fgzv                1/1     Running            0          7d10h   172.20.1.21   10.1.36.47   <none>           <none>
+my-nginx-86459cfc9f-csg5l                1/1     Running            0          7d10h   172.20.1.20   10.1.36.47   <none>           <none>
+my-nginx-86459cfc9f-lvthq                1/1     Running            0          7d10h   172.20.3.2    10.1.36.49   <none>           <none>
+my-nginx-86459cfc9f-qhjww                1/1     Running            0          7d10h   172.20.0.11   10.1.36.46   <none>           <none>
+my-nginx-86459cfc9f-qwclj                1/1     Running            0          7d10h   172.20.0.12   10.1.36.46   <none>           <none>
+my-nginx-86459cfc9f-stx7p                1/1     Running            0          7d10h   172.20.2.6    10.1.36.48   <none>           <none>
+my-nginx-86459cfc9f-wx2hq                1/1     Running            0          7d10h   172.20.3.3    10.1.36.49   <none>           <none>
+mysql-test                               0/1     Completed          0          12m     172.20.1.27   10.1.36.47   <none>           <none>
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get service -o wide
+NAME               TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE     SELECTOR
+confluence         NodePort    10.68.241.111   <none>        8090:24248/TCP   35h     app=confluence,service=confluence
+confluence-mysql   ClusterIP   10.68.89.209    <none>        3306/TCP         6d3h    app=confluence,tier=mysql
+edusoho            NodePort    10.68.215.211   <none>        80:27118/TCP     81s     app=edusoho,service=edusoho
+edusoho-mysql      ClusterIP   10.68.42.16     <none>        3306/TCP         14m     app=edusoho,tier=mysql
+jira               NodePort    10.68.191.95    <none>        8080:26286/TCP   7h49m   app=jira,service=jira
+kubernetes         ClusterIP   10.68.0.1       <none>        443/TCP          15d     <none>
+[root@k8s-master1 temp]# 
+
+
+http://www.mayanpeng.cn/archives/78.html
+
+
+######################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: edusoho
+  labels:
+    app: edusoho
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: edusoho
+    service: edusoho
+  type: NodePort
+  externalTrafficPolicy: Local
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edusoho-deployment
+  labels:
+    service: edusoho
+    app: edusoho
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: edusoho
+      service: edusoho
+  template:
+    metadata:
+      labels:
+        app: edusoho
+        service: edusoho
+    spec:
+      containers:
+        - name: edusoho
+          image: edusoho/edusoho
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          env:
+            - name: DOMAIN
+              value: course.mingyuanyun.com
+            - name: MYSQL_USER
+              value: root
+            - name: MYSQL_PASSWORD
+              value: rootpassword
+ 
+ ###################################################################
+ 
+ [root@k8s-master1 temp]# vim edusoho.yml 
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# cat edusoho.yml 
+apiVersion: v1
+kind: Service
+metadata:
+  name: edusoho
+  labels:
+    app: edusoho
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: edusoho
+    service: edusoho
+  type: NodePort
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edusoho-deployment
+  labels:
+    service: edusoho
+    app: edusoho
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: edusoho
+      service: edusoho
+  template:
+    metadata:
+      labels:
+        app: edusoho
+        service: edusoho
+    spec:
+      containers:
+        - name: edusoho
+          image: edusoho/edusoho
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          env:
+            - name: DOMAIN
+              value: course.mingyuanyun.com
+            - name: MYSQL_USER
+              value: root
+            - name: MYSQL_PASSWORD
+              value: rootpassword
+          volumeMounts:
+            - name: edusoho-data
+              mountPath: /var/www
+
+      nodeSelector:
+        nodename:
+          k8s-linux-worker4
+
+      volumes:
+        - name: edusoho-data
+          hostPath:
+            path: /opt/k8s/volume_data/edusoho-data/
+
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl apply -f  ./edusoho.yml 
+service/edusoho created
+deployment.apps/edusoho-deployment created
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get deployment -o wide
+NAME                 READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                                         SELECTOR
+confluence-mysql     1/1     1            1           19h   mysql        mysql/mysql-server:5.7                         app=confluence,tier=mysql
+edusoho-deployment   1/1     1            1           7s    edusoho      edusoho/edusoho                                app=edusoho,service=edusoho
+edusoho-mysql        1/1     1            1           20h   mysql        mysql/mysql-server:5.7                         app=edusoho,tier=mysql
+jira-deployment      1/1     1            1           27h   jira         cptactionhank/atlassian-jira-software:latest   app=jira,service=jira
+my-nginx             8/8     8            8           8d    my-nginx     nginx                                          run=my-nginx
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get pod -o wide
+NAME                                  READY   STATUS      RESTARTS   AGE   IP            NODE         NOMINATED NODE   READINESS GATES
+confluence-mysql-859d7f788b-24l27     1/1     Running     0          19h   172.20.0.19   10.1.36.46   <none>           <none>
+edusoho-deployment-64bc89766b-78hxk   1/1     Running     0          17s   172.20.3.11   10.1.36.49   <none>           <none>
+edusoho-mysql-fc4f549f5-hv9sw         1/1     Running     0          20h   172.20.1.26   10.1.36.47   <none>           <none>
+jira-deployment-ccc84bffd-r9mzz       1/1     Running     0          27h   172.20.2.16   10.1.36.48   <none>           <none>
+my-nginx-86459cfc9f-29wdg             1/1     Running     0          8d    172.20.2.7    10.1.36.48   <none>           <none>
+my-nginx-86459cfc9f-6fgzv             1/1     Running     0          8d    172.20.1.21   10.1.36.47   <none>           <none>
+my-nginx-86459cfc9f-csg5l             1/1     Running     0          8d    172.20.1.20   10.1.36.47   <none>           <none>
+my-nginx-86459cfc9f-lvthq             1/1     Running     0          8d    172.20.3.2    10.1.36.49   <none>           <none>
+my-nginx-86459cfc9f-qhjww             1/1     Running     0          8d    172.20.0.11   10.1.36.46   <none>           <none>
+my-nginx-86459cfc9f-qwclj             1/1     Running     0          8d    172.20.0.12   10.1.36.46   <none>           <none>
+my-nginx-86459cfc9f-stx7p             1/1     Running     0          8d    172.20.2.6    10.1.36.48   <none>           <none>
+my-nginx-86459cfc9f-wx2hq             1/1     Running     0          8d    172.20.3.3    10.1.36.49   <none>           <none>
+mysql-test                            0/1     Completed   0          19h   172.20.1.28   10.1.36.47   <none>           <none>
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get service -o wide
+NAME               TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE     SELECTOR
+confluence         NodePort    10.68.241.111   <none>        8090:24248/TCP   2d7h    app=confluence,service=confluence
+confluence-mysql   ClusterIP   10.68.89.209    <none>        3306/TCP         6d23h   app=confluence,tier=mysql
+edusoho            NodePort    10.68.148.20    <none>        80:29812/TCP     29s     app=edusoho,service=edusoho
+edusoho-mysql      ClusterIP   10.68.42.16     <none>        3306/TCP         20h     app=edusoho,tier=mysql
+jira               NodePort    10.68.191.95    <none>        8080:26286/TCP   27h     app=jira,service=jira
+kubernetes         ClusterIP   10.68.0.1       <none>        443/TCP          16d     <none>
+[root@k8s-master1 temp]# 
+
+
+
+
+
+
 
 
 
