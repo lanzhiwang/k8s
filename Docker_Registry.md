@@ -602,6 +602,12 @@ Get https://10.5.10.118:5000/v2/: http: server gave HTTP response to HTTPS clien
 
 
 
+docker pull mcr.microsoft.com/dotnet/core/samples:aspnetapp-nanoserver-sac2016
+
+docker run -it --rm -p 8000:80 --name aspnetcore_sample mcr.microsoft.com/dotnet/core/samples:aspnetapp-nanoserver-sac2016
+
+http://localhost:8000
+
 ```
 
 
