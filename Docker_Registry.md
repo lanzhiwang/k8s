@@ -608,6 +608,15 @@ docker run -it --rm -p 8000:80 --name aspnetcore_sample mcr.microsoft.com/dotnet
 
 http://localhost:8000
 
+PS C:\Windows\system32> docker info
+Containers: 0
+ Running: 0
+ Paused: 0
+ Stopped: 0
+Images: 1
+Server Version: 18.09.2
+Storage Driver: windowsfilter
+
 ```
 
 
