@@ -65,10 +65,7 @@ docker run -d --name sonarqube \
     sonarqube
 
 
-
-
-
-
+# 使用下面的配置文件启动容器，不使用环境变量指定数据库
 [root@localhost SonarQube]# cat sonar.properties 
 # Property values can:
 # - reference an environment variable, for example sonar.jdbc.url= ${env:SONAR_JDBC_URL}
@@ -85,8 +82,8 @@ docker run -d --name sonarqube \
 # User credentials.
 # Permissions to create tables, indices and triggers must be granted to JDBC user.
 # The schema must be created first.
-#sonar.jdbc.username=
-#sonar.jdbc.password=
+sonar.jdbc.username=root
+sonar.jdbc.password=rootpass
 
 #----- Embedded Database (default)
 # H2 embedded database server listening port, defaults to 9092
@@ -97,8 +94,7 @@ docker run -d --name sonarqube \
 # Support of MySQL is dropped in Data Center Editions and deprecated in all other editions
 # Only InnoDB storage engine is supported (not myISAM).
 # Only the bundled driver is supported. It can not be changed.
-#sonar.jdbc.url=jdbc:mysql://localhost:3306/sonar?useUnicode=true&characterEncoding=utf8&rewriteBatchedStatements=true&useConfigs=maxPerformance&useSSL=false
-
+sonar.jdbc.url=jdbc:mysql://172.17.0.6:3306/sonar?useUnicode=true&characterEncoding=utf8&rewriteBatchedStatements=true&useConfigs=maxPerformance&useSSL=false
 
 #----- Oracle 11g/12c
 # The Oracle JDBC driver must be copied into the directory extensions/jdbc-driver/oracle/.
@@ -182,7 +178,7 @@ docker run -d --name sonarqube \
 # The default value is root context (empty value).
 #sonar.web.context=
 # TCP port for incoming HTTP connections. Default value is 9000.
-#sonar.web.port=9000
+sonar.web.port=9008
 
 
 # The maximum number of connections that the server will accept and process at any given time.
@@ -492,7 +488,13 @@ docker run -d --name sonarqube \
 #sonar.search.httpPort=-1
 [root@localhost SonarQube]# 
 
-
+docker run -d --name sonarqube \
+    -p 9000:9000 \
+    -v /root/work/SonarQube/conf:/opt/sonarqube/conf \
+    -v /root/work/SonarQube/data:/opt/sonarqube/data \
+    -v /root/work/SonarQube/logs:/opt/sonarqube/logs \
+    -v /root/work/SonarQube/extensions:/opt/sonarqube/extensions \
+    sonarqube
 
 
 
