@@ -47,7 +47,7 @@ kubectl logs counter
 
 ```
 
-
+You can use kubectl logs to retrieve logs from a previous instantiation of a container with --previous flag, in case the container has crashed. If your pod has multiple containers, you should specify which container’s logs you want to access by appending a container name to the command. See the kubectl logs documentation for more details.  如果容器已崩溃，您可以使用kubectl日志从带有--previous标志的容器的先前实例化中检索日志。 如果您的pod有多个容器，则应通过在命令中附加容器名称来指定要访问的容器的日志。 有关更多详细信息，请参阅kubectl logs文档。
 
 ## Logging at the node level
 
