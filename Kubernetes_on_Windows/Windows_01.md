@@ -22,9 +22,9 @@ As Kubernetes clusters introduce new subnets for pods and services, it is import
 
 | Subnet / Address range | Description | Default Value | Actual Value |
 | ---- | ---- | ---- | ---- |
-| Service Subnet | A non-routable, purely virtual subnet that is used by pods to uniformally access services without caring about the network topology. It is translated to/from routable address space by `kube-proxy` running on the nodes.  一个不可路由的纯虚拟子网，由pod用于统一访问服务，而无需关心网络拓扑。 它通过在节点上运行的kube-proxy转换为可路由地址空间/从可路由地址空间转换。| "10.96.0.0/12" |      |
-| Cluster Subnet | This is a global subnet that is used by all pods in the cluster. Each nodes is assigned a smaller /24 subnet from this for their pods to use. It must be large enough to accommodate all pods used in your cluster. To calculate minimum subnet size: (number of nodes) + (number of nodes * maximum pods per node that you configure)  这是群集中所有pod使用的全局子网。 为每个节点分配一个较小的/ 24子网，供其pod使用。 它必须足够大，以容纳群集中使用的所有pod。Example for a 5 node cluster for 100 pods per node: (5) + (5 * 100) = 505. | "10.244.0.0/16" |      |
-| Kubernetes DNS Service IP | IP address of "kube-dns" service that will be used for DNS resolution & cluster service discovery. | "10.96.0.10" |      |
+| Service Subnet | A non-routable, purely virtual subnet that is used by pods to uniformally access services without caring about the network topology. It is translated to/from routable address space by `kube-proxy` running on the nodes.  一个不可路由的纯虚拟子网，由pod用于统一访问服务，而无需关心网络拓扑。 它通过在节点上运行的kube-proxy转换为可路由地址空间/从可路由地址空间转换。| "10.96.0.0/12" | 10.68.0.0/16 |
+| Cluster Subnet | This is a global subnet that is used by all pods in the cluster. Each nodes is assigned a smaller /24 subnet from this for their pods to use. It must be large enough to accommodate all pods used in your cluster. To calculate minimum subnet size: (number of nodes) + (number of nodes * maximum pods per node that you configure)  这是群集中所有pod使用的全局子网。 为每个节点分配一个较小的/ 24子网，供其pod使用。 它必须足够大，以容纳群集中使用的所有pod。Example for a 5 node cluster for 100 pods per node: (5) + (5 * 100) = 505. | "10.244.0.0/16" | 172.20.0.0/16 |
+| Kubernetes DNS Service IP | IP address of "kube-dns" service that will be used for DNS resolution & cluster service discovery. | "10.96.0.10" | 10.68.0.2 |
 
 Note:
 There is another Docker network (NAT) that gets created by default when you install Docker. It is not needed to operate Kubernetes on Windows as we assign IPs from the cluster subnet instead.  安装Docker时，默认情况下会创建另一个Docker网络（NAT）。 我们不需要在Windows上运行Kubernetes，因为我们从群集子网中分配IP。
