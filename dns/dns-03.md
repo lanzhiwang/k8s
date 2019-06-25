@@ -436,6 +436,54 @@ Address:	10.68.0.2:53
 / # 
 
 
+# cat nginx-rc.yaml 
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: nginx-test
+  labels:
+    name: nginx-test
+spec:
+  replicas: 2
+  selector:
+    name: nginx-test
+  template:
+    metadata:
+      labels: 
+       name: nginx-test
+    spec:
+      containers:
+      - name: nginx-test
+        image: docker.io/nginx
+        ports:
+        - containerPort: 80
+      
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-test
+  labels: 
+   name: nginx-test
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+    name: http
+    nodePort: 30088
+  selector:
+    name: nginx-test
 
+
+
+nslookup nginx-test
+
+错误分析：
+kubelet 服务增加以下三个选项，重启 kubelet 服务
+--cluster-dns=10.68.0.2 \
+--cluster-domain=cluster.local. \
+--resolv-conf=/etc/resolv.conf \
 
 ```
