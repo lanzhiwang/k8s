@@ -403,5 +403,24 @@ sed -e "s/CLUSTER_DNS_IP/$CLUSTER_DNS_IP/g" \
 
 
 
+[root@k8s-master1 temp]# kubectl apply -f ./coredns.yaml
+serviceaccount/coredns created
+clusterrole.rbac.authorization.k8s.io/system:coredns created
+clusterrolebinding.rbac.authorization.k8s.io/system:coredns created
+configmap/coredns created
+deployment.apps/coredns created
+service/kube-dns created
+[root@k8s-master1 temp]# 
+
+[root@k8s-master1 temp]# kubectl run -i -t busybox-test --image=busybox --restart=Never sh
+If you don't see a command prompt, try pressing enter.
+/ # cat /etc/resolv.conf 
+nameserver 10.68.0.2
+search default.svc.cluster.local. svc.cluster.local. cluster.local. reddog.microsoft.com
+options ndots:5
+/ # 
+
+
+
 
 ```
