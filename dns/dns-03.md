@@ -419,6 +419,21 @@ nameserver 10.68.0.2
 search default.svc.cluster.local. svc.cluster.local. cluster.local. reddog.microsoft.com
 options ndots:5
 / # 
+/ # nslookup sonar
+Server:		10.68.0.2
+Address:	10.68.0.2:53
+
+** server can't find sonar.default.svc.cluster.local.: NXDOMAIN
+
+*** Can't find sonar.svc.cluster.local.: No answer
+*** Can't find sonar.cluster.local.: No answer
+*** Can't find sonar.reddog.microsoft.com: No answer
+*** Can't find sonar.default.svc.cluster.local.: No answer
+*** Can't find sonar.svc.cluster.local.: No answer
+*** Can't find sonar.cluster.local.: No answer
+*** Can't find sonar.reddog.microsoft.com: No answer
+
+/ # 
 
 
 
