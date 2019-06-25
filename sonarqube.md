@@ -1077,7 +1077,357 @@ docker run -d --name sonarqube \
     sonarqube
 
 
+```
+
+## sonar kubernetes
+
+```bash
+[root@k8s-master1 temp]# cat ./my.cnf 
+# For advice on how to change settings please see
+# http://dev.mysql.com/doc/refman/5.7/en/server-configuration-defaults.html
+
+[mysqld]
+#
+# Remove leading # and set to the amount of RAM for the most important data
+# cache in MySQL. Start at 70% of total RAM for dedicated server, else 10%.
+# innodb_buffer_pool_size = 128M
+#
+# Remove leading # to turn on a very important data integrity option: logging
+# changes to the binary log between backups.
+# log_bin
+#
+# Remove leading # to set options mainly useful for reporting servers.
+# The server defaults are faster for transactions and fast SELECTs.
+# Adjust sizes as needed, experiment to find the optimal values.
+# join_buffer_size = 128M
+# sort_buffer_size = 2M
+# read_rnd_buffer_size = 2M
+user=mysql
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+bind-address=0.0.0.0
+
+# character-set-server=utf8
+# collation-server=utf8_bin
+
+default-storage-engine=INNODB
+
+max_allowed_packet=256M
+
+innodb_log_file_size=2GB
+
+# sql_mode = sql_mode=NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES
+
+transaction-isolation=READ-COMMITTED
+
+binlog_format=row
+
+
+# Disabling symbolic-links is recommended to prevent assorted security risks
+symbolic-links=0
+
+log-error=/var/log/mysqld.log
+pid-file=/var/run/mysqld/mysqld.pid
+
+# 
+character_set_server=utf8mb4
+collation_server=utf8mb4_bin
+innodb_default_row_format=DYNAMIC
+innodb_large_prefix=ON
+innodb_file_format=Barracuda
+# innodb_log_file_size=2G
+
+# sql_mode = NO_AUTO_VALUE_ON_ZERO
+[root@k8s-master1 temp]# 
+
+
+kubectl create configmap sonar-mysql-config --from-file=./my.cnf
+
+[root@k8s-master1 temp]# kubectl get configmap -o wide
+NAME                      DATA   AGE
+confluence-mysql-config   1      19d
+docker-registry-auth      1      10d
+docker-registry-config    1      10d
+edusoho-mysql-config      1      19d
+sonar-mysql-config        1      12m
+[root@k8s-master1 temp]# 
+
+[root@k8s-master1 temp]# vim sonar-mysql.yml 
+[root@k8s-master1 temp]# cat sonar-mysql.yml 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sonar-mysql
+  labels:
+    app: sonar
+spec:
+  ports:
+    - port: 3306
+  selector:
+    app: sonar
+    tier: mysql
+
+---
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: sonar-mysql
+  labels:
+    app: sonar
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: sonar
+        tier: mysql
+    spec:
+      containers:
+        - image: mysql/mysql-server:5.7
+          name: mysql
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: rootpassword
+          ports:
+            - containerPort: 3306
+              name: mysql
+
+          volumeMounts:
+            - name: mysql-config
+              subPath: my.cnf
+              mountPath: /etc/my.cnf
+
+            - name: mysql-log
+              subPath: mysqld.log
+              mountPath: /var/log/mysqld.log
+
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+
+      nodeSelector:
+        nodename:
+          k8s-linux-worker3
+
+      volumes:
+        - name: mysql-config
+          configMap:
+            name: sonar-mysql-config
+
+        - name: mysql-log
+          hostPath:
+            path: /opt/k8s/volume_data/sonar_mysql/mysql-log/
+
+        - name: mysql-data
+          hostPath:
+            path: /opt/k8s/volume_data/sonar_mysql/mysql-data/
+
+[root@k8s-master1 temp]# 
+
+[root@k8s-linux-worker3 sonar_mysql]# pwd
+/opt/k8s/volume_data/sonar_mysql
+[root@k8s-linux-worker3 sonar_mysql]# mkdir mysql-log/
+[root@k8s-linux-worker3 sonar_mysql]# mkdir mysql-data
+[root@k8s-linux-worker3 sonar_mysql]# ll
+total 8
+drwxr-xr-x 2 root root 4096 Jun 25 10:08 mysql-data
+drwxr-xr-x 2 root root 4096 Jun 25 10:08 mysql-log
+[root@k8s-linux-worker3 sonar_mysql]# 
+[root@k8s-linux-worker3 sonar_mysql]# touch mysql-log/mysqld.log
+[root@k8s-linux-worker3 sonar_mysql]# chmod -R 777  mysql-log
+[root@k8s-linux-worker3 sonar_mysql]# 
+  
+[root@k8s-master1 temp]# kubectl apply -f  ./sonar-mysql.yml
+service/sonar-mysql created
+deployment.extensions/sonar-mysql created
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get service -o wide
+NAME               TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE   SELECTOR
+sonar-mysql        ClusterIP   10.68.239.53    <none>        3306/TCP         24s   app=sonar,tier=mysql
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get deployment -o wide
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS        IMAGES                                         SELECTOR
+sonar-mysql             1/1     1            1           45s   mysql             mysql/mysql-server:5.7                         app=sonar,tier=mysql
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get pod -o wide
+NAME                                     READY   STATUS      RESTARTS   AGE   IP            NODE         NOMINATED NODE   READINESS GATES
+sonar-mysql-69f946bd64-r28xc             1/1     Running     0          61s   172.20.2.20   10.1.36.48   <none>           <none>
+[root@k8s-master1 temp]# 
+
+bash-4.2# mysql -u root -p -h 10.68.239.53
+Enter password: rootpassword
+
+mysql> 
+mysql> GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'rootpassword';
+Query OK, 0 rows affected, 1 warning (0.00 sec)
+
+mysql> flush privileges;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> 
+
+
+docker run -d --name sonarqube \
+    -p 9000:9000 \
+    -e sonar.jdbc.username=root \
+    -e sonar.jdbc.password=rootpass \
+    -e "sonar.jdbc.url=jdbc:mysql://172.17.0.6/sonar?useUnicode=true&characterEncoding=utf8&rewriteBatchedStatements=true&useConfigs=maxPerformance" \
+    -v /root/work/SonarQube/conf:/opt/sonarqube/conf \
+    -v /root/work/SonarQube/data:/opt/sonarqube/data \
+    -v /root/work/SonarQube/logs:/opt/sonarqube/logs \
+    -v /root/work/SonarQube/extensions:/opt/sonarqube/extensions \
+    sonarqube
+
+[root@k8s-linux-worker3 conf]# pwd
+/opt/k8s/volume_data/sonar_data/conf
+[root@k8s-linux-worker3 conf]# vim sonar.properties
+
+
+[root@k8s-master1 temp]# vim sonar.yml 
+[root@k8s-master1 temp]# cat sonar.yml 
+apiVersion: v1
+kind: Service
+metadata:
+  name: sonar
+  labels:
+    app: sonar
+spec:
+  ports:
+  - name: http
+    port: 9000
+    targetPort: 9000
+    protocol: TCP
+  selector:
+    app: sonar
+    service: sonar
+  type: NodePort
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonar-deployment
+  labels:
+    service: sonar
+    app: sonar
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sonar
+      service: sonar
+  template:
+    metadata:
+      labels:
+        app: sonar
+        service: sonar
+    spec:
+      containers:
+        - name: sonar
+          image: sonarqube:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9000
+          env:
+            - name: sonar.jdbc.username
+              value: root
+              
+            - name: sonar.jdbc.password
+              value: rootpassword
+              
+            - name: sonar.jdbc.url
+              value: jdbc:mysql://10.68.239.53/sonar?useUnicode=true&characterEncoding=utf8&rewriteBatchedStatements=true&useConfigs=maxPerformance
+          volumeMounts:
+            - name: sonar-conf
+              mountPath: /opt/sonarqube/conf
+              
+            - name: sonar-data
+              mountPath: /opt/sonarqube/data
+              
+            - name: sonar-extensions
+              mountPath: /opt/sonarqube/extensions
+              
+            - name: sonar-logs
+              mountPath: /opt/sonarqube/logs
+             
+
+      nodeSelector:
+        nodename:
+          k8s-linux-worker3
+
+      volumes:
+        - name: sonar-conf
+          hostPath:
+            path: /opt/k8s/volume_data/sonar_data/conf
+            
+        - name: sonar-data
+          hostPath:
+            path: /opt/k8s/volume_data/sonar_data/data
+            
+        - name: sonar-extensions
+          hostPath:
+            path: /opt/k8s/volume_data/sonar_data/extensions
+            
+        - name: sonar-logs
+          hostPath:
+            path: /opt/k8s/volume_data/sonar_data/logs
+
+[root@k8s-master1 temp]# 
+
+
+[root@k8s-master1 temp]# kubectl apply -f  ./sonar.yml 
+service/sonar unchanged
+deployment.apps/sonar-deployment created
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get services -o wide
+NAME               TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE     SELECTOR
+confluence         NodePort    10.68.241.111   <none>        8090:24248/TCP   21d     app=confluence,service=confluence
+confluence-mysql   ClusterIP   10.68.89.209    <none>        3306/TCP         25d     app=confluence,tier=mysql
+docker-registry    NodePort    10.68.186.144   <none>        5000:36496/TCP   10d     app=docker-registry,service=docker-registry
+edusoho            NodePort    10.68.148.20    <none>        80:29812/TCP     18d     app=edusoho,service=edusoho
+edusoho-mysql      ClusterIP   10.68.42.16     <none>        3306/TCP         19d     app=edusoho,tier=mysql
+jira               NodePort    10.68.191.95    <none>        8080:26286/TCP   19d     app=jira,service=jira
+kubernetes         ClusterIP   10.68.0.1       <none>        443/TCP          34d     <none>
+sonar              NodePort    10.68.53.235    <none>        9000:28256/TCP   2m29s   app=sonar,service=sonar
+sonar-mysql        ClusterIP   10.68.239.53    <none>        3306/TCP         41m     app=sonar,tier=mysql
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get deployment -o wide
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS        IMAGES                                         SELECTOR
+confluence-deployment   1/1     1            1           15d   confluence        atlassian/confluence-server:latest             app=confluence,service=confluence
+confluence-mysql        1/1     1            1           19d   mysql             mysql/mysql-server:5.7                         app=confluence,tier=mysql
+docker-registry         1/1     1            1           10d   docker-registry   registry:latest                                app=docker-registry,service=docker-registry
+edusoho-deployment      1/1     1            1           18d   edusoho           edusoho/edusoho                                app=edusoho,service=edusoho
+edusoho-mysql           1/1     1            1           19d   mysql             mysql/mysql-server:5.7                         app=edusoho,tier=mysql
+jira-deployment         1/1     1            1           19d   jira              cptactionhank/atlassian-jira-software:latest   app=jira,service=jira
+my-nginx                8/8     8            8           27d   my-nginx          nginx                                          run=my-nginx
+sonar-deployment        1/1     1            1           36s   sonar             sonarqube:latest                               app=sonar,service=sonar
+sonar-mysql             1/1     1            1           41m   mysql             mysql/mysql-server:5.7                         app=sonar,tier=mysql
+[root@k8s-master1 temp]# 
+[root@k8s-master1 temp]# kubectl get pod -o wide
+NAME                                     READY   STATUS      RESTARTS   AGE     IP            NODE         NOMINATED NODE   READINESS GATES
+confluence-deployment-59c98447bf-tqndr   1/1     Running     0          15d     172.20.2.19   10.1.36.48   <none>           <none>
+confluence-mysql-859d7f788b-24l27        1/1     Running     0          19d     172.20.0.19   10.1.36.46   <none>           <none>
+docker-registry-6685d74448-t87zv         1/1     Running     0          10d     172.20.1.29   10.1.36.47   <none>           <none>
+edusoho-deployment-64bc89766b-hqvcs      1/1     Running     0          18d     172.20.3.12   10.1.36.49   <none>           <none>
+edusoho-mysql-fc4f549f5-hv9sw            1/1     Running     0          19d     172.20.1.26   10.1.36.47   <none>           <none>
+jira-deployment-ccc84bffd-r9mzz          1/1     Running     0          19d     172.20.2.16   10.1.36.48   <none>           <none>
+my-nginx-86459cfc9f-29wdg                1/1     Running     0          27d     172.20.2.7    10.1.36.48   <none>           <none>
+my-nginx-86459cfc9f-6fgzv                1/1     Running     0          27d     172.20.1.21   10.1.36.47   <none>           <none>
+my-nginx-86459cfc9f-csg5l                1/1     Running     0          27d     172.20.1.20   10.1.36.47   <none>           <none>
+my-nginx-86459cfc9f-lvthq                1/1     Running     0          27d     172.20.3.2    10.1.36.49   <none>           <none>
+my-nginx-86459cfc9f-qhjww                1/1     Running     0          27d     172.20.0.11   10.1.36.46   <none>           <none>
+my-nginx-86459cfc9f-qwclj                1/1     Running     0          27d     172.20.0.12   10.1.36.46   <none>           <none>
+my-nginx-86459cfc9f-stx7p                1/1     Running     0          27d     172.20.2.6    10.1.36.48   <none>           <none>
+my-nginx-86459cfc9f-wx2hq                1/1     Running     0          27d     172.20.3.3    10.1.36.49   <none>           <none>
+mysql-test                               0/1     Completed   0          8m37s   172.20.1.30   10.1.36.47   <none>           <none>
+sonar-deployment-7df689bd74-p4gss        1/1     Running     0          47s     172.20.2.21   10.1.36.48   <none>           <none>
+sonar-mysql-69f946bd64-r28xc             1/1     Running     0          41m     172.20.2.20   10.1.36.48   <none>           <none>
+[root@k8s-master1 temp]# 
+
+
 
 
 ```
-
