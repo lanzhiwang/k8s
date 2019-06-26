@@ -1431,3 +1431,20 @@ sonar-mysql-69f946bd64-r28xc             1/1     Running     0          41m     
 
 
 ```
+
+## sonar 使用
+
+[参考](https://blog.csdn.net/qq_42564846/article/details/81407117)
+
+插件安装
+
+chinese
+c#
+JavaScript
+
+
+
+
+
+
+
