@@ -541,4 +541,63 @@ Address: 10.68.173.192
 
 dnstools# 
 
+dnstools# dig -t A sonar
+
+; <<>> DiG 9.11.3 <<>> -t A sonar
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: FORMERR, id: 41046
+;; flags: qr rd; QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 1
+;; WARNING: recursion requested but not available
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4096
+; COOKIE: 09451c4c0f1fda90 (echoed)
+;; QUESTION SECTION:
+;sonar.				IN	A
+
+;; Query time: 3 msec
+;; SERVER: 10.68.0.2#53(10.68.0.2)
+;; WHEN: Wed Jun 26 05:19:18 UTC 2019
+;; MSG SIZE  rcvd: 46
+
+dnstools# 
+dnstools# dig -t A sonar.default.svc.cluster.local
+
+; <<>> DiG 9.11.3 <<>> -t A sonar.default.svc.cluster.local
+;; global options: +cmd
+;; Got answer:
+;; WARNING: .local is reserved for Multicast DNS
+;; You are currently testing what happens when an mDNS query is leaked to DNS
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 62180
+;; flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+;; WARNING: recursion requested but not available
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4096
+; COOKIE: 363b663f7126f52c (echoed)
+;; QUESTION SECTION:
+;sonar.default.svc.cluster.local. IN	A
+
+;; ANSWER SECTION:
+sonar.default.svc.cluster.local. 5 IN	A	10.68.53.235
+
+;; Query time: 1 msec
+;; SERVER: 10.68.0.2#53(10.68.0.2)
+;; WHEN: Wed Jun 26 05:19:37 UTC 2019
+;; MSG SIZE  rcvd: 119
+
+dnstools# 
 ```
+
+dnstools# nslookup baidu.com
+Server:		10.68.0.2
+Address:	10.68.0.2#53
+
+Non-authoritative answer:
+Name:	baidu.com
+Address: 123.125.114.144
+Name:	baidu.com
+Address: 220.181.38.148
+
+dnstools# 
