@@ -1442,66 +1442,13 @@ chinese
 c#
 JavaScript
 
-
-
-
-
 ```
-# step 1
-MSBuild.SonarQube.Runner.exe begin /k:"xxh.xzc.api" /n:"xhh.xzc.api" /v:"1.0"
 
-SonarScanner.MSBuild.exe begin /k:"cbxt:feature_6ysp2rcdd" /n:"成本系统-代码质量-6月SP2日常迭代" /v:"1.0" /d:sonar.cs.nunit.reportsPaths="NUnitResults.xml" /d:sonar.cs.dotcover.reportsPaths="dotCover.html" 
+SonarScanner.MSBuild.exe begin /k:"platform" /n:"platform" /v:"platform-1.0" /d:sonar.cs.nunit.reportsPaths="NUnitResults.xml" /d:sonar.cs.dotcover.reportsPaths="dotCover.html"
 
-
-PS F:\code\cbxt> SonarScanner.MSBuild.exe begin /k:"cbxt:feature_6ysp2rcdd" /n:"成本系统-代码质量-6月SP2日常迭代" /v:"1.0" /d:sonar.cs.nunit.reportsPaths="NUnitResults.xml" /d:sonar.cs.dotcover.reportsPaths="dotCover.html"
-SonarScanner for MSBuild 4.6.2
-Using the .NET Framework version of the Scanner for MSBuild
-Pre-processing started.
-Preparing working directories...
-14:12:25.981  Updating build integration targets...
-14:12:26.042  Fetching analysis configuration settings...
-14:12:31.097  Provisioning analyzer assemblies for cs...
-14:12:31.099  Installing required Roslyn analyzers...
-14:12:31.548  Pre-processing succeeded.
-PS F:\code\cbxt>
-
-# step 2
-MSBuild.exe /t:Rebuild
-
-msbuild src\成本整体解决方案.sln
-
- 15 个警告
-    916 个错误
-
-已用时间 00:00:11.36
-
-
-
-# step 3
-MSBuild.SonarQube.Runner.exe end
+msbuild src\平台整体解决方案.sln
 
 SonarScanner.MSBuild.exe end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ```
-
-
-
-
-
-
 
