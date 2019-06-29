@@ -74,10 +74,108 @@ PS C:\k>
 
 
 
+PS C:\k> .\start.ps1 -ManagementIP 10.1.36.50 -NetworkMode overlay  -ClusterCIDR 172.20.0.0/16 -ServiceCIDR 10.68.0.0/16 -KubeDnsServiceIP 10.68.0.2 -LogDir F:\k8s\kubernetes\node\bin\log
+Creating Kubernetes directories
+Downloading Windows Kubernetes scripts
+File c:\k\hns.psm1 already exists.
+File c:\k\Dockerfile already exists.
+File c:\k\stop.ps1 already exists.
+File c:\k\start-kubelet.ps1 already exists.
+File c:\k\start-Kubeproxy.ps1 already exists.
+Downloading Flannel binaries
+File c:\k\flanneld.exe already exists.
+Downloading CNI binaries
+File c:\k\net-conf.json already exists.
+File c:\k\cni\config\cni.conf already exists.
+File c:\k\cni\flannel.exe already exists.
+File c:\k\cni\host-local.exe already exists.
+File c:\k\cni\win-overlay.exe already exists.
+Copying Flannel setup files
+警告: 模块“hns”中的某些导入命令的名称包含未批准的动词，这些动词可能导致这些命令名不易被发现。若要查找具有未批准的动词的命令，请使用 Verbose 参数再次运行 Import-Module 命令。有关批准的动词列表，请键入 Get-Verb。
+Generated CNI Config [@{cniVersion=0.2.0; name=vxlan0; type=flannel; delegate=}]
+Generated net-conf Config [@{Network=172.20.0.0/16; Backend=}]
+Node k8s-win-worker1 already registered
+警告: 模块“hns”中的某些导入命令的名称包含未批准的动词，这些动词可能导致这些命令名不易被发现。若要查找具有未批准的动词的命令，请使用 Verbose 参数再次运行 Import-Module 命令。有关批准的动词列表，请键入 Get-Verb。
+详细信息: Invoke-HNSRequest Method[GET] Path[/networks] Data[]
+详细信息: Result :
+{"Output":[{"ActivityId":"84473089-EDC9-436D-A1E1-3A7882850FD5","AdditionalParams":{},"CurrentEndpointCount":0,"DNSServerCompartment":3,"DrMacAddress":"00-15-5D-BB-6E-B1","Extensions":[{"Id":"E7C3B2F0-F3C5-48DF-AF2B-10FED6D72E7A","IsEnabled":false,"Name":"Microsoft
+Windows 筛选平台"},{"Id":"E9B59CFA-2BE1-4B21-828F-B6FBDBDDC017","IsEnabled":true,"Name":"Microsoft Azure VFP Switch Extension"},{"Id":"EA24CD6C-D17A-4348-9190-09F0D5BE83DD","IsEnabled":true,"Name":"Microsoft NDIS
+捕获"}],"Flags":0,"Health":{"LastErrorCode":0,"LastUpdateTime":132062690972642312},"ID":"9B219D6E-6847-43FC-8258-81DB4B63C09C","IPv6":false,"LayeredOn":"395B983F-DCC7-4E77-BF04-F01084CFC7DD","MacPools":[{"EndMacAddress":"00-15-5D-69-3F-FF","StartMacAddress":"00-15-5D-69
+-30-00"}],"ManagementIP":"10.1.36.50","MaxConcurrentEndpoints":0,"Name":"External","Policies":[],"Resources":{"AdditionalParams":{},"AllocationOrder":0,"Allocators":[{"AdditionalParams":{},"AllocationOrder":0,"Health":{"LastErrorCode":0,"LastUpdateTime":1320626909699861
+14},"ID":"2D72E7C0-9E9D-4A01-8057-66E7938D0EE0","IsPolicy":false,"Isolation_0":9999,"PortId":"81C0D794-C201-4707-9D12-F1AF435C1916","RDID":"9B219D6E-6847-43FC-8258-81DB4B63C09C","State":3,"SwitchId":"30081EA2-DE0E-4771-82BF-3FDBE9AA31BB","Tag":"RDID"}],"Health":{"LastEr
+rorCode":0,"LastUpdateTime":132062690969986114},"ID":"84473089-EDC9-436D-A1E1-3A7882850FD5","PortOperationTime":0,"State":1,"SwitchOperationTime":0,"VfpOperationTime":0,"parentId":"325555C6-D065-4A90-A92A-DD7A5EED5B9B"},"State":1,"Subnets":[{"AdditionalParams":{},"Addre
+ssPrefix":"192.168.255.0/30","GatewayAddress":"192.168.255.1","Health":{"LastErrorCode":0,"LastUpdateTime":132062690972642312},"ID":"A8D5A7AB-DD0D-4A01-8E37-10681D2A494A","ObjectType":5,"Policies":[{"Type":"VSID","VSID":9999}],"State":0}],"TotalEndpoints":0,"Type":"over
+lay","Version":38654705666},{"ActivityId":"C9CAE6EF-217C-44D1-8942-56B09EB89577","AdditionalParams":{},"CurrentEndpointCount":0,"Extensions":[{"Id":"E7C3B2F0-F3C5-48DF-AF2B-10FED6D72E7A","IsEnabled":false,"Name":"Microsoft Windows
+筛选平台"},{"Id":"E9B59CFA-2BE1-4B21-828F-B6FBDBDDC017","IsEnabled":false,"Name":"Microsoft Azure VFP Switch Extension"},{"Id":"EA24CD6C-D17A-4348-9190-09F0D5BE83DD","IsEnabled":true,"Name":"Microsoft NDIS
+捕获"}],"Flags":0,"Health":{"AddressNotificationMissedCount":0,"AddressNotificationSequenceNumber":0,"InterfaceNotificationMissedCount":0,"InterfaceNotificationSequenceNumber":0,"LastErrorCode":0,"LastUpdateTime":132062691024261116,"RouteNotificationMissedCount":0,"Rout
+eNotificationSequenceNumber":0},"ID":"B4E14E41-5EE4-441A-9675-138F88C43DB0","IPv6":false,"LayeredOn":"1D68A2E3-C9B1-40DC-88BC-C215F750B048","MacPools":[{"EndMacAddress":"00-15-5D-4F-8F-FF","StartMacAddress":"00-15-5D-4F-80-00"}],"MaxConcurrentEndpoints":0,"Name":"nat","
+NatName":"ICSBEDB5686-6B22-44B5-A3AF-385BD261F365","Policies":[],"Resources":{"AdditionalParams":{},"AllocationOrder":2,"Allocators":[{"AdapterNetCfgInstanceId":"{BEDB5686-6B22-44B5-A3AF-385BD261F365}","AdditionalParams":{},"AllocationOrder":0,"CompartmendId":0,"Connect
+ed":true,"DevicelessNic":false,"EndpointNicGuid":"58D5547C-7040-4BD3-ABB6-E1EE878E6CAD","EndpointPortGuid":"AB26FE6E-B628-4E6B-AC8A-56824F0B44DF","Health":{"LastErrorCode":0,"LastUpdateTime":132062691026403111},"Hidden":false,"ID":"88AE1A7A-77BD-42DF-931B-F7F219C13F9A",
+"InterfaceGuid":"BEDB5686-6B22-44B5-A3AF-385BD261F365","IsPolicy":false,"IsolationId":0,"MTU":1450,"MacAddress":"00-15-5D-4F-87-08","ManagementPort":true,"NicFriendlyName":"nat","PreferredPortFriendlyName":"Container NIC
+88ae1a7a","State":3,"SwitchId":"AEBE7EB6-3486-43DF-BF4D-431CF2615513","Tag":"Host
+Vnic","WaitForIpv6Interface":false,"nonPersistentPort":false},{"AdditionalParams":{},"AllocationOrder":1,"Dhcp":false,"Dns":false,"ExternalInterfaceConstraint":0,"Health":{"DHCPState":1,"DNSState":1,"ICSState":2,"LastErrorCode":0,"LastUpdateTime":132062691028748165},"IC
+SFlags":0,"ID":"C015E1CB-3FDF-46A8-BCEF-3FE7AC53B831","IsPolicy":false,"Prefix":20,"PrivateInterfaceGUID":"BEDB5686-6B22-44B5-A3AF-385BD261F365","State":3,"SubnetIPAddress":"172.25.192.0","Tag":"ICS"}],"Health":{"LastErrorCode":0,"LastUpdateTime":132062691026403111},"ID
+":"C9CAE6EF-217C-44D1-8942-56B09EB89577","PortOperationTime":0,"State":1,"SwitchOperationTime":0,"VfpOperationTime":0,"parentId":"630083EE-297A-445E-82F1-2B4950A1F129"},"State":1,"Subnets":[{"AdditionalParams":{},"AddressPrefix":"172.25.192.0/20","GatewayAddress":"172.2
+5.192.1","Health":{"LastErrorCode":0,"LastUpdateTime":132062691026403111},"ID":"9472AD80-BCEE-440C-8ADB-7458C95532EA","Policies":[],"State":0}],"TotalEndpoints":0,"Type":"nat","Version":38654705666}],"Success":true}
+Waiting for the Network to be created
+I0629 08:09:11.421046    1256 main.go:450] Searching for interface using 10.1.36.50
+I0629 08:09:11.681436    1256 main.go:210] Could not find valid interface matching 10.1.36.50: error looking up interface 10.1.36.50: no index found for interface ""
+E0629 08:09:11.681436    1256 main.go:234] Failed to find interface to use that matches the interfaces and/or regexes provided
+详细信息: Invoke-HNSRequest Method[GET] Path[/networks] Data[]
+详细信息: Result :
+{"Output":[{"ActivityId":"84473089-EDC9-436D-A1E1-3A7882850FD5","AdditionalParams":{},"CurrentEndpointCount":0,"DNSServerCompartment":3,"DrMacAddress":"00-15-5D-BB-6E-B1","Extensions":[{"Id":"E7C3B2F0-F3C5-48DF-AF2B-10FED6D72E7A","IsEnabled":false,"Name":"Microsoft
+Windows 筛选平台"},{"Id":"E9B59CFA-2BE1-4B21-828F-B6FBDBDDC017","IsEnabled":true,"Name":"Microsoft Azure VFP Switch Extension"},{"Id":"EA24CD6C-D17A-4348-9190-09F0D5BE83DD","IsEnabled":true,"Name":"Microsoft NDIS
+捕获"}],"Flags":0,"Health":{"LastErrorCode":0,"LastUpdateTime":132062690972642312},"ID":"9B219D6E-6847-43FC-8258-81DB4B63C09C","IPv6":false,"LayeredOn":"395B983F-DCC7-4E77-BF04-F01084CFC7DD","MacPools":[{"EndMacAddress":"00-15-5D-69-3F-FF","StartMacAddress":"00-15-5D-69
+-30-00"}],"ManagementIP":"10.1.36.50","MaxConcurrentEndpoints":0,"Name":"External","Policies":[],"Resources":{"AdditionalParams":{},"AllocationOrder":0,"Allocators":[{"AdditionalParams":{},"AllocationOrder":0,"Health":{"LastErrorCode":0,"LastUpdateTime":1320626909699861
+14},"ID":"2D72E7C0-9E9D-4A01-8057-66E7938D0EE0","IsPolicy":false,"Isolation_0":9999,"PortId":"81C0D794-C201-4707-9D12-F1AF435C1916","RDID":"9B219D6E-6847-43FC-8258-81DB4B63C09C","State":3,"SwitchId":"30081EA2-DE0E-4771-82BF-3FDBE9AA31BB","Tag":"RDID"}],"Health":{"LastEr
+rorCode":0,"LastUpdateTime":132062690969986114},"ID":"84473089-EDC9-436D-A1E1-3A7882850FD5","PortOperationTime":0,"State":1,"SwitchOperationTime":0,"VfpOperationTime":0,"parentId":"325555C6-D065-4A90-A92A-DD7A5EED5B9B"},"State":1,"Subnets":[{"AdditionalParams":{},"Addre
+ssPrefix":"192.168.255.0/30","GatewayAddress":"192.168.255.1","Health":{"LastErrorCode":0,"LastUpdateTime":132062690972642312},"ID":"A8D5A7AB-DD0D-4A01-8E37-10681D2A494A","ObjectType":5,"Policies":[{"Type":"VSID","VSID":9999}],"State":0}],"TotalEndpoints":0,"Type":"over
+lay","Version":38654705666},{"ActivityId":"C9CAE6EF-217C-44D1-8942-56B09EB89577","AdditionalParams":{},"CurrentEndpointCount":0,"Extensions":[{"Id":"E7C3B2F0-F3C5-48DF-AF2B-10FED6D72E7A","IsEnabled":false,"Name":"Microsoft Windows
+筛选平台"},{"Id":"E9B59CFA-2BE1-4B21-828F-B6FBDBDDC017","IsEnabled":false,"Name":"Microsoft Azure VFP Switch Extension"},{"Id":"EA24CD6C-D17A-4348-9190-09F0D5BE83DD","IsEnabled":true,"Name":"Microsoft NDIS
+捕获"}],"Flags":0,"Health":{"AddressNotificationMissedCount":0,"AddressNotificationSequenceNumber":0,"InterfaceNotificationMissedCount":0,"InterfaceNotificationSequenceNumber":0,"LastErrorCode":0,"LastUpdateTime":132062691024261116,"RouteNotificationMissedCount":0,"Rout
+eNotificationSequenceNumber":0},"ID":"B4E14E41-5EE4-441A-9675-138F88C43DB0","IPv6":false,"LayeredOn":"1D68A2E3-C9B1-40DC-88BC-C215F750B048","MacPools":[{"EndMacAddress":"00-15-5D-4F-8F-FF","StartMacAddress":"00-15-5D-4F-80-00"}],"MaxConcurrentEndpoints":0,"Name":"nat","
+NatName":"ICSBEDB5686-6B22-44B5-A3AF-385BD261F365","Policies":[],"Resources":{"AdditionalParams":{},"AllocationOrder":2,"Allocators":[{"AdapterNetCfgInstanceId":"{BEDB5686-6B22-44B5-A3AF-385BD261F365}","AdditionalParams":{},"AllocationOrder":0,"CompartmendId":0,"Connect
+ed":true,"DevicelessNic":false,"EndpointNicGuid":"58D5547C-7040-4BD3-ABB6-E1EE878E6CAD","EndpointPortGuid":"AB26FE6E-B628-4E6B-AC8A-56824F0B44DF","Health":{"LastErrorCode":0,"LastUpdateTime":132062691026403111},"Hidden":false,"ID":"88AE1A7A-77BD-42DF-931B-F7F219C13F9A",
+"InterfaceGuid":"BEDB5686-6B22-44B5-A3AF-385BD261F365","IsPolicy":false,"IsolationId":0,"MTU":1450,"MacAddress":"00-15-5D-4F-87-08","ManagementPort":true,"NicFriendlyName":"nat","PreferredPortFriendlyName":"Container NIC
+88ae1a7a","State":3,"SwitchId":"AEBE7EB6-3486-43DF-BF4D-431CF2615513","Tag":"Host
+Vnic","WaitForIpv6Interface":false,"nonPersistentPort":false},{"AdditionalParams":{},"AllocationOrder":1,"Dhcp":false,"Dns":false,"ExternalInterfaceConstraint":0,"Health":{"DHCPState":1,"DNSState":1,"ICSState":2,"LastErrorCode":0,"LastUpdateTime":132062691028748165},"IC
+SFlags":0,"ID":"C015E1CB-3FDF-46A8-BCEF-3FE7AC53B831","IsPolicy":false,"Prefix":20,"PrivateInterfaceGUID":"BEDB5686-6B22-44B5-A3AF-385BD261F365","State":3,"SubnetIPAddress":"172.25.192.0","Tag":"ICS"}],"Health":{"LastErrorCode":0,"LastUpdateTime":132062691026403111},"ID
+":"C9CAE6EF-217C-44D1-8942-56B09EB89577","PortOperationTime":0,"State":1,"SwitchOperationTime":0,"VfpOperationTime":0,"parentId":"630083EE-297A-445E-82F1-2B4950A1F129"},"State":1,"Subnets":[{"AdditionalParams":{},"AddressPrefix":"172.25.192.0/20","GatewayAddress":"172.2
+5.192.1","Health":{"LastErrorCode":0,"LastUpdateTime":132062691026403111},"ID":"9472AD80-BCEE-440C-8ADB-7458C95532EA","Policies":[],"State":0}],"TotalEndpoints":0,"Type":"nat","Version":38654705666}],"Success":true}
+Waiting for the Network to be created
 
 
 
 
+修改 -ManagementIP 参数为 vEthernet
+
+PS C:\k> .\start.ps1 -ManagementIP vEthernet  -NetworkMode overlay  -ClusterCIDR 172.20.0.0/16 -ServiceCIDR 10.68.0.0/16 -KubeDnsServiceIP 10.68.0.2 -LogDir F:\k8s\kubernetes\node\bin\log
+Creating Kubernetes directories
+Downloading Windows Kubernetes scripts
+File c:\k\hns.psm1 already exists.
+File c:\k\Dockerfile already exists.
+File c:\k\stop.ps1 already exists.
+File c:\k\start-kubelet.ps1 already exists.
+File c:\k\start-Kubeproxy.ps1 already exists.
+Downloading Flannel binaries
+File c:\k\flanneld.exe already exists.
+Downloading CNI binaries
+File c:\k\net-conf.json already exists.
+File c:\k\cni\config\cni.conf already exists.
+File c:\k\cni\flannel.exe already exists.
+File c:\k\cni\host-local.exe already exists.
+File c:\k\cni\win-overlay.exe already exists.
+Copying Flannel setup files
+警告: 模块“hns”中的某些导入命令的名称包含未批准的动词，这些动词可能导致这些命令名不易被发现。若要查找具有未批准的动词的命令，请使用 Verbose 参数再次运行 Import-Module 命令。有关批准的动词列表，请键入 Get-Verb。
+PS C:\k>
+
+
+
+
+
+.\start.ps1 -ManagementIP "vEthernet (以太网)"  -NetworkMode overlay  -ClusterCIDR 172.20.0.0/16 -ServiceCIDR 10.68.0.0/16 -KubeDnsServiceIP 10.68.0.2 -LogDir F:\k8s\kubernetes\node\bin\log
+
+ .\start.ps1 -ManagementIP 10.1.36.50 -NetworkMode overlay  -ClusterCIDR 172.20.0.0/16 -ServiceCIDR 10.68.0.0/16 -KubeDnsServiceIP 10.68.0.2 -InterfaceName "vEthernet (以太网)" -LogDir F:\k8s\kubernetes\node\bin\log 
 
 
 
