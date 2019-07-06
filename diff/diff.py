@@ -74,27 +74,30 @@ def getProcessesInfo():
     # print pids
     for pid in pids:
         processes = {}
-        p = psutil.Process(pid)
-        processes['name'] = p.name()  # 进程名称
-        processes['exe'] = p.exe()  # 进程exe路径
-        processes['cwd'] = p.cwd()  # 进程工作目录
-        processes['cmdline'] = p.cmdline()  # 进程启动的命令行
-        processes['ppid'] = p.ppid()  # 父进程ID
-        processes['parent'] = p.parent()  # 父进程
-        processes['children'] = p.children()  # 子进程列表
-        processes['status'] = p.status()  # 进程状态
-        processes['username'] = p.username()  # 进程用户名
-        processes['create_time'] = p.create_time()  # 进程创建时间
-        processes['terminal'] = p.terminal()  # 进程终端
-        processes['cpu_times'] = p.cpu_times()  # 进程使用的CPU时间
-        processes['memory_info'] = p.memory_info()  # 进程使用的内存
-        processes['open_files'] = p.open_files()  # 进程打开的文件
-        processes['connections'] = p.connections()  # 进程相关网络连接
-        processes['num_threads'] = p.num_threads()  # 进程的线程数量
-        processes['threads'] = p.threads()  # 所有线程信息
-        processes['environ'] = p.environ()  # 进程环境变量
+        try:
+            p = psutil.Process(pid)
+            processes['name'] = p.name()  # 进程名称
+            processes['exe'] = p.exe()  # 进程exe路径
+            processes['cwd'] = p.cwd()  # 进程工作目录
+            processes['cmdline'] = p.cmdline()  # 进程启动的命令行
+            processes['ppid'] = p.ppid()  # 父进程ID
+            processes['parent'] = p.parent()  # 父进程
+            processes['children'] = p.children()  # 子进程列表
+            processes['status'] = p.status()  # 进程状态
+            processes['username'] = p.username()  # 进程用户名
+            processes['create_time'] = p.create_time()  # 进程创建时间
+            processes['terminal'] = p.terminal()  # 进程终端
+            processes['cpu_times'] = p.cpu_times()  # 进程使用的CPU时间
+            processes['memory_info'] = p.memory_info()  # 进程使用的内存
+            processes['open_files'] = p.open_files()  # 进程打开的文件
+            processes['connections'] = p.connections()  # 进程相关网络连接
+            processes['num_threads'] = p.num_threads()  # 进程的线程数量
+            processes['threads'] = p.threads()  # 所有线程信息
+            processes['environ'] = p.environ()  # 进程环境变量
 
-        yield processes
+            yield processes
+        except psutil.NoSuchProcess as e:
+            pass
 
 
 def getAllModule():
