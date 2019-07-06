@@ -28,6 +28,10 @@
 ## 示例(为显示只做部分输出)
 
 ```bash
+pip install -r requirements,txt
+python diff.py > diff.log
+
+
 ------------ 获取系统基本信息 ------------
 {'node': 'localhost.localdomain', 'linux_distribution': ('CentOS Linux', '7.5.1804', 'Core'), 'uname': ('Linux', 'localhost.localdomain', '3.10.0-862.11.6.el7.x86_64', '#1 SMP Tue Aug 14 21:49:04 UTC 2018', 'x86_64', 'x86_64'), 'system': 'Linux', 'machine': 'x86_64', 'platform': 'Linux-3.10.0-862.11.6.el7.x86_64-x86_64-with-centos-7.5.1804-Core', 'version': '#1 SMP Tue Aug 14 21:49:04 UTC 2018', 'architecture': ('64bit', 'ELF'), 'processor': 'x86_64'}
 
