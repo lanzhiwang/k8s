@@ -533,7 +533,8 @@ if __name__ == '__main__':
     print '\n\n'
 
     print '------------ 获取系统的所有进程信息 ------------'
-    print getProcessesInfo()
+    for processes in getProcessesInfo():
+        print processes
     print '\n\n'
 
     print '------------ 获取所有加载的模块 ------------'
@@ -553,7 +554,8 @@ if __name__ == '__main__':
     print '\n\n'
 
     print '------------ 获取系统的所有网络连接信息 ------------'
-    print getNetwordLink()
+    for link in getNetwordLink():
+        print link
     print '\n\n'
 
     print '------------ 获取系统的所有被占用的端口 ------------'
@@ -589,7 +591,8 @@ if __name__ == '__main__':
     print '\n\n'
 
     print '------------ 获取某个路径下的所有可执行文件 ------------'
-    print getCommandlist('PATH')
+    for command in getCommandlist('PATH'):
+        print command
     print '\n\n'
 
     print '------------ 获取文件或者目录的权限信息 ------------'
