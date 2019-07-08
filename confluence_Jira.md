@@ -1520,6 +1520,75 @@ kubernetes         ClusterIP   10.68.0.1       <none>        443/TCP          15
 
 
 
+[root@k8s-master1 back]# ./atlassian-confluence-6.9.1-x64.bin 
+Unpacking JRE ...
+Starting Installer ...
+
+This will install Confluence 6.9.1 on your computer.
+OK [o, Enter], Cancel [c]
+o
+Click Next to continue, or Cancel to exit Setup.
+
+Choose the appropriate installation or upgrade option.
+Please choose one of the following:
+Express Install (uses default settings) [1], 
+Custom Install (recommended for advanced users) [2, Enter], 
+Upgrade an existing Confluence installation [3]
+2
+
+Select the folder where you would like Confluence 6.9.1 to be installed,
+then click Next.
+Where should Confluence 6.9.1 be installed?
+[/opt/atlassian/confluence]
+/opt/k8s/confluence/confluence_install
+
+Default location for Confluence data
+[/var/atlassian/application-data/confluence]
+/opt/k8s/confluence/confluence_home
+
+Configure which ports Confluence will use.
+Confluence requires two TCP ports that are not being used by any other
+applications on this machine. The HTTP port is where you will access
+Confluence through your browser. The Control port is used to Startup and
+Shutdown Confluence.
+Use default ports (HTTP: 8090, Control: 8000) - Recommended [1, Enter], Set custom value for HTTP and Control ports [2]
+2
+HTTP Port Number
+[8090]
+8090
+Control Port Number
+[8000]
+8091
+
+Confluence can be run in the background.
+You may choose to run Confluence as a service, which means it will start
+automatically whenever the computer restarts.
+Install Confluence as Service?
+Yes [y, Enter], No [n]
+n
+
+Extracting files ...
+                                                                           
+
+Please wait a few moments while we configure Confluence.
+
+Installation of Confluence 6.9.1 is complete
+Start Confluence now?
+Yes [y, Enter], No [n]
+y
+
+Please wait a few moments while Confluence starts up.
+Launching Confluence ...
+
+Installation of Confluence 6.9.1 is complete
+Your installation of Confluence 6.9.1 is now ready and can be accessed via
+your browser.
+Confluence 6.9.1 can be accessed at http://localhost:8090
+Finishing installation ...
+[root@k8s-master1 back]# 
+
+
+
 
 
 
