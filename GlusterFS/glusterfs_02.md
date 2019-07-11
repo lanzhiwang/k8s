@@ -103,3 +103,20 @@ For example, to create a distributed striped volume across eight storage servers
 Creation of test-volume has been successful
 Please start the volume to access data.
 ```
+
+# FUSE
+
+GlusterFS is a userspace filesystem. This was a decision made by the GlusterFS developers initially as getting the modules into linux kernel is a very long and difficult process.  GlusterFS是一个用户空间文件系统。 这是GlusterFS开发人员最初做出的决定，因为将模块放入Linux内核是一个非常漫长而艰难的过程。
+
+Being a userspace filesystem, to interact with kernel VFS, GlusterFS makes use of FUSE (File System in Userspace). For a long time, implementation of a userspace filesystem was considered impossible. FUSE was developed as a solution for this. FUSE is a kernel module that support interaction between kernel VFS and non-privileged user applications and it has an API that can be accessed from userspace. Using this API, any type of filesystem can be written using almost any language you prefer as there are many bindings between FUSE and other languages.  作为用户空间文件系统，GlusterFS与内核VFS交互，利用FUSE（用户空间中的文件系统）。 很长一段时间，用户空间文件系统的实现被认为是不可能的。 FUSE是为此而开发的解决方案。 FUSE是一个内核模块，支持内核VFS和非特权用户应用程序之间的交互，它有一个可以从用户空间访问的API。 使用此API，可以使用您喜欢的几乎任何语言编写任何类型的文件系统，因为FUSE和其他语言之间存在许多绑定。
+
+![](./images/06.png)
+Structural diagram of FUSE.  FUSE的结构图。
+
+This shows a filesystem "hello world" that is compiled to create a binary "hello". It is executed with a filesystem mount point /tmp/fuse. Then the user issues a command ls -l on the mount point /tmp/fuse. This command reaches VFS via glibc and since the mount /tmp/fuse corresponds to a FUSE based filesystem, VFS passes it over to FUSE module. The FUSE kernel module contacts the actual filesystem binary "hello" after passing through glibc and FUSE library in userspace(libfuse). The result is returned by the "hello" through the same path and reaches the ls -l command.  这显示了一个文件系统“hello world”，它被编译为创建二进制“hello”。 它使用文件系统安装点/ tmp / fuse执行。 然后用户在挂载点/ tmp / fuse上发出命令ls -l。 此命令通过glibc到达VFS，并且由于mount / tmp / fuse对应于基于FUSE的文件系统，因此VFS将其传递给FUSE模块。 FUSE内核模块在通过用户空间（libfuse）中的glibc和FUSE库后联系实际的文件系统二进制文件“hello”。 结果由“hello”通过相同的路径返回并到达ls -l命令。
+
+The communication between FUSE kernel module and the FUSE library(libfuse) is via a special file descriptor which is obtained by opening /dev/fuse. This file can be opened multiple times, and the obtained file descriptor is passed to the mount syscall, to match up the descriptor with the mounted filesystem.  FUSE内核模块和FUSE库（libfuse）之间的通信是通过打开/ dev / fuse获得的特殊文件描述符。 此文件可以多次打开，并且获取的文件描述符将传递给mount syscall，以使描述符与已安装的文件系统相匹配。
+
+
+
+
