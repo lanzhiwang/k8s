@@ -1,6 +1,8 @@
 # Jenkins Distributed builds
 
-[参考](https://wiki.jenkins.io/display/JENKINS/Distributed+builds)
+[参考1](https://wiki.jenkins.io/display/JENKINS/Distributed+builds)
+[参考2](https://hub.docker.com/u/jenkins)
+[参考3](https://jenkins.io/zh/blog/2018/12/10/the-official-Docker-image/)
 
 It is pretty common when starting with Jenkins to have a single server which runs the master and all builds, however Jenkins architecture is fundamentally "Master+Agent". The master is designed to do co-ordination and provide the GUI and API endpoints, and the Agents are designed to perform the work. The reason being that workloads are often best "farmed out" to distributed servers. This may be for scale, or to provide different tools, or build on different target platforms. Another common reason for remote agents is to enact deployments into secured environments (without the master having direct access).   从Jenkins开始拥有运行master和所有构建的单个服务器是很常见的，但Jenkins架构基本上是“Master + Agent”。 主服务器旨在协调并提供GUI和API端点，代理程序旨在执行工作。 原因是工作负载通常最好“分配”到分布式服务器。 这可能是为了扩展，或提供不同的工具，或构建在不同的目标平台上。 远程代理的另一个常见原因是将部署安装到安全环境中（主设备无法直接访问）。
 
