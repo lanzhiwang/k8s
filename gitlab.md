@@ -4,6 +4,37 @@
 
 [参考2](https://docs.gitlab.com/ee/raketasks/backup_restore.html)
 
+使用 docker 安装 gitlab
+
+```bash
+[root@gitlab gitlab-test-data]# cat docker-compose.yml 
+web:
+  image: 'gitlab/gitlab-ce:11.1.4-ce.0'
+  restart: always
+  hostname: '10.1.36.45'
+  container_name: gitlab-test
+  environment:
+    GITLAB_OMNIBUS_CONFIG: |
+      external_url 'http://10.1.36.45:9090'
+      gitlab_rails['gitlab_shell_ssh_port'] = 2224
+  ports:
+    - '9090:9090'
+    - '2224:22'
+  volumes:
+    - '/data/gitlab-test-data/config:/etc/gitlab'
+    - '/data/gitlab-test-data/logs:/var/log/gitlab'
+    - '/data/gitlab-test-data/data:/var/opt/gitlab'
+
+[root@gitlab gitlab-test-data]# 
+
+docker-compose up -d
+
+
+```
+
+
+
+
 先迁移配置，后迁移数据
 
 迁移配置：
