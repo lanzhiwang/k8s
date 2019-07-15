@@ -105,3 +105,28 @@ gitlab-ctl start
 gitlab-rake gitlab:check SANITIZE=true
 
 ```
+
+
+gitlab 中运行的进程
+
+```bash
+root@10:/var/opt/gitlab/backups# gitlab-ctl start
+ok: run: alertmanager: (pid 5400) 614s
+ok: run: gitaly: (pid 1888) 846s
+ok: run: gitlab-monitor: (pid 1921) 845s
+ok: run: gitlab-workhorse: (pid 5372) 614s
+ok: run: logrotate: (pid 1070) 917s
+ok: run: nginx: (pid 1045) 923s
+ok: run: node-exporter: (pid 1202) 905s
+ok: run: postgres-exporter: (pid 1988) 844s
+ok: run: postgresql: (pid 768) 1013s
+ok: run: prometheus: (pid 12928) 0s
+ok: run: redis: (pid 724) 1024s
+ok: run: redis-exporter: (pid 1270) 897s
+ok: run: sidekiq: (pid 5048) 648s
+ok: run: sshd: (pid 37) 1099s
+ok: run: unicorn: (pid 5630) 603s
+
+
+```
+
