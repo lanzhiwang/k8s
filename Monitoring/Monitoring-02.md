@@ -116,6 +116,9 @@ $ docker run -d -p 3000:3000 --name grafana -e "GF_SECURITY_ADMIN_PASSWORD=admin
 ```
 
 参考
+
 https://www.aneasystone.com/archives/2018/11/prometheus-in-action.html
+
+https://segmentfault.com/a/1190000015710814
 
 
