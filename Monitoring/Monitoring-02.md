@@ -113,8 +113,12 @@ $ curl -X DELETE http://localhost:9091/metrics/jobs/demo_job
 $ docker run -d -p 3000:3000 --name grafana -e "GF_SECURITY_ADMIN_PASSWORD=admin" grafana/grafana:4.5.2
 
 
-
-
-
-
 ```
+
+参考
+
+https://www.aneasystone.com/archives/2018/11/prometheus-in-action.html
+
+https://segmentfault.com/a/1190000015710814
+
+
