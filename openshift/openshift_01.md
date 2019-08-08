@@ -60,7 +60,7 @@ OpenShift Container Platform 的功能比 OpenShift Container Engine 的功能�
 ### OpenShift Dedicated  OpenShift专用
 Red Hat's managed public cloud application deployment and hosting service.  Red Hat管理的公共云应用程序部署和托管服务。
 
-### OKD
+### OKD(OpenShift Origin)
 
 OpenShift's open source, upstream project.   OpenShift的开源上游项目。
 
