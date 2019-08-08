@@ -8,9 +8,24 @@ https://docs.openshift.com/
 
 https://access.redhat.com/logout
 
-账号：it@daocloud.io,
+账号：it@daocloud.io
 
 密码： 7758521abc@r
+
+7758521abc@r
+
+
+
+```bash
+
+subscription-manager register --username it@daocloud.io --password 7758521abc@r --auto-attach
+
+
+```
+
+
+
+
 
 
 ## openhift 相关产品
@@ -24,6 +39,10 @@ https://access.redhat.com/logout
 
 ### OpenShift Online
 Red Hat's public cloud application deployment and hosting platform.  红帽的公共云应用程序部署和托管平台
+
+https://manage.openshift.com/
+
+
 
 ### OpenShift Container Platform
 Red Hat's private, on-premise cloud application deployment and hosting platform.  Red Hat的私有，内部部署云应用程序部署和托管平台。
@@ -781,3 +800,26 @@ c4712a0fcd50        openshift/origin-pod:v3.11                     "/usr/bin/pod
 
 
 ```
+
+
+
+
+
+https://medium.com/@adilsonbna/installing-a-highly-available-openshift-origin-cluster-f3493cbdb644
+
+
+
+http://uncontained.io/articles/openshift-ha-installation/
+
+
+
+https://subscription.packtpub.com/book/application_development/9781788992329/4/ch04lvl1sec49/openshift-architecture
+
+
+
+
+
+
+
+
+
