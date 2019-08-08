@@ -253,3 +253,8 @@ The playbook will delete content for any hosts defined in the inventory file tha
 
 Enjoy your Cluster :)
 
+
+
+[参考](https://medium.com/@adilsonbna/installing-a-highly-available-openshift-origin-cluster-f3493cbdb644)
+
+[参考](http://uncontained.io/articles/openshift-ha-installation/#_validating_the_cluster)
