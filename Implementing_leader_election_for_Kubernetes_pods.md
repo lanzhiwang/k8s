@@ -133,3 +133,15 @@ spec:
 
 This setup allows us to have only 1 pod serving music to our CDN at a time. If for any reason the master pod terminates or becomes unhealthy, a new leader will be elected, will become ‘Ready’, and will start receiving traffic from its service.  此设置允许我们一次只有1个pod为我们的CDN提供音乐。 如果主吊舱因任何原因终止或变得不健康，将选出新的领导者，将变为“准备就绪”，并将开始从其服务接收流量。
 
+
+
+参考
+
+* https://tunein.engineering/implementing-leader-election-for-kubernetes-pods-2477deef8f13
+
+* https://github.com/kubernetes-retired/contrib/tree/master/election
+
+* http://www.liuhaihua.cn/archives/224423.html
+
+* https://zhengyinyong.com/kubernetes-pod-leader-election.html
+
