@@ -1,1 +1,0 @@
-install-service-catalog-using-helm
