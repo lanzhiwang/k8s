@@ -959,3 +959,111 @@ Subjects:
 
 
 ```
+
+# User
+
+```bash
+
+User  admin
+
+User  system:kube-controller-manager
+
+User  system:kube-scheduler
+
+User  system:kube-scheduler
+
+User  system:kube-proxy
+
+User  system:node:fake
+
+User  cityinthesky
+
+
+kubectl describe clusterrolebindings admin-cluster-admin-binding
+Name:         admin-cluster-admin-binding
+Labels:       <none>
+Annotations:  <none>
+Role:
+  Kind:  ClusterRole
+  Name:  cluster-admin
+Subjects:
+  Kind  Name   Namespace
+  ----  ----   ---------
+  User  admin
+
+kubectl describe clusterrolebindings system:kube-controller-manager
+Name:         system:kube-controller-manager
+Labels:       kubernetes.io/bootstrapping=rbac-defaults
+Annotations:  rbac.authorization.kubernetes.io/autoupdate=true
+Role:
+  Kind:  ClusterRole
+  Name:  system:kube-controller-manager
+Subjects:
+  Kind  Name                            Namespace
+  ----  ----                            ---------
+  User  system:kube-controller-manager
+
+kubectl describe clusterrolebindings system:kube-scheduler
+Name:         system:kube-scheduler
+Labels:       kubernetes.io/bootstrapping=rbac-defaults
+Annotations:  rbac.authorization.kubernetes.io/autoupdate=true
+Role:
+  Kind:  ClusterRole
+  Name:  system:kube-scheduler
+Subjects:
+  Kind  Name                   Namespace
+  ----  ----                   ---------
+  User  system:kube-scheduler
+
+kubectl describe clusterrolebindings system:volume-scheduler
+Name:         system:volume-scheduler
+Labels:       kubernetes.io/bootstrapping=rbac-defaults
+Annotations:  rbac.authorization.kubernetes.io/autoupdate=true
+Role:
+  Kind:  ClusterRole
+  Name:  system:volume-scheduler
+Subjects:
+  Kind  Name                   Namespace
+  ----  ----                   ---------
+  User  system:kube-scheduler
+
+kubectl describe clusterrolebindings system:node-proxier
+Name:         system:node-proxier
+Labels:       kubernetes.io/bootstrapping=rbac-defaults
+Annotations:  rbac.authorization.kubernetes.io/autoupdate=true
+Role:
+  Kind:  ClusterRole
+  Name:  system:node-proxier
+Subjects:
+  Kind  Name               Namespace
+  ----  ----               ---------
+  User  system:kube-proxy
+
+kubectl describe clusterrolebindings system:node
+Name:         system:node
+Labels:       kubernetes.io/bootstrapping=rbac-defaults
+Annotations:  rbac.authorization.kubernetes.io/autoupdate=true
+Role:
+  Kind:  ClusterRole
+  Name:  system:node
+Subjects:
+  Kind  Name              Namespace
+  ----  ----              ---------
+  User  system:node:fake
+
+kubectl describe clusterrolebindings cityinthesky-cluster-admin-binding
+Name:         cityinthesky-cluster-admin-binding
+Labels:       <none>
+Annotations:  <none>
+Role:
+  Kind:  ClusterRole
+  Name:  cluster-admin
+Subjects:
+  Kind  Name          Namespace
+  ----  ----          ---------
+  User  cityinthesky
+
+
+
+
+```
