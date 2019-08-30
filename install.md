@@ -432,6 +432,9 @@ ca.pem  # CA 证书
 
 
 # 准备 kubectl 使用的 admin 证书签名请求，缺少 hosts 自动
+# CN is for the username and O for the group
+# CN 写成 clusterroles admins
+# O 写成 clusterrolebindings/cluster-admin 绑定的 group system:masters
 [root@k8s-master1 ssl]# vim ./admin-csr.json
 [root@k8s-master1 ssl]# cat ./admin-csr.json
 {
