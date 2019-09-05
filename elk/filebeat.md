@@ -1,14 +1,14 @@
-# ELK
-
-## filebeat
+# Filebeat
 
 ```bash
-[root@huzhi-code filebeat]# rpm -ivh filebeat-7.3.0-x86_64.rpm
-[root@huzhi-code filebeat]#
-[root@huzhi-code filebeat]# rpm -ql filebeat-7.3.0
+################# filebeat 安装文件 #################
+[root@huzhi-code filebeat]# rpm -ql filebeat-7.3.0-1.x86_64
+# filebeat 配置文件
 /etc/filebeat/fields.yml
 /etc/filebeat/filebeat.reference.yml
 /etc/filebeat/filebeat.yml
+
+# filebeat 模块配置文件
 /etc/filebeat/modules.d/apache.yml.disabled
 /etc/filebeat/modules.d/auditd.yml.disabled
 /etc/filebeat/modules.d/cisco.yml.disabled
@@ -39,9 +39,15 @@
 /etc/filebeat/modules.d/system.yml.disabled
 /etc/filebeat/modules.d/traefik.yml.disabled
 /etc/filebeat/modules.d/zeek.yml.disabled
+
+# filebeat 服务文件
 /etc/init.d/filebeat
 /lib/systemd/system/filebeat.service
+
+# filebeat 二进制文件
 /usr/bin/filebeat
+
+# 暂时忽略
 /usr/share/filebeat/.build_hash.txt
 /usr/share/filebeat/LICENSE.txt
 /usr/share/filebeat/NOTICE.txt
@@ -288,8 +294,145 @@
 /usr/share/filebeat/module/zeek/ssl/manifest.yml
 [root@huzhi-code filebeat]#
 
-########################################################################
+################# filebeat 服务文件 #################
+# filebeat 服务文件
+/etc/init.d/filebeat
+/lib/systemd/system/filebeat.service
 
+[root@huzhi-code filebeat]# cat /lib/systemd/system/filebeat.service
+[Unit]
+Description=Filebeat sends log files to Logstash or directly to Elasticsearch.
+Documentation=https://www.elastic.co/products/beats/filebeat
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+
+Environment="BEAT_LOG_OPTS=-e"
+Environment="BEAT_CONFIG_OPTS=-c /etc/filebeat/filebeat.yml"
+Environment="BEAT_PATH_OPTS=-path.home /usr/share/filebeat -path.config /etc/filebeat -path.data /var/lib/filebeat -path.logs /var/log/filebeat"
+ExecStart=/usr/share/filebeat/bin/filebeat $BEAT_LOG_OPTS $BEAT_CONFIG_OPTS $BEAT_PATH_OPTS
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+[root@huzhi-code filebeat]#
+
+#
+/usr/share/filebeat/bin/filebeat -e -c /etc/filebeat/filebeat.yml -path.home /usr/share/filebeat -path.config /etc/filebeat -path.data /var/lib/filebeat -path.logs /var/log/filebeat
+
+# /usr/share/filebeat/bin/filebeat
+[root@huzhi-code filebeat]# ll /usr/share/filebeat/bin/filebeat
+-rwxr-xr-x 1 root root 89144818 Jul 25 01:40 /usr/share/filebeat/bin/filebeat
+[root@huzhi-code filebeat]# ll /usr/bin/filebeat
+-rwxr-xr-x 1 root root 321 Jul 25 01:41 /usr/bin/filebeat
+[root@huzhi-code filebeat]#
+
+# -path.home /usr/share/filebeat
+[root@huzhi-code filebeat]# ll /usr/share/filebeat
+total 236
+drwxr-xr-x  2 root root     42 Aug 15 15:26 bin
+drwxr-xr-x  3 root root     15 Aug 15 15:26 kibana
+-rw-r--r--  1 root root  13675 Jul 25 01:16 LICENSE.txt
+drwxr-xr-x 33 root root   4096 Aug 15 15:26 module
+-rw-r--r--  1 root root 216284 Jul 25 01:16 NOTICE.txt
+-rw-r--r--  1 root root    802 Jul 25 01:41 README.md
+[root@huzhi-code filebeat]#
+[root@huzhi-code filebeat]# ll /usr/share/filebeat/bin/
+total 88092
+-rwxr-xr-x 1 root root 89144818 Jul 25 01:40 filebeat
+-rwxr-xr-x 1 root root  1057147 Jul 25 01:39 filebeat-god
+[root@huzhi-code filebeat]#
+
+# 调用 kibana 相关接口加载一些 dashboard
+[root@huzhi-code filebeat]# ll /usr/share/filebeat/kibana/
+total 0
+drwxr-xr-x 3 root root 23 Aug 15 15:26 7
+[root@huzhi-code filebeat]#
+[root@huzhi-code filebeat]# ll /usr/share/filebeat/kibana/7/
+total 4
+drwxr-xr-x 2 root root 4096 Aug 15 15:26 dashboard
+[root@huzhi-code filebeat]# ll /usr/share/filebeat/kibana/7/dashboard/
+total 520
+-rw-r--r-- 1 root root 10335 Jul 25 01:39 Coredns-Overview-Dashboard.json
+-rw-r--r-- 1 root root 13046 Jul 25 01:39 Filebeat-apache.json
+-rw-r--r-- 1 root root  9092 Jul 25 01:39 Filebeat-auditd.json
+-rw-r--r-- 1 root root  7732 Jul 25 01:39 Filebeat-auth-sudo-commands.json
+-rw-r--r-- 1 root root 23214 Jul 25 01:39 Filebeat-Cisco-ASA.json
+-rw-r--r-- 1 root root 19316 Jul 25 01:39 Filebeat-Envoyproxy-Overview.json
+-rw-r--r-- 1 root root  8779 Jul 25 01:39 Filebeat-haproxy-overview.json
+-rw-r--r-- 1 root root  5984 Jul 25 01:39 Filebeat-icinga-debug-log.json
+-rw-r--r-- 1 root root  5924 Jul 25 01:39 Filebeat-icinga-main-log.json
+-rw-r--r-- 1 root root  3446 Jul 25 01:39 Filebeat-icinga-startup-errors.json
+-rw-r--r-- 1 root root 12394 Jul 25 01:39 Filebeat-iis.json
+-rw-r--r-- 1 root root 15745 Jul 25 01:39 Filebeat-Iptables-Overview.json
+-rw-r--r-- 1 root root 18145 Jul 25 01:39 Filebeat-Iptables-Ubiquiti-Firewall-Overview.json
+-rw-r--r-- 1 root root  8550 Jul 25 01:39 Filebeat-Kafka-overview.json
+-rw-r--r-- 1 root root  6344 Jul 25 01:39 Filebeat-logstash-log.json
+-rw-r--r-- 1 root root 10454 Jul 25 01:39 Filebeat-logstash-slowlog.json
+-rw-r--r-- 1 root root  4709 Jul 25 01:39 Filebeat-Mongodb-overview.json
+-rw-r--r-- 1 root root 13613 Jul 25 01:39 Filebeat-mysql.json
+-rw-r--r-- 1 root root 19507 Jul 25 01:39 Filebeat-nats-overview.json
+-rw-r--r-- 1 root root 16778 Jul 25 01:39 filebeat-network-flows-top-n.json
+-rw-r--r-- 1 root root 14196 Jul 25 01:39 Filebeat-new-users-and-groups.json
+-rw-r--r-- 1 root root  6625 Jul 25 01:39 Filebeat-nginx-logs.json
+-rw-r--r-- 1 root root 15240 Jul 25 01:39 Filebeat-nginx-overview.json
+-rw-r--r-- 1 root root 23270 Jul 25 01:39 Filebeat-panw-network-overview.json
+-rw-r--r-- 1 root root 17593 Jul 25 01:39 Filebeat-panw-threat-overview.json
+-rw-r--r-- 1 root root  6266 Jul 25 01:39 Filebeat-Postgresql-overview.json
+-rw-r--r-- 1 root root  6269 Jul 25 01:39 Filebeat-Postgresql-slowlogs.json
+-rw-r--r-- 1 root root 10699 Jul 25 01:39 Filebeat-redis.json
+-rw-r--r-- 1 root root 12721 Jul 25 01:39 filebeat-santa-log-overview.json
+-rw-r--r-- 1 root root 10370 Jul 25 01:39 Filebeat-ssh-login-attempts.json
+-rw-r--r-- 1 root root 16929 Jul 25 01:39 Filebeat-Suricata-Alert-Overview.json
+-rw-r--r-- 1 root root 18760 Jul 25 01:39 Filebeat-Suricata-Overview.json
+-rw-r--r-- 1 root root  6207 Jul 25 01:39 Filebeat-syslog.json
+-rw-r--r-- 1 root root 11486 Jul 25 01:39 Filebeat-traefik-overview.json
+-rw-r--r-- 1 root root 18655 Jul 25 01:39 Filebeat-Zeek-Overview.json
+-rw-r--r-- 1 root root 14130 Jul 25 01:39 osquery-compliance.json
+-rw-r--r-- 1 root root  8437 Jul 25 01:39 osquery-rootkit.json
+[root@huzhi-code filebeat]#
+
+[root@huzhi-code filebeat]# ll /usr/share/filebeat/module
+total 0
+drwxr-xr-x 4 root root  51 Aug 15 15:26 apache
+drwxr-xr-x 2 root root  24 Aug 15 15:26 apache2
+drwxr-xr-x 3 root root  35 Aug 15 15:26 auditd
+drwxr-xr-x 4 root root  63 Aug 15 15:26 cisco
+drwxr-xr-x 3 root root  52 Aug 15 15:26 coredns
+drwxr-xr-x 7 root root  95 Aug 15 15:26 elasticsearch
+drwxr-xr-x 3 root root  52 Aug 15 15:26 envoyproxy
+drwxr-xr-x 3 root root  21 Aug 15 15:26 googlecloud
+drwxr-xr-x 3 root root  35 Aug 15 15:26 haproxy
+drwxr-xr-x 5 root root  64 Aug 15 15:26 icinga
+drwxr-xr-x 4 root root  33 Aug 15 15:26 iis
+drwxr-xr-x 3 root root  52 Aug 15 15:26 iptables
+drwxr-xr-x 3 root root  35 Aug 15 15:26 kafka
+drwxr-xr-x 3 root root  35 Aug 15 15:26 kibana
+drwxr-xr-x 4 root root  50 Aug 15 15:26 logstash
+drwxr-xr-x 3 root root  35 Aug 15 15:26 mongodb
+drwxr-xr-x 3 root root  17 Aug 15 15:26 mssql
+drwxr-xr-x 4 root root  52 Aug 15 15:26 mysql
+drwxr-xr-x 3 root root  35 Aug 15 15:26 nats
+drwxr-xr-x 3 root root  17 Aug 15 15:26 netflow
+drwxr-xr-x 4 root root  51 Aug 15 15:26 nginx
+drwxr-xr-x 3 root root  38 Aug 15 15:26 osquery
+drwxr-xr-x 3 root root  54 Aug 15 15:26 panw
+drwxr-xr-x 3 root root  35 Aug 15 15:26 postgresql
+drwxr-xr-x 3 root root  17 Aug 15 15:26 rabbitmq
+drwxr-xr-x 4 root root  50 Aug 15 15:26 redis
+drwxr-xr-x 3 root root  35 Aug 15 15:26 santa
+drwxr-xr-x 3 root root  52 Aug 15 15:26 suricata
+drwxr-xr-x 4 root root  50 Aug 15 15:26 system
+drwxr-xr-x 3 root root  38 Aug 15 15:26 traefik
+drwxr-xr-x 8 root root 147 Aug 15 15:26 zeek
+[root@huzhi-code filebeat]#
+
+################# filebeat 配置文件 #################
+# filebeat 配置文件
+/etc/filebeat/fields.yml
+/etc/filebeat/filebeat.reference.yml
+/etc/filebeat/filebeat.yml
 
 [root@huzhi-code filebeat]# cat /etc/filebeat/filebeat.yml
 ###################### Filebeat Configuration Example #########################
@@ -358,6 +501,8 @@ filebeat.inputs:
 
 
 #============================= Filebeat modules ===============================
+# Filebeat modules 预先定义一些常规系统例如 nginx 日志的收集路径和相关参数
+# Filebeat附带预构建的模块，这些模块包含收集、解析、充实和可视化各种日志文件格式数据所需的配置，每个Filebeat模块由一个或多个文件集组成，这些文件集包含摄取节点管道、Elasticsearch模板、Filebeat勘探者配置和Kibana仪表盘。
 
 filebeat.config.modules:
   # Glob pattern for configuration loading
@@ -505,9 +650,66 @@ processors:
 #migration.6_to_7.enabled: true
 [root@huzhi-code filebeat]#
 
+[root@huzhi-code filebeat]# cat /etc/filebeat/modules.d/apache.yml.disabled
+# Module: apache
+# Docs: https://www.elastic.co/guide/en/beats/filebeat/7.3/filebeat-module-apache.html
 
+- module: apache
+  # Access logs
+  access:
+    enabled: true
 
-########################################################################
+    # Set custom paths for the log files. If left empty,
+    # Filebeat will choose the paths depending on your OS.
+    #var.paths:
+
+  # Error logs
+  error:
+    enabled: true
+
+    # Set custom paths for the log files. If left empty,
+    # Filebeat will choose the paths depending on your OS.
+    #var.paths:
+[root@huzhi-code filebeat]#
+[root@huzhi-code filebeat]#
+[root@huzhi-code filebeat]#
+[root@huzhi-code filebeat]# cat /etc/filebeat/modules.d/elasticsearch.yml.disabled
+# Module: elasticsearch
+# Docs: https://www.elastic.co/guide/en/beats/filebeat/7.3/filebeat-module-elasticsearch.html
+
+- module: elasticsearch
+  # Server log
+  server:
+    enabled: true
+
+    # Set custom paths for the log files. If left empty,
+    # Filebeat will choose the paths depending on your OS.
+    #var.paths:
+
+  gc:
+    enabled: true
+    # Set custom paths for the log files. If left empty,
+    # Filebeat will choose the paths depending on your OS.
+    #var.paths:
+
+  audit:
+    enabled: true
+    # Set custom paths for the log files. If left empty,
+    # Filebeat will choose the paths depending on your OS.
+    #var.paths:
+
+  slowlog:
+    enabled: true
+    # Set custom paths for the log files. If left empty,
+    # Filebeat will choose the paths depending on your OS.
+    #var.paths:
+
+  deprecation:
+    enabled: true
+    # Set custom paths for the log files. If left empty,
+    # Filebeat will choose the paths depending on your OS.
+    #var.paths:
+[root@huzhi-code filebeat]#
 
 
 [root@huzhi-code filebeat]# cat /etc/filebeat/filebeat.reference.yml
@@ -2775,12 +2977,4 @@ logging.files:
 # This allows to enable 6.7 migration aliases
 #migration.6_to_7.enabled: false
 
-
-
 ```
-
-
-## ElasticSearch
-
-## Kibana
-
