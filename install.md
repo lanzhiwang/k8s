@@ -2,6 +2,22 @@
 
 [kubernetes高可用架构](https://blog.csdn.net/sinat_35930259/article/details/80411878)
 
+### 机器资源
+
+```
+k8s master
+etcd
+10.1.36.43 k8s-master1
+10.1.36.44 k8s-master2
+10.1.36.45 k8s-master3
+
+k8s node
+10.1.36.46 k8s-linux-worker1
+10.1.36.47 k8s-linux-worker2
+10.1.36.48 k8s-linux-worker3
+10.1.36.49 k8s-linux-worker4
+
+```
 
 ### 相关配置
 
@@ -56,7 +72,7 @@ $ wget https://dl.k8s.io/v1.14.0/kubernetes-server-linux-amd64.tar.gz
 [root@k8s-master1 temp]# tree -a kubernetes
 kubernetes
 ├── addons
-├── kubernetes-src.tar.gz
+├── kubernetes-src.tar.gz  # k8s 源码
 ├── LICENSES
 └── server
     └── bin
@@ -86,26 +102,34 @@ kubernetes
 [root@k8s-master1 temp]# 
 [root@k8s-master1 temp]# ll kubernetes/server/bin/
 total 1569736
--rwxr-xr-x 1 root root  42785408 Mar 26 00:32 apiextensions-apiserver
--rwxr-xr-x 1 root root 100320960 Mar 26 00:32 cloud-controller-manager
--rw-r--r-- 1 root root         8 Mar 26 00:28 cloud-controller-manager.docker_tag
--rw-r--r-- 1 root root 144212480 Mar 26 00:28 cloud-controller-manager.tar
--rwxr-xr-x 1 root root 211089600 Mar 26 00:32 hyperkube
--rwxr-xr-x 1 root root  39574816 Mar 26 00:32 kubeadm
+# 
 -rwxr-xr-x 1 root root 167464288 Mar 26 00:32 kube-apiserver
 -rw-r--r-- 1 root root         8 Mar 26 00:28 kube-apiserver.docker_tag
 -rw-r--r-- 1 root root 211355648 Mar 26 00:28 kube-apiserver.tar # 相关 docker 镜像
+# 
 -rwxr-xr-x 1 root root 115497504 Mar 26 00:32 kube-controller-manager
 -rw-r--r-- 1 root root         8 Mar 26 00:28 kube-controller-manager.docker_tag
 -rw-r--r-- 1 root root 159389184 Mar 26 00:28 kube-controller-manager.tar
--rwxr-xr-x 1 root root  43103040 Mar 26 00:32 kubectl
--rwxr-xr-x 1 root root 127850432 Mar 26 00:32 kubelet
--rwxr-xr-x 1 root root  36681344 Mar 26 00:32 kube-proxy
--rw-r--r-- 1 root root         8 Mar 26 00:29 kube-proxy.docker_tag
--rw-r--r-- 1 root root  83978752 Mar 26 00:29 kube-proxy.tar
+# 
 -rwxr-xr-x 1 root root  39254208 Mar 26 00:32 kube-scheduler
 -rw-r--r-- 1 root root         8 Mar 26 00:28 kube-scheduler.docker_tag
 -rw-r--r-- 1 root root  83145728 Mar 26 00:28 kube-scheduler.tar
+# 
+-rwxr-xr-x 1 root root 127850432 Mar 26 00:32 kubelet
+# 
+-rwxr-xr-x 1 root root  36681344 Mar 26 00:32 kube-proxy
+-rw-r--r-- 1 root root         8 Mar 26 00:29 kube-proxy.docker_tag
+-rw-r--r-- 1 root root  83978752 Mar 26 00:29 kube-proxy.tar
+# 
+-rwxr-xr-x 1 root root 100320960 Mar 26 00:32 cloud-controller-manager
+-rw-r--r-- 1 root root         8 Mar 26 00:28 cloud-controller-manager.docker_tag
+-rw-r--r-- 1 root root 144212480 Mar 26 00:28 cloud-controller-manager.tar
+#
+-rwxr-xr-x 1 root root  39574816 Mar 26 00:32 kubeadm
+-rwxr-xr-x 1 root root  43103040 Mar 26 00:32 kubectl
+# 
+-rwxr-xr-x 1 root root  42785408 Mar 26 00:32 apiextensions-apiserver
+-rwxr-xr-x 1 root root 211089600 Mar 26 00:32 hyperkube
 -rwxr-xr-x 1 root root   1648224 Mar 26 00:32 mounter
 [root@k8s-master1 temp]# 
 
@@ -119,10 +143,12 @@ quay.io/coreos/flannel        v0.11.0-arm         ef3b5d63729b        3 months a
 $ docker pull quay.io/coreos/flannel
 其中 quay.io 是 https://quay.io 镜像仓库网站
 
-https://quay.io Docker 镜像私有库
-k8s.gcr.io Docker 镜像私有库
+# Docker 镜像私有库
+https://quay.io
+http://k8s.gcr.io
 
-quay.io/coreos/flannel:v0.11.0-arm Docker 镜像私有库 / 镜像所属个人或组织 / 镜像名称：tag
+# 镜像私有库 / 镜像所属个人或组织 / 镜像名称：tag
+quay.io/coreos/flannel:v0.11.0-arm  
 
 
 # etcd
@@ -140,7 +166,26 @@ $ mv -f cfssl-certinfo_linux-amd64 cfssl-certinfo
 
 # cni
 $ wget https://github.com/containernetworking/plugins/releases/download/v0.8.0/cni-plugins-linux-amd64-v0.8.0.tgz
-
+[root@huzhi-code cni]# ll
+总用量 74552
+# 全部是二进制执行文件
+-rwxr-xr-x 1 root root  4559393 5月  10 2019 bandwidth
+-rwxr-xr-x 1 root root  5009327 5月  10 2019 bridge
+-rwxr-xr-x 1 root root 11610554 5月  10 2019 dhcp
+-rwxr-xr-x 1 root root  6018180 5月  10 2019 firewall
+-rwxr-xr-x 1 root root  3069034 5月  10 2019 flannel
+-rwxr-xr-x 1 root root  4536917 5月  10 2019 host-device
+-rwxr-xr-x 1 root root  3957620 5月  10 2019 host-local
+-rwxr-xr-x 1 root root  4687042 5月  10 2019 ipvlan
+-rwxr-xr-x 1 root root  3650379 5月  10 2019 loopback
+-rwxr-xr-x 1 root root  4762577 5月  10 2019 macvlan
+-rwxr-xr-x 1 root root  4327403 5月  10 2019 portmap
+-rwxr-xr-x 1 root root  4939923 5月  10 2019 ptp
+-rwxr-xr-x 1 root root  3871353 5月  10 2019 sbr
+-rwxr-xr-x 1 root root  2876359 5月  10 2019 static
+-rwxr-xr-x 1 root root  3736919 5月  10 2019 tuning
+-rwxr-xr-x 1 root root  4686952 5月  10 2019 vlan
+[root@huzhi-code cni]#
 
 
 
@@ -157,7 +202,6 @@ $ vim /etc/crontab
 
 
 [root@k8s-master1 ~]# cat /etc/fstab 
-
 #
 # /etc/fstab
 # Created by anaconda on Wed Aug 15 20:43:40 2018
@@ -336,7 +380,7 @@ lrwxrwxrwx 1 root root 10 May 16 17:39 6c772e2d-ecdb-4653-a459-eefd99455f68 -> .
 
 
 [root@k8s-master1 ~]# vim /etc/fstab
-UUID=852da811-4d2e-4108-bb17-8eb51d49689e /opt/k8s                ext4    defaults        0 0
+UUID=6c772e2d-ecdb-4653-a459-eefd99455f68 /opt/k8s                ext4    defaults        0 0
 [root@k8s-master1 ~]# 
 重启系统检查 hostname 和挂载是否生效
 
@@ -348,7 +392,7 @@ UUID=852da811-4d2e-4108-bb17-8eb51d49689e /opt/k8s                ext4    defaul
 ```bash
 [root@k8s-master1 ssl]# pwd
 /opt/k8s/temp/ssl
-# 准备 CA 配置文件
+# 准备 cfssl 相关工具配置文件
 [root@k8s-master1 ssl]# vim ./ca-config.json 
 [root@k8s-master1 ssl]# cat ./ca-config.json
 {
@@ -403,17 +447,19 @@ ca-csr.json
 [root@k8s-master1 ssl]# ll
 total 18828
 -rw-r--r-- 1 root root      292 May 20 09:58 ca-config.json
--rw-r--r-- 1 root root     1005 May 20 10:02 ca.csr
 -rw-r--r-- 1 root root      251 May 20 10:01 ca-csr.json
+
+-rw-r--r-- 1 root root     1005 May 20 10:02 ca.csr
 -rw------- 1 root root     1675 May 20 10:02 ca-key.pem
 -rw-r--r-- 1 root root     1371 May 20 10:02 ca.pem
+
 -rwxr-xr-x 1 root root 10376657 Mar 30  2016 cfssl
 -rwxr-xr-x 1 root root  6595195 Mar 30  2016 cfssl-certinfo
 -rwxr-xr-x 1 root root  2277873 Mar 30  2016 cfssljson
 [root@k8s-master1 ssl]# 
 
-ca-config.json
-ca-csr.json 
+ca-config.json  # cfssl 相关工具配置文件
+ca-csr.json  # CA 签名请求文件
 
 ca.csr  # CA 证书请求文件
 ca-key.pem  # CA 私钥
@@ -496,6 +542,63 @@ python-firewall-0.4.4.4-14.el7.noarch
 [root@k8s-master1 temp]# 
 
 [root@k8s-master1 temp]# yum install -y conntrack-tools psmisc nfs-utils jq socat bash-completion rsync ipset ipvsadm
+
+conntrack-tools
+/usr/sbin/conntrack
+/usr/sbin/conntrackd
+/usr/sbin/nfct
+
+psmisc
+/usr/bin/killall
+/usr/bin/peekfd
+/usr/bin/prtstat
+/usr/bin/pstree
+/usr/bin/pstree.x11
+/usr/sbin/fuser
+
+nfs-utils
+/sbin/mount.nfs
+/sbin/mount.nfs4
+/sbin/osd_login
+/sbin/rpc.statd
+/sbin/umount.nfs
+/sbin/umount.nfs4
+/usr/sbin/blkmapd
+/usr/sbin/exportfs
+/usr/sbin/mountstats
+/usr/sbin/nfsdcltrack
+/usr/sbin/nfsidmap
+/usr/sbin/nfsiostat
+/usr/sbin/nfsstat
+/usr/sbin/rpc.gssd
+/usr/sbin/rpc.idmapd
+/usr/sbin/rpc.mountd
+/usr/sbin/rpc.nfsd
+/usr/sbin/rpcdebug
+/usr/sbin/showmount
+/usr/sbin/sm-notify
+/usr/sbin/start-statd
+
+jq
+/usr/bin/jq
+
+socat
+/usr/bin/filan
+/usr/bin/procan
+/usr/bin/socat
+
+bash-completion
+
+rsync
+/usr/bin/rsync
+
+ipset
+/usr/sbin/ipset
+
+ipvsadm
+/usr/sbin/ipvsadm
+/usr/sbin/ipvsadm-restore
+/usr/sbin/ipvsadm-save
 
 
 # 永久关闭 selinux
@@ -3482,5 +3585,3 @@ token:      eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2V
 
 
 ```
-
-
