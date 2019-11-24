@@ -10,6 +10,11 @@ huzhi%^&@##huzhi
 ```
 
 
+
+```bash
+kubectl config view
+```
+
 ### 24 题，160分钟。
 
 ### 1. (5%) 日志
@@ -31,8 +36,8 @@ kubectl logs bar | grep file-not-found > /opt/dir/bar
 使用 kubectl 的自带功能对输出排序，不要做其他任何处理。
 
 ```bash
-kubectl get pv --sort-by='{.spec.capacity.storage}' > /opt/dir/volume_list
-kubectl get pv -o json
+kubectl get pv --all-namespaces --sort-by='{.spec.capacity.storage}' > /opt/dir/volume_list
+kubectl get pv --all-namespaces -o json
         {
             "apiVersion": "v1",
             "kind": "PersistentVolume",
@@ -895,3 +900,286 @@ $ systemctl restart kubelet
 $ kubectl get pods -o wide --show-labels
 
 ```
+
+######################################################
+
+1、切换和查看上下文
+
+1、Set configuration context $ kubectl config use-context k8s
+
+Monitor the logs of Pod foobar and Extract log lines corresponding to error unable-to-access-website Write them to /opt/KULM00201/foobar
+
+
+
+```bash
+kubectl config use-context k8s
+
+kubectl get pods -o wide --show-labels
+
+kubectl logs foobar | grep 'unable-to-access-website' > /opt/KULM00201/foobar
+
+```
+
+2、Set configuration context $ kubectl config use-context k8s
+
+List all PVs sorted by name,saving the full kubectl output to /opt/kUCC0010/my_volumes. Use kubectl‘s own functionally for sorting the output，
+
+and do not mainpulate it any further
+
+```bash
+kubectl config use-context k8s
+
+kubectl get pv -o json
+
+kubectl get pv --all-namespaces --sort-by='{.metadata.name}' > /opt/kUCC0010/my_volumes
+
+```
+
+3、Set configuration context $ kubectl config use-context k8s
+
+Ensure a single instance of Pod nginx is running on each node of the kubernetes cluster where nginx also represents the image name which has to be used.Do no override any taints currently in place.Use Daemonset to complete this task and use ds.kusc00201 as Daemonset name.
+
+```bash
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ds.kusc00201
+spec:
+  selector:
+    matchLabels:
+      name: ds-nginx
+  template:
+    metadata:
+      labels:
+        name: ds-nginx
+    spec:
+      containers:
+      - name: ds-nginx
+        image: nginx
+
+
+```
+
+4、Set configuration context $ kubectl config use-context k8s
+
+Perform the following tasks Add an init container to lumpy-koala (which has been defined in spec file /opt/kucc00100/pod-sepc-KUCC00100.yaml)
+
+The init container should create an empty file named /workdir/calm.txt。If /workdir/calm.txt is not be detected,the Pod should exit
+
+Once the spec file has been updated  with the init container definition, the Pod should be created.
+
+```bash
+cat /opt/kucc00100/pod-sepc-KUCC00100.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: myapp-container
+    image: busybox:1.28
+    command: ['sh', '-c', 'if [-f /workdir/calm.txt]; then sleep 1000000; else exit 1; fi']
+  initContainers:
+  - name: lumpy-koala
+    image: busybox:1.28
+    command: ['sh', '-c', 'touch /workdir/calm.txt']
+
+
+```
+
+5、Set configuration context $ kubectl config use-context k8s
+
+Create a pod named kucc4 with a single container for each of the following images running inside (there may be between 1 and 4 images specified):
+
+ngingx + redis + memcached + consul
+
+```bash
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kucc4
+spec:
+  containers:
+
+  - name: nginx-container
+    image: nginx
+
+  - name: redis-container
+    image: redis
+
+  - name: memcached-container
+    image: memcached
+
+  - name: consul-container
+    image: consul
+
+
+```
+
+6、Set configuration context $ kubectl config use-context k8s
+
+Schedule a Pod as follows:
+
+Name:nginx-kusc00101
+
+Image:nginx
+
+Nodeselector:disk=ssd
+
+```bash
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-kusc00101
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+  nodeSelector:
+    disk: ssd
+
+
+```
+
+7、Set configuration context $ kubectl config use-context k8s
+
+Create a deployment as follows
+
+Name：nginx-app
+
+Using container nginx with version 1.11.9-alpine
+
+The deployment should contain 3 replicas
+
+Next, deploy the app with new version 1.12.0-alpine by performing a rolling update and record that update.
+
+Finally, rollback that update to the previous version 1.11.9-alpine
+
+```bash
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-app
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.11.9-alpine
+
+kubectl set image deployment/nginx-app nginx=nginx:1.12.0-alpine --record
+
+kubectl rollout history deployment.v1.apps/nginx-app
+
+
+kubectl rollout undo deployment.v1.apps/nginx-app --to-revision=2
+
+```
+
+8、Set configuration context $ kubectl config use-context k8s
+
+Create and configure the service front-end-service so it‘s accessible through NodePort/ClusterIP and routes to the existing pod named front-end
+
+```bash
+kubectl expose pod front-end --port=80 --name=front-end-service  --type=NodePort
+
+```
+
+9、Set configuration context $ kubectl config use-context k8s
+
+Create a Pod as follows:
+
+Name: jenkins
+
+Using image: jenkins
+
+In a new Kubernetes namespce named website-frontend
+
+```bash
+kubectl create namespace website-frontend
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: jenkins
+  namespace: website-frontend
+spec:
+  containers:
+  - name: jenkins
+    image: jenkins
+
+
+
+
+```
+
+10、Set configuration context $ kubectl config use-context k8s
+
+Create a deployment spce file that will：
+
+launch 7 replicas of the redis image with the label:app_env_stage=dev
+
+Deployment name: kua100201
+
+Save a copy of this spec file to /opt/KUAL00201/deploy_spec.yaml
+
+When you are done,clean up (delete) any new k8s API objects that you produced during this task
+
+```bash
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kua100201
+  labels:
+    app_env_stage: dev
+spec:
+  replicas: 7
+  selector:
+    matchLabels:
+      app_env_stage: dev
+  template:
+    metadata:
+      labels:
+        app_env_stage: dev
+    spec:
+      containers:
+      - name: redis
+        image: redis
+
+
+
+
+```
+
+11、Set configuration context $ kubectl config use-context k8s
+
+Create a file /opt/KUCC00302/kucc00302.txt that lists all pods that implement Service foo in Namespce production
+
+The format of the file should be one pod name per line
+
+```bash
+kubectl get services -n production -o wide --show-labels
+
+kubectl get svc --show-labels -n production
+kubectl get pods -n production -l *** 
+kubectl get pods -l name=haha -n production |grep -v NAME|awk '{print $1}'
+
+```
+
+
+
+
+
+
