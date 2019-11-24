@@ -7,6 +7,9 @@ https://portal.linuxfoundation.org/portal
 zhihu
 huzhi%^&@##huzhi
 
+
+如果在3个工作日后仍未收到结果，请直接通过以下地址与Linux基金会联系：certificationsupport@linuxfoundation.org
+感谢您使用PSI进行测试。 祝你今天愉快。
 ```
 
 
