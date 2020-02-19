@@ -930,6 +930,7 @@ docker-compose version 1.24.0, build 0aa59064
 ```bash
 
 # 创建 etcd 证书请求文件
+# CN is for the username and O for the group
 [root@k8s-master1 ssl]# vim ./etcd-csr.json
 [root@k8s-master1 ssl]# cat ./etcd-csr.json
 {

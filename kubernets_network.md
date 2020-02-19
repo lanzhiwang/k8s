@@ -38,7 +38,7 @@ NODE_PORT_RANGE="20000-40000"
 
 
 
-### 群网络插件，可以支持 calico、flannel、kube-router、cilium
+### 集群网络插件，可以支持 calico、flannel、kube-router、cilium
 
 [https://github.com/containernetworking/plugins/releases](https://github.com/containernetworking/plugins/releases)
 ```bash

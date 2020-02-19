@@ -1,6 +1,4 @@
-# Kubetnetes 原理
-
-## Kubetnetes 调度过程，也就是 Kubetnetes 中 pod 创建流程
+# Kubetnetes 调度过程，也就是 Kubetnetes 中 pod 创建流程
 
 Pod 是 Kubernetes 中最基本的部署调度单元，可以包含 container，逻辑上表示某种应用的一个实例。例如一个web 站点应用由前端、后端及数据库构建而成，这三个组件将运行在各自的容器中，那么我们可以创建包含三个container 的 pod。
 
@@ -18,28 +16,8 @@ Kubetnetes 中 pod 创建流程如下图所示
 6. 选择主机：选择打分最高的主机，进行 binding 操作，结果存储到 etcd 中。
 7. kubelet 根据调度结果执行 Pod 创建操作： 绑定成功后，scheduler 会调用 APIServer 的 API 在 etcd 中创建一个 boundpod 对象，描述在一个工作节点上绑定运行的所有 pod 信息。运行在每个工作节点上的 kubelet 也会定期与 APIServer 同步 boundpod 信息，一旦发现应该在该工作节点上运行的 boundpod 对象没有更新，则调用Docker API 创建并启动 pod 内的容器。
 
-## Kubetnetes 各组件的作用
 
-* kubectl
-
-* apiserver
-
-* controller-manager：负责管理集群各种资源，保证资源处于预期的状态。Controller Manager由多种controller组成，包括replication controller、endpoints controller、namespace controller、serviceaccounts controller等 。由控制器完成的主要功能主要包括生命周期功能和API业务逻辑，具体如下：
-
-	* 生命周期功能：包括Namespace创建和生命周期、Event垃圾回收、Pod终止相关的垃圾回收、级联垃圾回收及Node垃圾回收等。
-	* API业务逻辑：例如，由ReplicaSet执行的Pod扩展等。
-
-* scheduler：查看未绑定的 Pod，尝试为 Pod 分配主机
-
-* kubelet：运行在每个工作节点上的 kubelet 也会定期与 APIServer 同步 boundpod 信息，一旦发现应该在该工作节点上运行的 boundpod 对象没有更新，则调用Docker API 创建并启动 pod 内的容器
-
-* proxy：service在逻辑上代表了后端的多个Pod，外借通过service访问Pod。service接收到请求就需要kube-proxy完成转发到Pod的。每个Node都会运行kube-proxy服务，负责将访问的service的TCP/UDP数据流转发到后端的容器，如果有多个副本，kube-proxy会实现负载均衡，有2种方式：LVS或者Iptables
-
-* docker
-
-* etcd
-
-## Kubetnetes 的预选策略(predicate)和优选策略(priority)
+# Kubetnetes 的预选策略(predicate)和优选策略(priority)
 
 Kubernetes Scheduler 提供的调度流程分三步:
 
