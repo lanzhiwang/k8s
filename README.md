@@ -54,7 +54,7 @@
 
 参考
 * [K8S cni和网络方案](https://sq.163yun.com/blog/article/226877250389852160)
-* [CNI 插件基本使用方法](./use_CNI_to_setup_network.md]
+* [CNI 插件基本使用方法](./use_CNI_to_setup_network.md)
 * [K8S cni和网络方案](./K8S_cni_network.pdf)
 
 
