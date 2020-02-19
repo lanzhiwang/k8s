@@ -92,7 +92,9 @@
 4. etcd 集群部署
 
 参考
-* [学习笔记](./kubernetes_install.md)
+
+* [集群架构](./k8s_ansible/kubernetes_install.md)
+
 * [详细操作过程](./install.md)
 * [ansible 部署集群的方法](https://github.com/gjmzj/kubeasz)
 
