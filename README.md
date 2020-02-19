@@ -139,6 +139,14 @@
 
 
 
+### Kubeadm 部署 k8s 集群
+
+参考
+
+* [基本说明](./Kubeadm.md)
+
+
+
 后续整理
 
 find . -name '*.pdf'
