@@ -59,6 +59,10 @@
 
 
 
+继续
+
+
+
 
 
 ### kubernetes 认证和授权方式
@@ -122,6 +126,16 @@
 * 《Kubernetes in Action中文版》第十四章
 
 
+
+### kubernetes 服务目录
+
+参考
+
+* 《Kubernetes in Action中文版》第十八章
+
+* [install-service-catalog-using-helm](https://k8smeetup.github.io/docs/tasks/service-catalog/install-service-catalog-using-helm/)
+* [ 服务目录使用示例](http://www.just4coding.com/blog/2019/08/10/service-catalog/)
+* [Kubernetes的Service Catalog机制](https://blog.gmem.cc/service-catalog-of-kubernetes)
 
 
 
