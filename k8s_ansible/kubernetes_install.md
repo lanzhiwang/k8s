@@ -2,7 +2,7 @@
 
 ### 整体架构
 
-![](./images/architecture.png)
+![](../images/architecture.png)
 
 * 所有节点以 centos7 为操作系统
 * 整个集群包括 k8s 主节点、k8s node 节点、etcd、负载均衡节点

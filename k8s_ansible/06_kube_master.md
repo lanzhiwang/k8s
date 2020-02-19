@@ -193,7 +193,7 @@ test1234,admin,1
 readonly,readonly,2
 ```
 
-![ca](./images/ca.png)
+![ca](../images/ca.png)
 
 ```bash
 # 创建 kube-apiserver 的 systemd unit 文件，以 192.168.1.1 为例
