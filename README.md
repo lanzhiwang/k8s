@@ -94,7 +94,6 @@
 参考
 
 * [集群架构](./k8s_ansible/kubernetes_install.md)
-
 * [详细操作过程](./install.md)
 * [ansible 部署集群的方法](https://github.com/gjmzj/kubeasz)
 
@@ -113,6 +112,16 @@
 * 《Wireshark网络分析就这么简单》DNS 小科普
 * [阮一峰 DNS 原理入门](http://www.ruanyifeng.com/blog/2016/06/dns.html)
 * CoreDNS 原理
+
+
+
+### Kubernetes资源限制
+
+参考
+* [深入理解Kubernetes资源限制：内存](pdf/Kuberneter_memory.pdf)
+* 《Kubernetes in Action中文版》第十四章
+
+
 
 
 
