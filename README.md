@@ -72,6 +72,12 @@
 
 
 
+### kubernetes ssl 认证
+
+参考
+
+* [学习笔记](./kubernetes_ssl.md)
+
 ### cfssl 配置选项含义
 
 参考
