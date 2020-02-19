@@ -27,3 +27,6 @@
 | system:controller:cloud-provider               | system:controller:cloud-provider               | ServiceAccount  cloud-provider          |
 | system:controller:token-cleaner                | system:controller:token-cleaner                | ServiceAccount  token-cleaner           |
 
+ps:
+
+**Kubernetes 没有相应的 API 创建 user 和 group，也就是 kubernetes 只存在默认的 user 和 group。**
