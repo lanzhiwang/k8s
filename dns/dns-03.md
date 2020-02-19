@@ -1,31 +1,6 @@
 # deploy.sh 脚本注释
 
 ```bash
-[root@k8s-master1 kubernetes]# bash deploy.sh 
-+++ dirname deploy.sh
-++ cd .
-++ pwd
-+ DIR=/opt/k8s/temp/dns/deployment/kubernetes
-+ CLUSTER_DOMAIN=cluster.local
-+ YAML_TEMPLATE=/opt/k8s/temp/dns/deployment/kubernetes/coredns.yaml.sed
-+ STUBDOMAINS=
-+ UPSTREAM='\/etc\/resolv.conf'
-+ FEDERATIONS=
-+ getopts hsr:i:d:t:k: opt
-+ [[ -z '' ]]
-+ REVERSE_CIDRS='in-addr.arpa ip6.arpa'
-+ [[ -z '' ]]
-++ kubectl get service --namespace kube-system kube-dns -o 'jsonpath={.spec.clusterIP}'
-Error from server (NotFound): services "kube-dns" not found
-+ CLUSTER_DNS_IP=
-+ '[' 1 -ne 0 ']'
-+ echo 'Error! The IP address for DNS service couldn'\''t be determined automatically. Please specify the DNS-IP with the '\''-i'\'' option.'
-Error! The IP address for DNS service couldn't be determined automatically. Please specify the DNS-IP with the '-i' option.
-+ exit 2
-[root@k8s-master1 kubernetes]# 
-
-##############################################################################
-
 [root@k8s-master1 kubernetes]# bash deploy.sh -i 10.68.0.2
 +++ dirname deploy.sh
 ++ cd .
@@ -401,6 +376,8 @@ sed -e "s/CLUSTER_DNS_IP/$CLUSTER_DNS_IP/g" \
 
 # sed -e s/CLUSTER_DNS_IP/10.68.0.2/g -e s/CLUSTER_DOMAIN/cluster.local/g -e 's?REVERSE_CIDRS?in-addr.arpa ip6.arpa?g' -e s@STUBDOMAINS@@g -e s@FEDERATIONS@@g -e 's/UPSTREAMNAMESERVER/\/etc\/resolv.conf/g' /opt/k8s/temp/dns/deployment/kubernetes/coredns.yaml.sed
 
+
+##############################################################################
 
 
 [root@k8s-master1 temp]# kubectl apply -f ./coredns.yaml

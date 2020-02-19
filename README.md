@@ -55,7 +55,7 @@
 参考
 * [K8S cni和网络方案](https://sq.163yun.com/blog/article/226877250389852160)
 * [CNI 插件基本使用方法](./use_CNI_to_setup_network.md)
-* [K8S cni和网络方案](./K8S_cni_network.pdf)
+* [K8S cni和网络方案](./pdf/K8S_cni_network.pdf)
 
 
 
@@ -68,7 +68,7 @@
 * [使用kubectl访问Kubernetes集群时的身份验证和授权](https://tonybai.com/2018/06/14/the-authentication-and-authorization-of-kubectl-when-accessing-k8s-cluster/)
 * [Kubernetes 默认 User、Group、Service Account](./default_user_group.md)
 * 《Kubernetes in Action中文版》第十二章
-* [kubectl_Kubernetes](./kubectl_Kubernetes.pdf)
+* [kubectl_Kubernetes](./pdf/kubectl_Kubernetes.pdf)
 
 
 
@@ -105,8 +105,17 @@
 
 * [kube-dns and CoreDNS](./dns/dns-01.md)
 * [how to deploy CoreDNS in Kubernetes](./dns/dns-02.md)
+* [部署 CoreDNS 和相关测试](./dns/dns-03.md)
+* [搭建Kubernetes集群时DNS无法解析问题的处理过程](./dns/k8s_dns.pdf)
+* [K8s DNS 策略](./dns/Kubernetes_DNS.pdf)
 * 《Wireshark网络分析就这么简单》DNS 小科普
 * [阮一峰 DNS 原理入门](http://www.ruanyifeng.com/blog/2016/06/dns.html)
+
+
+
+后续整理
+
+find . -name '*.pdf'
 
 
 
