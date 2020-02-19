@@ -96,3 +96,17 @@
 * [详细操作过程](./install.md)
 * [ansible 部署集群的方法](https://github.com/gjmzj/kubeasz)
 
+### Kubernetes DNS
+
+1. 服务发现
+2. kube-dns and CoreDNS
+
+参考
+
+* [kube-dns and CoreDNS](./dns/dns-01.md)
+* [how to deploy CoreDNS in Kubernetes](./dns/dns-02.md)
+* 《Wireshark网络分析就这么简单》DNS 小科普
+* [阮一峰 DNS 原理入门](http://www.ruanyifeng.com/blog/2016/06/dns.html)
+
+
+
