@@ -97,7 +97,7 @@
 参考
 
 * [集群架构](./k8s_ansible/kubernetes_install.md)
-* [详细操作过程](./install.md)
+* [~~详细操作过程~~](./install.md)
 * [ansible 部署集群的方法](https://github.com/gjmzj/kubeasz)
 
 ### Kubernetes DNS
