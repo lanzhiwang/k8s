@@ -43,7 +43,10 @@
 4. 在 k8s 中部署 flannel
 
 参考
-* [~~学习笔记~~](./kubernets_network.md)
+
+* [kubernetes 网络基础](./network/Kubernetes_101_Networking.md)
+
+* [~~学习笔记~~](./network/kubernets_network.md)
 
 
 
@@ -54,8 +57,10 @@
 
 参考
 * [K8S cni和网络方案](./cni/K8S_cni.pdf)
-* [CNI 插件基本使用方法1](./cni/use_CNI_to_setup_network.md)
-* [CNI 插件基本使用方法2](./cni/understanding_cni.md)
+* [CNI 插件基本使用方法](./cni/use_CNI_to_setup_network.md)
+* [Understanding CNI (Container Networking Interface)](./cni/understanding_cni.md)
+* [Using CNI with Docker](./cni/Using_CNI_with_Docker.md)
+* [IPAM and DNS with CNI](./cni/IPAM_and_DNS_with_CNI.md)
 
 
 
