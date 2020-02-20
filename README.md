@@ -115,7 +115,9 @@
 * [K8s DNS 策略](./dns/Kubernetes_DNS.pdf)
 * 《Wireshark网络分析就这么简单》DNS 小科普
 * [阮一峰 DNS 原理入门](http://www.ruanyifeng.com/blog/2016/06/dns.html)
+* [DNS 学习笔记](https://github.com/lanzhiwang/awesome-huzhi/blob/master/computer/DNS.md)
 * CoreDNS 原理
+  * [CoreDNS 使用与架构分析](./dns/CoreDNS_01.pdf)
 
 
 
