@@ -53,15 +53,9 @@
 2. 使用 CNI 插件后为什么还需要使用 flannel、calico 等类似第三方插件
 
 参考
-* [K8S cni和网络方案](./pdf/K8S_cni.pdf)
-* [CNI 插件基本使用方法](./use_CNI_to_setup_network.md)
-* 
-
-
-
-继续
-
-
+* [K8S cni和网络方案](./cni/K8S_cni.pdf)
+* [CNI 插件基本使用方法1](./cni/use_CNI_to_setup_network.md)
+* [CNI 插件基本使用方法2](./cni/understanding_cni.md)
 
 
 
